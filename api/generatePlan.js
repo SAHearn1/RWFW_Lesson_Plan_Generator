@@ -1,4 +1,5 @@
-File 2: api/generatePlan.js
+// ===================================================================================
+// File 2: api/generatePlan.js
 // This is your new secure backend function.
 // ===================================================================================
 const admin = require('firebase-admin');
