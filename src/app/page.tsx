@@ -6,7 +6,8 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 
 // --- Firebase Configuration ---
-const firebaseConfig = process.env.NEXT_PUBLIC_FIREBASE_CONFIG ? JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_CONFIG) : {};
+const firebaseConfigString = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
+const firebaseConfig = firebaseConfigString ? JSON.parse(firebaseConfigString) : {};
 
 // --- Main App Component ---
 export default function HomePage() {
