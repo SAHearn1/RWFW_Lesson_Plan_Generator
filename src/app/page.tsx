@@ -7,11 +7,11 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 
 // --- Firebase Configuration ---
 // This configuration is now handled by Vercel Environment Variables for security.
-const firebaseConfig = JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_CONFIG || '{}');
+const firebaseConfig = process.env.NEXT_PUBLIC_FIREBASE_CONFIG ? JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_CONFIG) : {};
 
 // --- Main App Component ---
 export default function HomePage() {
@@ -19,15 +19,15 @@ export default function HomePage() {
   const [view, setView] = useState('loading'); // loading, form, results
   const [lessonPlan, setLessonPlan] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   
   // User and Usage State
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [usageInfo, setUsageInfo] = useState({ count: 0, limit: 5 });
 
   // Form State
   const [gradeLevel, setGradeLevel] = useState('');
-  const [subjects, setSubjects] = useState([]);
+  const [subjects, setSubjects] = useState<string[]>([]);
   const [duration, setDuration] = useState('3');
   const [unitTitle, setUnitTitle] = useState('');
   const [standards, setStandards] = useState('');
@@ -35,7 +35,6 @@ export default function HomePage() {
 
   // --- Firebase Authentication Effect ---
   useEffect(() => {
-    // This check prevents errors during the build process on the server
     if (typeof window === 'undefined') return;
     
     if (!firebaseConfig.apiKey) {
@@ -59,15 +58,19 @@ export default function HomePage() {
   }, []);
 
   // --- Form Input Handlers ---
-  const handleSubjectChange = (e) => {
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = [...e.target.selectedOptions];
     const values = options.map(option => option.value);
     setSubjects(values);
   };
 
   // --- API Call to Backend Serverless Function ---
-  const handleGeneratePlan = async (e) => {
+  const handleGeneratePlan = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) {
+        setError("You are not signed in.");
+        return;
+    }
     if (!gradeLevel || subjects.length === 0) {
       setError('Please select a grade level and at least one subject.');
       return;
@@ -123,7 +126,7 @@ export default function HomePage() {
       setUsageInfo(data.usageInfo);
       setView('results');
 
-    } catch (err) {
+    } catch (err: any) {
       setError(`Failed to generate lesson plan: ${err.message}`);
       setView('form');
     } finally {
