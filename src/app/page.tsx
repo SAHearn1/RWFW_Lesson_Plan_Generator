@@ -1,7 +1,3 @@
-// ===================================================================================
-// File 1: src/app/page.tsx
-// This is your main application file.
-// ===================================================================================
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +6,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 
 // --- Firebase Configuration ---
-// This configuration is now handled by Vercel Environment Variables for security.
 const firebaseConfig = process.env.NEXT_PUBLIC_FIREBASE_CONFIG ? JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_CONFIG) : {};
 
 // --- Main App Component ---
