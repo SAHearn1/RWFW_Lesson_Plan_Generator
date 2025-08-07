@@ -17,14 +17,15 @@
     "postbuild": "next-sitemap --config next-sitemap.config.js",
     "prepare": "husky install"
   },
-  "dependencies": {
+ "dependencies": {
     "clsx": "^2.0.0",
-    "lucide-react": "^0.438.0",
-    "next": "^15.4.3",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-icons": "^5.5.0",
-    "tailwind-merge": "^2.6.0",
+    "firebase": "^10.12.2",
+    "lucide-react": "^0.284.0",
+    "next": "13.5.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "tailwind-merge": "^1.14.0"
+  },
     "zod": "^3.24.1"
   },
   "devDependencies": {
