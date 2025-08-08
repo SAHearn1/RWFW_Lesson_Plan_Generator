@@ -7,42 +7,40 @@ const auth = getAuth(app);
 
 export default function HomePage() {
   // …your useState hooks…
-  
- // 1) Load framework from localStorage
-   useEffect(() => {
-     if (typeof window === 'undefined') return;
-     const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
-     setRootWorkFramework(saved);
-   }, []);
+    // 1) Load framework from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
+    setRootWorkFramework(saved);
+  }, []);
 
-   // 2) Save framework when it changes
-   useEffect(() => {
-     saveToLocalStorage('rootWorkFramework', rootWorkFramework);
-   }, [rootWorkFramework]);
+  // 2) Save framework when it changes
+  useEffect(() => {
+    saveToLocalStorage('rootWorkFramework', rootWorkFramework);
+  }, [rootWorkFramework]);
 
-   // 3) Firebase anonymous auth
-   useEffect(() => {
-     if (typeof window === 'undefined') return;
-     if (!firebaseConfig.apiKey) {
-       setError("Firebase configuration is missing…");
-       setView('form');
-       return;
-     }
-     onAuthStateChanged(auth, user => {
-       if (user) {
-         setUser(user);
-         setView('form');
-       } else {
-         signInAnonymously(auth).catch(err => {
-           console.error("Anonymous sign-in error:", err);
-          setError("Could not sign in. Please try again.");
-         });
-       }
-     });
-   }, []);
+  // 3) Firebase anonymous auth
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!firebaseConfig.apiKey) {
+      setError("Firebase configuration is missing. Please set it in your Vercel environment variables.");
+      setView('form');
+      return;
+    }
+    onAuthStateChanged(auth, (currentUser: User | null) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setView('form');
+      } else {
+        signInAnonymously(auth).catch(err => {
+          console.error("Anonymous sign-in error:", err);
+          setError("Could not sign in. Please try again later.");
+        });
+      }
+    });
+  }, []);
 
-// --- Enhanced Main App Component ---
-export default function HomePage() {
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<'generator' | 'framework' | 'dashboard'>('generator');
   
