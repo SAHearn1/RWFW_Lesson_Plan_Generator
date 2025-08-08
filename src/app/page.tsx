@@ -1,33 +1,97 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import {
-auth,
-onAuthStateChanged,
-signInAnonymously,
-} from "@/lib/firebase";
-import type { User } from "firebase/auth";
-// Import our Root Work Framework utilities
-import {
-  RootWorkEntry,
-  RootWorkFramework,
-  validateRootWorkEntry,
-  checkComplianceFlags,
-  getPriorityScore,
-  getStatusColor,
-  getCategoryColor,
-  sortEntriesByPriority,
-  searchEntries,
-  exportToCSV,
-  generateId,
-  saveToLocalStorage,
-  loadFromLocalStorage,
+// …all the single block of imports…
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+export default function HomePage() {
+  // …your useState hooks…
+  
+ // 1) Load framework from localStorage
+   useEffect(() => {
+     if (typeof window === 'undefined') return;
+     const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
+     setRootWorkFramework(saved);
+   }, []);
+
+   // 2) Save framework when it changes
+   useEffect(() => {
+     saveToLocalStorage('rootWorkFramework', rootWorkFramework);
+   }, [rootWorkFramework]);
+
+   // 3) Firebase anonymous auth
+   useEffect(() => {
+     if (typeof window === 'undefined') return;
+     if (!firebaseConfig.apiKey) {
+       setError("Firebase configuration is missing…");
+       setView('form');
+       return;
+     }
+     onAuthStateChanged(auth, user => {
+       if (user) {
+         setUser(user);
+         setView('form');
+       } else {
+         signInAnonymously(auth).catch(err => {
+           console.error("Anonymous sign-in error:", err);
+          setError("Could not sign in. Please try again.");
+         });
+       }
+     });
+   }, []);
+
+// --- Enhanced Main App Component ---
+export default function HomePage() {
+  // Navigation State
+  const [activeTab, setActiveTab] = useState<'generator' | 'framework' | 'dashboard'>('generator');
+  
+  // Lesson Generator State
+  const [view, setView] = useState<'loading' | 'form' | 'results'>('loading');
+  const [lessonPlan, setLessonPlan] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // User & Usage State
+  const [user, setUser] = useState<User | null>(null);
+  const [usageInfo, setUsageInfo] = useState({ count: 0, limit: 5 });
+
+  // Form State
+  const [gradeLevel, setGradeLevel] = useState('');
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [duration, setDuration] = useState('3');
+  const [unitTitle, setUnitTitle] = useState('');
+  const [standards, setStandards] = useState('');
+  const [focus, setFocus] = useState('');
+
+  // Root Work Framework State
+  const [rootWorkFramework, setRootWorkFramework] = useState<RootWorkFramework>({
+    entries: [],
+    metadata: { lastUpdated: new Date(), version: '1.0.0', createdBy: 'Root Work Framework User' }
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<RootWorkEntry['category'] | 'all'>('all');
+  const [showEntryForm, setShowEntryForm] = useState(false);
+
+  // New Entry Form State
+  const [newEntry, setNewEntry] = useState<Partial<RootWorkEntry>>({
+    title: '', description: '', category: 'educational',
+    priority: 'medium', status: 'pending', tags: [], assignee: ''
+  });
+
+
+// --- Enhanced Main App Component ---
+{
+  // … your state hooks here …
+
   generateLessonPlan,
   formatDate,
-  cn
-} from '../lib/utils';
+  cn,
+} from '@/lib/utils';
 
+// Initialize Firebase once
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 // --- Enhanced Main App Component ---
 export default function HomePage() {
   // Navigation State
@@ -77,64 +141,36 @@ export default function HomePage() {
     assignee: ''
   });
 
-  // --- Load Root Work Data on Mount ---
+  // 1) Load framework from localStorage
   useEffect(() => {
-    const savedFramework = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
-    setRootWorkFramework(savedFramework);
+    if (typeof window === 'undefined') return;
+    const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
+    setRootWorkFramework(saved);
   }, []);
 
-  // --- Save Root Work Data when it changes ---
-    // --- Load Root Work Data on Mount ---
-  useEffect(() => {
-    const savedFramework = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
-    setRootWorkFramework(savedFramework);
-  }, []);
-
-  // --- Save Root Work Data when it changes ---
+  // 2) Save framework when it changes
   useEffect(() => {
     saveToLocalStorage('rootWorkFramework', rootWorkFramework);
   }, [rootWorkFramework]);
 
-  // --- Firebase Authentication Effect ---
+  // 3) Firebase anonymous auth
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setView('form');
-      } else {
-        signInAnonymously(auth).catch(err => {
-          console.error('Anonymous sign-in error', err);
-          setError('Could not sign in. Please try again later.');
-          setView('form');
-        });
-      }
-    });
-  }, []);
-  useEffect(() => {
-    saveToLocalStorage('rootWorkFramework', rootWorkFramework);
-  }, [rootWorkFramework]);
-
-  // --- Firebase Authentication Effect ---
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
     if (!firebaseConfig.apiKey) {
-        setError("Firebase configuration is missing. Please set it in your Vercel environment variables.");
-        setView('form');
-        return;
+      setError(
+        "Firebase configuration is missing. Please set it in your Vercel environment variables."
+      );
+      setView('form');
+      return;
     }
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    onAuthStateChanged(auth, (currentUser) => {
+    onAuthStateChanged(auth, (currentUser: User | null) => {
       if (currentUser) {
         setUser(currentUser);
         setView('form');
       } else {
         signInAnonymously(auth).catch(err => {
-            setError("Could not sign in. Please try again later.");
-            console.error("Anonymous sign-in error:", err);
+          console.error("Anonymous sign-in error:", err);
+          setError("Could not sign in. Please try again later.");
         });
       }
     });
