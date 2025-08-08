@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
-
+import {
+auth,
+onAuthStateChanged,
+signInAnonymously,
+} from "@/lib/firebase";
+import type { User } from "firebase/auth";
 // Import our Root Work Framework utilities
 import {
   RootWorkEntry,
@@ -24,10 +27,6 @@ import {
   formatDate,
   cn
 } from '../lib/utils';
-
-// --- Firebase Configuration ---
-const firebaseConfigString = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
-const firebaseConfig = firebaseConfigString ? JSON.parse(firebaseConfigString) : {};
 
 // --- Enhanced Main App Component ---
 export default function HomePage() {
@@ -85,6 +84,34 @@ export default function HomePage() {
   }, []);
 
   // --- Save Root Work Data when it changes ---
+    // --- Load Root Work Data on Mount ---
+  useEffect(() => {
+    const savedFramework = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
+    setRootWorkFramework(savedFramework);
+  }, []);
+
+  // --- Save Root Work Data when it changes ---
+  useEffect(() => {
+    saveToLocalStorage('rootWorkFramework', rootWorkFramework);
+  }, [rootWorkFramework]);
+
+  // --- Firebase Authentication Effect ---
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setView('form');
+      } else {
+        signInAnonymously(auth).catch(err => {
+          console.error('Anonymous sign-in error', err);
+          setError('Could not sign in. Please try again later.');
+          setView('form');
+        });
+      }
+    });
+  }, []);
   useEffect(() => {
     saveToLocalStorage('rootWorkFramework', rootWorkFramework);
   }, [rootWorkFramework]);
