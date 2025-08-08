@@ -1,8 +1,9 @@
 // next.config.js
+
 const withTM = require('next-transpile-modules')([
   'firebase',
-  'undici',
-  '@firebase/auth',
+  'firebase/auth',
+  'undici'
 ]);
 const path = require('path');
 
