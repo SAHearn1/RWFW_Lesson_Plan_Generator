@@ -5,6 +5,25 @@ import ReactMarkdown from 'react-markdown';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+ import {
+   RootWorkEntry,
+   RootWorkFramework,
+   validateRootWorkEntry,
+   checkComplianceFlags,
+   getPriorityScore,
+   getStatusColor,
+   getCategoryColor,
+   sortEntriesByPriority,
+   searchEntries,
+   exportToCSV,
+   generateId,
+   saveToLocalStorage,
+   loadFromLocalStorage,
+   generateLessonPlan,
+   formatDate,
+   cn,
+ } from '@/lib/utils';
+
 export default function HomePage() {
   // …your useState hooks…
     // 1) Load framework from localStorage
@@ -82,11 +101,7 @@ export default function HomePage() {
 {
   // … your state hooks here …
 
-  generateLessonPlan,
-  formatDate,
-  cn,
-} from '@/lib/utils';
-
+ 
 // Initialize Firebase once
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
