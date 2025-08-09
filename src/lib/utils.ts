@@ -72,7 +72,7 @@ export const isValidEmail = (email: string): boolean => {
 }
 
 export const isValidPhone = (phone: string): boolean => {
-  const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
+  const phoneRegex = /^\+?[\d\s()-]{10,}$/
   return phoneRegex.test(phone.replace(/\s/g, ''))
 }
 
