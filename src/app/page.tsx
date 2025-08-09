@@ -96,7 +96,7 @@ useEffect(() => {
     return;
   }
 
-  // Initialize on the client only
+  // ✅ Initialize on the client only
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
