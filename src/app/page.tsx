@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import React, { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -27,9 +29,6 @@ import {
 } from '@/lib/utils';
 
 // Initialize Firebase once (safe in dev with HMR)
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
 export default function HomePage() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<'generator' | 'framework' | 'dashboard'>('generator');
@@ -88,30 +87,33 @@ export default function HomePage() {
   }, [rootWorkFramework]);
 
   // 3) Firebase anonymous auth
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+useEffect(() => {
+  if (typeof window === 'undefined') return;
 
-    if (!firebaseConfig?.apiKey) {
-      setError('Firebase configuration is missing. Please set it in your Vercel environment variables.');
+  if (!firebaseConfig?.apiKey) {
+    setError('Firebase configuration is missing. Please set it in your Vercel environment variables.');
+    setView('form');
+    return;
+  }
+
+  // Initialize on the client only
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    if (currentUser) {
+      setUser(currentUser);
       setView('form');
-      return;
+    } else {
+      signInAnonymously(auth).catch((err) => {
+        console.error('Anonymous sign-in error:', err);
+        setError('Could not sign in. Please try again later.');
+      });
     }
+  });
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setView('form');
-      } else {
-        signInAnonymously(auth).catch((err) => {
-          console.error('Anonymous sign-in error:', err);
-          setError('Could not sign in. Please try again later.');
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
+  return () => unsubscribe();
+}, []);
 
   // --- Original Form Input Handlers ---
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
