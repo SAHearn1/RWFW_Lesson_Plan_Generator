@@ -1,74 +1,45 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-// …all the single block of imports…
-const app = initializeApp(firebaseConfig);
+
+// Firebase
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, signInAnonymously, type User } from 'firebase/auth';
+import { firebaseConfig } from '@/lib/firebase';
+
+// Utils
+import {
+  RootWorkEntry,
+  RootWorkFramework,
+  validateRootWorkEntry,
+  checkComplianceFlags,
+  getStatusColor,
+  getCategoryColor,
+  sortEntriesByPriority,
+  searchEntries,
+  exportToCSV,
+  generateId,
+  saveToLocalStorage,
+  loadFromLocalStorage,
+  formatDate,
+  cn,
+} from '@/lib/utils';
+
+// Initialize Firebase once (safe in dev with HMR)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
- import {
-   RootWorkEntry,
-   RootWorkFramework,
-   validateRootWorkEntry,
-   checkComplianceFlags,
-   getPriorityScore,
-   getStatusColor,
-   getCategoryColor,
-   sortEntriesByPriority,
-   searchEntries,
-   exportToCSV,
-   generateId,
-   saveToLocalStorage,
-   loadFromLocalStorage,
-   generateLessonPlan,
-   formatDate,
-   cn,
- } from '@/lib/utils';
-
 export default function HomePage() {
-  // …your useState hooks…
-    // 1) Load framework from localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
-    setRootWorkFramework(saved);
-  }, []);
-
-  // 2) Save framework when it changes
-  useEffect(() => {
-    saveToLocalStorage('rootWorkFramework', rootWorkFramework);
-  }, [rootWorkFramework]);
-
-  // 3) Firebase anonymous auth
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!firebaseConfig.apiKey) {
-      setError("Firebase configuration is missing. Please set it in your Vercel environment variables.");
-      setView('form');
-      return;
-    }
-    onAuthStateChanged(auth, (currentUser: User | null) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setView('form');
-      } else {
-        signInAnonymously(auth).catch(err => {
-          console.error("Anonymous sign-in error:", err);
-          setError("Could not sign in. Please try again later.");
-        });
-      }
-    });
-  }, []);
-
-
   // Navigation State
   const [activeTab, setActiveTab] = useState<'generator' | 'framework' | 'dashboard'>('generator');
-  
+
   // Lesson Generator State
   const [view, setView] = useState<'loading' | 'form' | 'results'>('loading');
   const [lessonPlan, setLessonPlan] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // User & Usage State
   const [user, setUser] = useState<User | null>(null);
   const [usageInfo, setUsageInfo] = useState({ count: 0, limit: 5 });
@@ -84,65 +55,12 @@ export default function HomePage() {
   // Root Work Framework State
   const [rootWorkFramework, setRootWorkFramework] = useState<RootWorkFramework>({
     entries: [],
-    metadata: { lastUpdated: new Date(), version: '1.0.0', createdBy: 'Root Work Framework User' }
+    metadata: { lastUpdated: new Date(), version: '1.0.0', createdBy: 'Root Work Framework User' },
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<RootWorkEntry['category'] | 'all'>('all');
   const [showEntryForm, setShowEntryForm] = useState(false);
 
-  // New Entry Form State
-  const [newEntry, setNewEntry] = useState<Partial<RootWorkEntry>>({
-    title: '', description: '', category: 'educational',
-    priority: 'medium', status: 'pending', tags: [], assignee: ''
-  });
-
-
-// --- Enhanced Main App Component ---
-{
-  // … your state hooks here …
-
- 
-// Initialize Firebase once
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-// --- Enhanced Main App Component ---
-export default function HomePage() {
-  // Navigation State
-  const [activeTab, setActiveTab] = useState<'generator' | 'framework' | 'dashboard'>('generator');
-  
-  // Original App State (Lesson Generator)
-  const [view, setView] = useState('loading'); // loading, form, results
-  const [lessonPlan, setLessonPlan] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // User and Usage State
-  const [user, setUser] = useState<User | null>(null);
-  const [usageInfo, setUsageInfo] = useState({ count: 0, limit: 5 });
-
-  // Original Form State
-  const [gradeLevel, setGradeLevel] = useState('');
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [duration, setDuration] = useState('3');
-  const [unitTitle, setUnitTitle] = useState('');
-  const [standards, setStandards] = useState('');
-  const [focus, setFocus] = useState('');
-
-  // New Root Work Framework State
-  const [rootWorkFramework, setRootWorkFramework] = useState<RootWorkFramework>({
-    entries: [],
-    metadata: {
-      lastUpdated: new Date(),
-      version: '1.0.0',
-      createdBy: 'Root Work Framework User'
-    }
-  });
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<RootWorkEntry['category'] | 'all'>('all');
-  const [showEntryForm, setShowEntryForm] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<string | null>(null);
-  
   // New Entry Form State
   const [newEntry, setNewEntry] = useState<Partial<RootWorkEntry>>({
     title: '',
@@ -151,17 +69,20 @@ export default function HomePage() {
     priority: 'medium',
     status: 'pending',
     tags: [],
-    assignee: ''
+    assignee: '',
   });
 
-  // 1) Load framework from localStorage
+  // --- EFFECTS (after state hooks) ---
+
+  // 1) Load from localStorage once
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
     setRootWorkFramework(saved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2) Save framework when it changes
+  // 2) Save to localStorage on changes
   useEffect(() => {
     saveToLocalStorage('rootWorkFramework', rootWorkFramework);
   }, [rootWorkFramework]);
@@ -169,25 +90,28 @@ export default function HomePage() {
   // 3) Firebase anonymous auth
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!firebaseConfig.apiKey) {
-      setError(
-        "Firebase configuration is missing. Please set it in your Vercel environment variables."
-      );
+
+    if (!firebaseConfig?.apiKey) {
+      setError('Firebase configuration is missing. Please set it in your Vercel environment variables.');
       setView('form');
       return;
     }
-    onAuthStateChanged(auth, (currentUser: User | null) => {
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         setView('form');
       } else {
-        signInAnonymously(auth).catch(err => {
-          console.error("Anonymous sign-in error:", err);
-          setError("Could not sign in. Please try again later.");
+        signInAnonymously(auth).catch((err) => {
+          console.error('Anonymous sign-in error:', err);
+          setError('Could not sign in. Please try again later.');
         });
       }
     });
+
+    return () => unsubscribe();
   }, []);
+
 
   // --- Original Form Input Handlers ---
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
