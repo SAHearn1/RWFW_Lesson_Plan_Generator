@@ -297,7 +297,7 @@ export default function HomePage() {
   };
 
   // Filter and search entries
-  const filteredEntries = React.useMemo(() => {
+  const filteredEntries = useMemo(() => {
     let filtered = rootWorkFramework.entries;
     
     if (selectedCategory !== 'all') {
@@ -604,17 +604,16 @@ export default function HomePage() {
                           
                           <p className="text-slate-600 mb-2">{entry.description}</p>
                           
-                          {entry.complianceFlags && entry.complianceFlags.length > 0 && (
-                            <div className="mb-2">
-                              <span className="text-sm font-medium text-red-600">⚠️ Compliance Flags:</span>
-                              <ul className="text-sm text-red-600 ml-4">
-                                {entry.complianceFlags.map((flag, index) => (
-                                  <li key={index}>• {flag}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          
+                         {entry.complianceFlags && entry.complianceFlags.length > 0 && (
+  <div className="mb-2">
+    <span className="text-sm font-medium text-red-600">⚠️ Compliance Flags:</span>
+    <ul className="text-sm text-red-600 ml-4">
+      {entry.complianceFlags.map((flag, index) => (
+        <li key={index}>• {flag}</li>
+      ))}
+    </ul>
+  </div>
+)}
                           <div className="flex flex-wrap gap-1 mb-2">
                             {entry.tags.map((tag, index) => (
                               <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
