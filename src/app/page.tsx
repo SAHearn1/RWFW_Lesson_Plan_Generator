@@ -106,6 +106,15 @@ export default function HomePage() {
   }, []);
 
   // --- Handlers ---
+const handleDownloadMarkdown = () => {
+  const blob = new Blob([lessonPlan || ''], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rwf-lesson-plan-${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = Array.from(e.target.selectedOptions);
