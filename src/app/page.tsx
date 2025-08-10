@@ -85,14 +85,36 @@ export default function HomePage() {
     saveToLocalStorage('rootWorkFramework', rootWorkFramework);
   }, [rootWorkFramework]);
 
- // 3) Firebase anonymous auth (client-only via dynamic imports)
- useEffect(() => {
-   if (typeof window === 'undefined') return;
-   if (!firebaseConfig?.apiKey) {
-     setError('Firebase configuration is missing. Please set it in your Vercel environment variables.');
-     setView('form');
-     return;
-   }
+// 3) Firebase anonymous auth
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+
+  if (!firebaseConfig?.apiKey) {
+    setError('Firebase configuration is missing. Please set it in your Vercel environment variables.');
+    setView('form');
+    return;
+  }
+
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    if (currentUser) {
+      setUser(currentUser);
+      setView('form');
+    } else {
+      signInAnonymously(auth).catch((err) => {
+        console.error('Anonymous sign-in error:', err);
+        setError('Could not sign in. Please try again later.');
+      });
+    }
+  });
+
+  return () => {
+    unsubscribe();
+  };
+}, []);
+
 
    let unsubscribe: (() => void) | undefined;
    (async () => {
