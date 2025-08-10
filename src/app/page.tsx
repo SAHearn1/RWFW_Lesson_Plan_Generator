@@ -107,12 +107,11 @@ export default function HomePage() {
          setUser(currentUser);
          setView('form');
        } else {
-         signInAnonymously(auth).catch(() => {
-           setError('Could not sign in. Please try again later.');
-         });
-       }
-     });
-   })();
+         signInAnonymously(auth).catch((err) => {
+  console.error('Anonymous sign-in error:', err);
+  setError(err?.code ? `Auth error: ${err.code}` : 'Could not sign in. Please try again later.');
+  setView('form'); // <-- show the error UI instead of spinning forever
+});
 
    return () => {
      if (unsubscribe) unsubscribe();
