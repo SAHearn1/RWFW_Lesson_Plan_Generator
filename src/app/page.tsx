@@ -8,6 +8,8 @@ import ReactMarkdown from 'react-markdown';
 // Firebase
 import type { User } from 'firebase/auth';
 import { firebaseConfig } from '@/lib/firebase';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 // Utils
 import {
@@ -103,10 +105,11 @@ useEffect(() => {
       setUser(currentUser);
       setView('form');
     } else {
-      signInAnonymously(auth).catch((err) => {
-        console.error('Anonymous sign-in error:', err);
-        setError('Could not sign in. Please try again later.');
-      });
+    signInAnonymously(auth).catch((err) => {
+  console.error('Anonymous sign-in error:', err);
+  setError(err?.code ? `Auth error: ${err.code}` : 'Could not sign in. Please try again later.');
+  setView('form'); // stop the spinner and show the form with the error
+});
     }
   });
 
@@ -115,30 +118,6 @@ useEffect(() => {
   };
 }, []);
 
-
-   let unsubscribe: (() => void) | undefined;
-   (async () => {
-     const { initializeApp, getApps, getApp } = await import('firebase/app');
-     const { getAuth, onAuthStateChanged, signInAnonymously } = await import('firebase/auth');
-
-     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-     const auth = getAuth(app);
-
-     unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-       if (currentUser) {
-         setUser(currentUser);
-         setView('form');
-       } else {
-         signInAnonymously(auth).catch((err) => {
-  console.error('Anonymous sign-in error:', err);
-  setError(err?.code ? `Auth error: ${err.code}` : 'Could not sign in. Please try again later.');
-  setView('form'); // <-- show the error UI instead of spinning forever
-});
-
-   return () => {
-     if (unsubscribe) unsubscribe();
-   };
- }, []);
   // --- Original Form Input Handlers ---
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = [...e.target.selectedOptions];
