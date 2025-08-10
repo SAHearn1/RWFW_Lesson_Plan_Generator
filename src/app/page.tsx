@@ -113,12 +113,7 @@ useEffect(() => {
     }
   });
 
-  return () => {
-    unsubscribe();
-  };
-}, []);
-
-  // --- Original Form Input Handlers ---
+    // --- Original Form Input Handlers ---
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = [...e.target.selectedOptions];
     const values = options.map(option => option.value);
@@ -202,20 +197,49 @@ useEffect(() => {
   };
 
   // --- Original API Call to Backend Serverless Function ---
-  const handleGeneratePlan = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!user) {
-        setError("You are not signed in.");
-        return;
-    }
-    if (!gradeLevel || subjects.length === 0) {
-      setError('Please select a grade level and at least one subject.');
-      return;
-    }
-    if (usageInfo.count >= usageInfo.limit) {
-      setError(`You have reached your monthly limit of ${usageInfo.limit} lesson plans.`);
-      return;
-    }
+ try {
+  const token = await user.getIdToken();
+
+  const response = await fetch('/api/generatePlan', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ prompt }),
+  });
+
+  // Read raw first, then parse
+  const raw = await response.text();
+  let data: any = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    // leave data as null; we'll surface raw below
+  }
+
+  if (!response.ok) {
+    const msg =
+      (data && (data.error || data.message)) ||
+      raw ||
+      `HTTP ${response.status}`;
+    throw new Error(msg);
+  }
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Empty or invalid JSON from /api/generatePlan');
+  }
+
+  setLessonPlan(data.lessonPlan || '');
+  if (data.usageInfo) setUsageInfo(data.usageInfo);
+  setView('results');
+} catch (err: any) {
+  setError(`Failed to generate lesson plan: ${err?.message || 'Unknown error'}`);
+  setView('form');
+} finally {
+  setIsLoading(false);
+}
+
 
     setIsLoading(true);
     setError(null);
