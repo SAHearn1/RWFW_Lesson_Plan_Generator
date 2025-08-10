@@ -106,15 +106,22 @@ export default function HomePage() {
   }, []);
 
   // --- Handlers ---
-const handleDownloadMarkdown = () => {
-  const blob = new Blob([lessonPlan || ''], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rwf-lesson-plan-${new Date().toISOString().slice(0,10)}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
+
+  const handleDownloadMarkdown = () => {
+    if (!lessonPlan) return;
+
+    const fileNameBase = unitTitle?.trim()
+      ? unitTitle.trim().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').slice(0, 60)
+      : 'rwf-lesson-plan';
+
+    const blob = new Blob([lessonPlan], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileNameBase}-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = Array.from(e.target.selectedOptions);
@@ -184,17 +191,6 @@ const handleDownloadMarkdown = () => {
     a.download = `root-work-framework-${formatDate(new Date())}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  const handleDownload = () => {
-    if (!lessonPlan) return;
-    const blob = new Blob([lessonPlan], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${unitTitle || 'rootwork-lesson-plan'}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleGeneratePlan = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -544,7 +540,7 @@ As an expert in curriculum design specializing in trauma-informed, healing-cente
                     </h2>
                   </div>
                   <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
-                    <button onClick={handleDownload} className="btn-primary">
+                    <button onClick={handleDownloadMarkdown} className="btn-primary">
                       📥 Download (.md)
                     </button>
                     <button onClick={handleNewPlan} className="btn-ghost">
