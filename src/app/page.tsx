@@ -203,8 +203,8 @@ As an expert in curriculum design specializing in trauma-informed, healing-cente
               Healing-Centered Lesson Plan Generator
             </h1>
             <p className="mt-3 text-white/90 max-w-3xl mx-auto">
-              Trauma-informed, culturally responsive, GRR-aligned plans—crafted for real classrooms.
-            </p>
+  S.T.E.A.M. Powered, Trauma Informed, Project Base Lesson planning for real classrooms
+</p>
           </div>
         </div>
       </header>
