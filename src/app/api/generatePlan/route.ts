@@ -1,175 +1,202 @@
-// src/app/api/generatePlan/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { LessonPlanSchema, type LessonPlan, Asset } from '@/lib/lessonSchema';
-import { renderTeacherMarkdown, renderStudentMarkdown, renderTeacherHTML } from '@/lib/renderers';
 
 export const runtime = 'nodejs';
 
-const SYSTEM = `You are an expert K–12 curriculum designer (20+ years) specializing in STEAM, PBL, trauma-informed care, MTSS, CASEL SEL, and Gradual Release of Responsibility (GRR). 
-Follow the Root Work Framework therapeutic context. 
-ALWAYS include [Teacher Note:] and [Student Note:] in EVERY step (Opening, I Do, We Do, You Do Together, You Do Alone, Closing). 
-Output STRICT JSON matching the provided schema and NO extra prose.`;
-
-function buildUserPrompt(input: {
+type GeneratePayload = {
   gradeLevel: string;
   subjects: string[];
-  durationDays: number;
+  duration: string | number;
   unitTitle?: string;
   standards?: string;
   focus?: string;
-}) {
-  const { gradeLevel, subjects, durationDays, unitTitle, standards, focus } = input;
+};
+
+type LessonPlanData = {
+  meta: {
+    unitTitle: string;
+    gradeLevel: string;
+    subjects: string[];
+    durationDays: number;
+  };
+  days: Array<{ dayNumber: number; title: string }>;
+  appendixA?: Array<{
+    fileName: string;
+    type?: string;
+    description?: string;
+    altText?: string;
+    figure?: string;
+    link?: string;
+  }>;
+};
+
+function coerceNumber(n: string | number, fallback = 3) {
+  const num = typeof n === 'string' ? parseInt(n, 10) : n;
+  return Number.isFinite(num) && num > 0 ? (num as number) : fallback;
+}
+
+function makeSystemPrompt() {
   return `
-Generate a JSON lesson plan for ${durationDays} days, 90 minutes per day, ${gradeLevel}, subjects: ${subjects.join(', ')}.
-Unit Title: ${unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression'}
-Standards Input: ${standards || 'Align to common core or relevant state/NGSS; include SEL (CASEL).'}
-Additional Focus: ${focus || 'None specified.'}
+You are an expert curriculum designer (20+ yrs) specializing in: K–12, SPED, PBL, STEAM, Living Learning Labs, trauma-informed care, CASEL SEL, MTSS, GRR. You know the Root Work Framework (healing-centered, culturally responsive) and embed it naturally (no labels).
 
-Constraints:
-- For each day, include steps: Opening, I Do, We Do, You Do Together, You Do Alone, Closing (with minutes, descriptions, and mandatory [Teacher Note:] and [Student Note:]).
-- Include MTSS tiers, assessments, SEL, rituals, choices, multimedia, reflection, extension.
-- Build Appendix A assets using this naming convention: {LessonCode}_{GradeLevel}{SubjectAbbrev}_{DescriptiveTitle}.{filetype}.
-- Incorporate garden/nature regulation rituals when appropriate.
-- Student-facing language must be warm, empowering, and accessible.
+MANDATORY OUTPUT CONTRACT
+- Return ONLY valid JSON (no extra text, no code fences).
+- JSON shape:
+{
+  "lessonPlan": <see schema below>,
+  "markdown": {
+    "teacher": "Full teacher-facing Markdown",
+    "student": "Full student-facing Markdown"
+  }
+}
 
-Return JSON ONLY.
+"lessonPlan" schema:
+{
+  "meta": {
+    "unitTitle": string,
+    "gradeLevel": string,
+    "subjects": string[],
+    "durationDays": number
+  },
+  "days": [
+    { "dayNumber": number, "title": string }
+  ],
+  "appendixA": [
+    {
+      "fileName": string,               // Respect naming convention
+      "type": "image|pdf|docx|sheet|link|other",
+      "description": string,
+      "altText": string,
+      "figure": "Figure X",
+      "link": "[Insert link here]"
+    }
+  ]
+}
+
+TEACHER/STUDENT NOTES PROTOCOL (must appear after EVERY activity in Markdown):
+- [Teacher Note: ...] (1–3 sentences; rationale, trauma-informed facilitation, differentiation, assessment, Rootwork tie-in)
+- [Student Note: ...] (1–2 sentences; coaching voice, self-advocacy, regulation)
+
+STRUCTURE PER DAY (both Teacher and Student markdown must include all):
+- Header: Day #, Lesson Title, Essential Question, Learning Target, Standards
+- Structured Flow with GRR:
+  Opening (X min)
+  I Do: Direct Instruction (X min)
+  We Do: Collaborative (X min)
+  You Do Together (X min)
+  You Do Alone (X min)
+  Closing (X min)
+- For each step: include [Teacher Note:] and [Student Note:] before MTSS.
+- Include: Student-facing instructions/scaffolds, Facilitator modeling, MTSS tiers, SEL competencies, Regulation rituals, Choice options, Multimedia placeholders, Assessment, Reflection/peer feedback.
+- End with "Appendix A: Resource and Visual Asset Directory" with named assets following the standard naming convention:
+  {LessonCode}_{GradeLevel}{SubjectAbbrev}_{DescriptiveTitle}.{ext}
+  e.g., RootedInMe_10ELA_RitualGuidebook.pdf
+
+QUALITY PASS:
+- Ensure EVERY component has both notes in the specified format.
+- Use warm, precise, professional tone. No filler. No external links unless explicitly marked as [Insert link here].
+- Assume 90-minute blocks unless told otherwise.
+`.trim();
+}
+
+function makeUserPrompt(p: GeneratePayload) {
+  const days = coerceNumber(p.duration, 3);
+  const unit = p.unitTitle?.trim() || 'Rooted in Me: Exploring Culture, Identity, and Expression';
+  const standards = p.standards?.trim() || 'Align to relevant state/CCSS/NGSS and CASEL SEL standards.';
+  const focus = p.focus?.trim() || 'Include trauma-informed supports, regulation rituals, and equity-centered scaffolds.';
+  const subj = p.subjects?.join(', ');
+
+  return `
+Generate a ${days}-day, ready-to-teach STEAM/PBL Root Work Framework lesson for:
+
+Grade Level: ${p.gradeLevel}
+Subjects: ${subj}
+Unit Title: ${unit}
+Standards/Input: ${standards}
+Additional Focus Areas: ${focus}
+
+Must strictly follow the output contract and structure above. Return only JSON.
 `.trim();
 }
 
 export async function POST(req: NextRequest) {
-  const openai = new OpenAI();
   try {
-    const body = await req.json().catch(() => ({}));
-    const {
-      gradeLevel = '',
-      subjects = [],
-      duration = '3',
-      unitTitle = '',
-      standards = '',
-      focus = '',
-    } = body || {};
-
-    if (!gradeLevel || !Array.isArray(subjects) || subjects.length === 0) {
-      return NextResponse.json({ error: 'gradeLevel and subjects[] are required.' }, { status: 400 });
+    const body = (await req.json().catch(() => null)) as GeneratePayload | null;
+    if (!body || !body.gradeLevel || !Array.isArray(body.subjects) || body.subjects.length === 0) {
+      return NextResponse.json({ error: 'Missing required fields: gradeLevel and subjects' }, { status: 400 });
     }
 
-    const durationDays = Number(duration) || 3;
+    const system = makeSystemPrompt();
+    const user = makeUserPrompt(body);
 
-    // Ask the model for strict JSON (chat.completions, json_object)
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: SYSTEM },
-        {
-          role: 'user',
-          content: buildUserPrompt({
-            gradeLevel,
-            subjects,
-            durationDays,
-            unitTitle,
-            standards,
-            focus,
-          }),
-        },
-        // Give the model the shape we expect (soft hint)
-        {
-          role: 'system',
-          content:
-            'Schema (fields & types) must align to: LessonPlan { meta, days[], appendixA[] }. Each day requires 6 steps and both notes per step.',
-        },
-      ],
-      temperature: 0.4,
-    });
-
-    const raw = completion.choices[0]?.message?.content || '{}';
-    // Validate with zod
-    const parsed = LessonPlanSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) {
+    const apiKey = process.env.OPENAI_API_KEY || '';
+    if (!apiKey) {
       return NextResponse.json(
-        { error: 'Invalid lesson JSON', issues: parsed.error.format(), raw },
-        { status: 422 }
+        { error: 'OPENAI_API_KEY is not set on the server.' },
+        { status: 500 },
       );
     }
 
-    // Tighten Appendix A entries: ensure minimum useful assets exist
-    const lp: LessonPlan = ensureAppendixAssets(parsed.data);
+    const openai = new OpenAI({ apiKey });
 
-    // Create branded Markdown/HTML
-    const mdTeacher = renderTeacherMarkdown(lp);
-    const mdStudent = renderStudentMarkdown(lp);
-    const htmlTeacher = renderTeacherHTML(lp);
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const completion = await openai.chat.completions.create({
+      model,
+      temperature: 0.5,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const raw = completion.choices?.[0]?.message?.content || '';
+
+    // Strip code fences if present
+    const cleaned = raw.replace(/^\s*```(json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Try to salvage JSON between first "{" and last "}"
+      const first = cleaned.indexOf('{');
+      const last = cleaned.lastIndexOf('}');
+      if (first >= 0 && last > first) {
+        const candidate = cleaned.slice(first, last + 1);
+        parsed = JSON.parse(candidate);
+      } else {
+        throw new Error('Model did not return valid JSON.');
+      }
+    }
+
+    // Coerce minimal shape
+    const lp: LessonPlanData = {
+      meta: {
+        unitTitle: parsed?.lessonPlan?.meta?.unitTitle || body.unitTitle || 'Root Work Lesson',
+        gradeLevel: parsed?.lessonPlan?.meta?.gradeLevel || body.gradeLevel,
+        subjects: parsed?.lessonPlan?.meta?.subjects || body.subjects,
+        durationDays: coerceNumber(parsed?.lessonPlan?.meta?.durationDays || body.duration || 3),
+      },
+      days: Array.isArray(parsed?.lessonPlan?.days) ? parsed.lessonPlan.days : [],
+      appendixA: Array.isArray(parsed?.lessonPlan?.appendixA) ? parsed.lessonPlan.appendixA : [],
+    };
+
+    const teacherMd: string = parsed?.markdown?.teacher || '';
+    const studentMd: string = parsed?.markdown?.student || '';
 
     return NextResponse.json(
       {
         lessonPlan: lp,
-        markdown: {
-          teacher: mdTeacher,
-          student: mdStudent,
-        },
-        html: {
-          teacher: htmlTeacher,
-        },
+        markdown: { teacher: teacherMd, student: studentMd },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || 'Server error' }, { status: 500 });
+    // eslint-disable-next-line no-console
+    console.error('generatePlan error:', err);
+    return NextResponse.json(
+      { error: err?.message || 'Server error' },
+      { status: 500 },
+    );
   }
-}
-
-/** Ensure Appendix A has core assets + consistent fields */
-function ensureAppendixAssets(lp: LessonPlan): LessonPlan {
-  const base: Asset[] = [
-    {
-      fileName: `RootedInMe_${lp.meta.gradeLevel}_${abbr(lp.meta.subjects[0])}_LessonCover.png`,
-      type: 'image',
-      description: 'Branded cover artwork (use for handouts/LMS tile).',
-      altText: `Cover art for ${lp.meta.unitTitle}`,
-      useInLesson: 'Front-matter / LMS',
-      figure: 'Figure 1',
-      generationPrompt:
-        'High-quality cover with garden/nature + STEAM motifs, indigo/purple with emerald accents, no text.',
-    },
-    {
-      fileName: `RootedInMe_${lp.meta.gradeLevel}_${abbr(lp.meta.subjects[0])}_RitualCard.png`,
-      type: 'image',
-      description: 'Breathing/grounding ritual visual (Opening).',
-      altText: '4-7-8 breathing card with leaf silhouettes and step icons',
-      useInLesson: 'Opening ritual (all days)',
-      figure: 'Figure 2',
-      generationPrompt:
-        'Accessible infographic for 4-7-8 breathing; soft gradient, simple icons, sensory-friendly.',
-    },
-    {
-      fileName: `RootedInMe_${lp.meta.gradeLevel}_${abbr(lp.meta.subjects[0])}_EvidenceToClaimOrganizer.docx`,
-      type: 'docx',
-      description: 'Graphic organizer: claim, evidence, reasoning.',
-      altText: 'N/A (document)',
-      useInLesson: 'We Do / You Do Together / Independent',
-      figure: 'Figure 3',
-    },
-  ];
-
-  const names = new Set(lp.appendixA.map(a => a.fileName));
-  for (const a of base) if (!names.has(a.fileName)) lp.appendixA.push(a);
-  return lp;
-}
-
-function abbr(subject: string): string {
-  const map: Record<string, string> = {
-    'English Language Arts': 'ELA',
-    'Mathematics': 'MATH',
-    'Science': 'SCI',
-    'Social Studies': 'SOC',
-    'Art': 'ART',
-    'Music': 'MUS',
-    'Physical Education': 'PE',
-    'Special Education': 'SPED',
-    'STEAM': 'STEAM',
-    'Agriculture': 'AGSCI',
-    'Career and Technical Education': 'CTE',
-  };
-  return map[subject] || subject?.toUpperCase()?.replace(/\W+/g, '').slice(0, 4);
 }
