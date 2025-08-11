@@ -133,7 +133,7 @@ endobj
   for (let i = 0; i < objects.length; i++) {
     const off = xref[i] ?? 0;
     xrefStr += `${String(off).padStart(10, '0')} 00000 n \n`;
-    runningOffset += Buffer.byteLength(objects[i], 'utf8');
+    let_runningOffset += Buffer.byteLength(objects[i], 'utf8');
   }
 
   const trailer = `trailer
