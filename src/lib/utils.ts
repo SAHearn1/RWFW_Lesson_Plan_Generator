@@ -264,7 +264,10 @@ export const saveToLocalStorage = (key: string, data: any): void => {
     try {
       localStorage.setItem(key, JSON.stringify(data))
     } catch (error) {
-      console.error('Error saving to localStorage:', error)
+      // Silent fail in production - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error saving to localStorage:', error)
+      }
     }
   }
 }
@@ -275,7 +278,10 @@ export const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
       const item = localStorage.getItem(key)
       return item ? JSON.parse(item) : defaultValue
     } catch (error) {
-      console.error('Error loading from localStorage:', error)
+      // Silent fail in production - only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading from localStorage:', error)
+      }
       return defaultValue
     }
   }
