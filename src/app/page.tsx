@@ -396,7 +396,8 @@ export default function HomePage() {
                         subject: planJson.meta.subjects[0],
                         appendixA: planJson.appendixA ?? [],
                       }),
-                    }).catch(() => {});
+                    }).catch(()onClick={(e) => e.preventDefault()}
+
 
                     // Immediately deliver Teacher DOCX
                     const res = await fetch('/api/export/docx', {
