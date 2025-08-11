@@ -1,4 +1,4 @@
-// next.config.js
+// next.config.cjs
 const path = require('path');
 
 module.exports = {
