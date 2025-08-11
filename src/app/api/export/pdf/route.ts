@@ -1,12 +1,12 @@
 // src/app/api/export/pdf/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  PDFDocument,
-  StandardFonts,
-  rgb,
-  type RGB,
   type Color,
   type PDFFont,
+  PDFDocument,
+  type RGB,
+  rgb,
+  StandardFonts,
 } from 'pdf-lib';
 
 export const runtime = 'nodejs';
@@ -212,12 +212,12 @@ export async function POST(req: NextRequest) {
 
     const title =
       typeof body?.title === 'string' && body.title.trim()
-        ? body!.title.trim()
+        ? body.title.trim()
         : 'Root Work Framework — Lesson Plan';
 
     const subtitle =
       typeof body?.subtitle === 'string' && body.subtitle.trim()
-        ? body!.subtitle.trim()
+        ? body.subtitle.trim()
         : undefined;
 
     const brandPrimary = toColor(body?.brand?.primary, DEFAULT_BRAND);
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
 
     // Build PDF
     const pdf = await PDFDocument.create();
-    const page = pdf.addPage([612, 792]); // Letter size points
+    let page = pdf.addPage([612, 792]); // Letter size points
     const width = page.getWidth();
     const height = page.getHeight();
 
@@ -317,9 +317,9 @@ export async function POST(req: NextRequest) {
     for (const para of paragraphs) {
       // Add new page if needed
       if (cursorY - lineHeight * 3 < marginY + 24) {
-        const p = pdf.addPage([612, 792]);
+        const newPage = pdf.addPage([612, 792]);
         drawHeaderFooter({
-          page: p,
+          page: newPage,
           width,
           height,
           marginX,
@@ -332,7 +332,7 @@ export async function POST(req: NextRequest) {
           brandPrimary,
         });
         // new page body box
-        p.drawRectangle({
+        newPage.drawRectangle({
           x: marginX - 8,
           y: marginY + 8,
           width: width - (marginX - 8) * 2,
@@ -342,8 +342,8 @@ export async function POST(req: NextRequest) {
           borderOpacity: 0,
         });
         // reset cursor on new page
-        (cursorY as number) = height - 100;
-        (page as any) = p;
+        cursorY = height - 100;
+        page = newPage;
       }
 
       cursorY = drawParagraph({
