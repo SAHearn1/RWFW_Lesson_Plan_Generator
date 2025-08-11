@@ -258,16 +258,13 @@ export const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
 }
 
-// Local storage utilities
+// Local storage utilities (production-safe - no console statements)
 export const saveToLocalStorage = (key: string, data: any): void => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(key, JSON.stringify(data))
     } catch (error) {
-      // Silent fail in production - only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error saving to localStorage:', error)
-      }
+      // Silent fail - errors are swallowed in production for clean builds
     }
   }
 }
@@ -278,10 +275,7 @@ export const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
       const item = localStorage.getItem(key)
       return item ? JSON.parse(item) : defaultValue
     } catch (error) {
-      // Silent fail in production - only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error loading from localStorage:', error)
-      }
+      // Silent fail - return default value
       return defaultValue
     }
   }
