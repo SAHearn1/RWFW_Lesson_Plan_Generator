@@ -62,13 +62,14 @@ ${appendixA.length ? appendixA.map(a =>
 
 export function renderStudentMarkdown(lp: LessonPlan): string {
   const { meta, days } = lp;
-  const header = `# ${meta.unitTitle} — Student Guide\n\n**What you’ll do:** ${meta.tagline ?? meta.branding.tagline}\n\n---\n`;
+  // ✅ Fixed: Use meta.branding.tagline directly (like other functions do)
+  const header = `# ${meta.unitTitle} — Student Guide\n\n**What you'll do:** ${meta.branding.tagline}\n\n---\n`;
   const body = days.map(d => {
     const steps = d.steps.map(s => (
 `### ${s.label} (${s.minutes} min)
 ${s.studentNote}
 
-> What we’ll focus on:  
+> What we'll focus on:  
 ${s.description}
 `).trim()).join('\n\n');
     return (
