@@ -4,341 +4,373 @@ import {
   PDFDocument,
   StandardFonts,
   rgb,
-  PDFFont,
+  type RGB,
+  type Color,
+  type PDFFont,
 } from 'pdf-lib';
 
 export const runtime = 'nodejs';
 
-// Basic types for the request body
-type ExportMeta = {
-  title?: string;
-  gradeLevel?: string;
-  subjects?: string[]; // e.g., ["ELA","Science"]
-};
+// -------- Types (what the route accepts) ----------
+type RGBInput = RGB | { r: number; g: number; b: number } | [number, number, number];
 
-type ExportRequest = {
-  markdown: string;
-  meta?: ExportMeta;
-};
+interface BrandOptions {
+  org?: string;              // e.g., "Root Work Framework"
+  primary?: RGBInput;        // preferred brand color
+  secondary?: RGBInput;      // optional accent
+}
 
-// --- Markdown -> simple block model (headings, bullets, paragraphs) ---
-type BlockType = 'h1' | 'h2' | 'h3' | 'bullet' | 'paragraph' | 'blank';
+interface ExportPdfPayload {
+  markdown?: string;         // lesson plan markdown
+  plainText?: string;        // if you already stripped it
+  title?: string;            // doc title for header
+  subtitle?: string;         // optional subheading line
+  brand?: BrandOptions;      // branding options
+}
 
-type Block = {
-  type: BlockType;
-  text: string;
-};
+// -------- Helpers ----------
+const DEFAULT_TEXT_COLOR = rgb(0.12, 0.12, 0.12);
+const DEFAULT_BRAND = rgb(0.07, 0.5, 0.37); // muted emerald
+const LIGHT_GRAY = rgb(0.92, 0.94, 0.97);
 
-// Minimal parser: recognizes #/##/### headings, bullets (-/*), and paragraphs.
-function parseMarkdown(md: string): Block[] {
-  const lines = md.replace(/\r\n/g, '\n').split('\n');
-  const blocks: Block[] = [];
+function toColor(input?: RGBInput, fallback: Color = DEFAULT_TEXT_COLOR): Color {
+  if (!input) return fallback;
+  if (Array.isArray(input)) {
+    const [r, g, b] = input;
+    return rgb(r, g, b);
+  }
+  if ('type' in (input as any)) {
+    // Already an RGB from pdf-lib
+    return input as RGB;
+  }
+  const { r, g, b } = input as { r: number; g: number; b: number };
+  return rgb(r, g, b);
+}
 
-  for (const raw of lines) {
-    const line = raw.trimEnd();
+/** very lightweight markdown->plain text (keeps list bullets and basic breaks) */
+function markdownToPlain(md: string): string {
+  return md
+    // headings -> keep text
+    .replace(/^#{1,6}\s*/gm, '')
+    // bold/italic/code markers
+    .replace(/(\*\*|\*|__|_|`|~~)/g, '')
+    // links [text](url) -> text (url)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
+    // images ![alt](src) -> alt (src)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '$1 ($2)')
+    // list items
+    .replace(/^\s*[-*+]\s+/gm, '• ')
+    .replace(/^\s*\d+\.\s+/gm, (m) => m) // keep numbering as-is
+    // collapse extra spaces
+    .replace(/[ \t]+/g, ' ')
+    // normalize newlines
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
 
-    if (line.trim() === '') {
-      blocks.push({ type: 'blank', text: '' });
-      continue;
-    }
+function drawHeaderFooter(opts: {
+  page: any;
+  width: number;
+  height: number;
+  marginX: number;
+  marginY: number;
+  title: string;
+  subtitle?: string;
+  headerFont: PDFFont;
+  captionFont: PDFFont;
+  pageNumber: number;
+  brandPrimary: Color;
+}) {
+  const {
+    page,
+    width,
+    height,
+    marginX,
+    marginY,
+    title,
+    subtitle,
+    headerFont,
+    captionFont,
+    pageNumber,
+    brandPrimary,
+  } = opts;
 
-    if (/^###\s+/.test(line)) {
-      blocks.push({ type: 'h3', text: line.replace(/^###\s+/, '').trim() });
-      continue;
-    }
-    if (/^##\s+/.test(line)) {
-      blocks.push({ type: 'h2', text: line.replace(/^##\s+/, '').trim() });
-      continue;
-    }
-    if (/^#\s+/.test(line)) {
-      blocks.push({ type: 'h1', text: line.replace(/^#\s+/, '').trim() });
-      continue;
-    }
+  // Top brand band
+  const bandHeight = 34;
+  page.drawRectangle({
+    x: 0,
+    y: height - bandHeight,
+    width,
+    height: bandHeight,
+    color: brandPrimary,
+  });
 
-    if (/^[-*]\s+/.test(line)) {
-      blocks.push({ type: 'bullet', text: line.replace(/^[-*]\s+/, '').trim() });
-      continue;
-    }
+  // Title
+  const titleSize = 12;
+  page.drawText(title, {
+    x: marginX,
+    y: height - bandHeight + (bandHeight - titleSize) / 2,
+    size: titleSize,
+    font: headerFont,
+    color: rgb(1, 1, 1),
+  });
 
-    blocks.push({ type: 'paragraph', text: line.trim() });
+  // Subtitle (optional)
+  if (subtitle) {
+    const subSize = 9;
+    const subY = height - bandHeight - 12;
+    page.drawText(subtitle, {
+      x: marginX,
+      y: subY,
+      size: subSize,
+      font: captionFont,
+      color: rgb(0.25, 0.25, 0.25),
+    });
   }
 
-  return blocks;
+  // Footer line
+  page.drawLine({
+    start: { x: marginX, y: marginY - 6 },
+    end: { x: width - marginX, y: marginY - 6 },
+    thickness: 0.5,
+    color: rgb(0.8, 0.85, 0.9),
+  });
+
+  // Page number
+  const pnSize = 9;
+  const pnText = `Page ${pageNumber}`;
+  const textWidth = captionFont.widthOfTextAtSize(pnText, pnSize);
+  page.drawText(pnText, {
+    x: width - marginX - textWidth,
+    y: marginY - 18,
+    size: pnSize,
+    font: captionFont,
+    color: rgb(0.4, 0.45, 0.5),
+  });
 }
 
-// Strip some common markdown inline markers for clean text rendering
-function stripInlineMd(text: string): string {
-  return text
-    // bold/italic/code markers
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/\*(.*?)\*/g, '$1')
-    .replace(/`(.*?)`/g, '$1')
-    .replace(/__(.*?)__/g, '$1')
-    .replace(/_(.*?)_/g, '$1')
-    // links: [label](url) -> label (url)
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)');
-}
-
-// Word-wrap for pdf-lib using font metrics
-function wrapText(
-  text: string,
-  font: PDFFont,
-  fontSize: number,
-  maxWidth: number
-): string[] {
+function wrapTextByWidth(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/);
   const lines: string[] = [];
   let current = '';
 
+  const spaceWidth = font.widthOfTextAtSize(' ', size);
+
   for (const word of words) {
-    const test = current ? `${current} ${word}` : word;
-    const width = font.widthOfTextAtSize(test, fontSize);
-    if (width <= maxWidth) {
-      current = test;
+    const w = font.widthOfTextAtSize(word, size);
+    if (!current) {
+      current = word;
+      continue;
+    }
+    const currentWidth = font.widthOfTextAtSize(current, size);
+    if (currentWidth + spaceWidth + w <= maxWidth) {
+      current += ' ' + word;
     } else {
-      if (current) lines.push(current);
-      // very long single word fallback
-      if (font.widthOfTextAtSize(word, fontSize) > maxWidth) {
-        let chunk = '';
-        for (const ch of word) {
-          const tryChunk = chunk + ch;
-          if (font.widthOfTextAtSize(tryChunk, fontSize) > maxWidth) {
-            if (chunk) lines.push(chunk);
-            chunk = ch;
-          } else {
-            chunk = tryChunk;
-          }
-        }
-        if (chunk) {
-          current = chunk;
-        } else {
-          current = '';
-        }
-      } else {
-        current = word;
-      }
+      lines.push(current);
+      current = word;
     }
   }
   if (current) lines.push(current);
   return lines;
 }
 
+function drawParagraph(opts: {
+  page: any;
+  text: string;
+  x: number;
+  y: number;
+  maxWidth: number;
+  lineHeight: number;
+  font: PDFFont;
+  size: number;
+  color?: Color;
+}) {
+  const { page, text, x, y, maxWidth, lineHeight, font, size, color } = opts;
+  let cursorY = y;
+  const lines = text.split('\n').flatMap((ln) => wrapTextByWidth(ln, font, size, maxWidth));
+  for (const ln of lines) {
+    if (cursorY - lineHeight < 60) break; // stop before the footer
+    page.drawText(ln, {
+      x,
+      y: cursorY,
+      size,
+      font,
+      color: color ?? DEFAULT_TEXT_COLOR,
+    });
+    cursorY -= lineHeight;
+  }
+  return cursorY;
+}
+
+// -------- Route ----------
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as ExportRequest | null;
-    const markdown = body?.markdown ?? '';
-    const meta = body?.meta ?? {};
+    const body = (await req.json()) as ExportPdfPayload | null;
+    const contentRaw =
+      (body?.plainText && typeof body.plainText === 'string' ? body.plainText : '') ||
+      (body?.markdown && typeof body.markdown === 'string' ? markdownToPlain(body.markdown) : '');
 
-    if (!markdown || typeof markdown !== 'string') {
-      return NextResponse.json(
-        { error: 'Missing or invalid "markdown" in body' },
-        { status: 400 }
-      );
-    }
+    const title =
+      typeof body?.title === 'string' && body.title.trim()
+        ? body!.title.trim()
+        : 'Root Work Framework — Lesson Plan';
 
-    // Parse markdown into simple blocks
-    const blocks = parseMarkdown(markdown).map((b) => ({
-      ...b,
-      text: stripInlineMd(b.text),
-    }));
+    const subtitle =
+      typeof body?.subtitle === 'string' && body.subtitle.trim()
+        ? body!.subtitle.trim()
+        : undefined;
 
-    // Create PDF
+    const brandPrimary = toColor(body?.brand?.primary, DEFAULT_BRAND);
+    const brandOrg =
+      (body?.brand?.org && typeof body.brand.org === 'string'
+        ? body.brand.org.trim()
+        : 'Root Work Framework') || 'Root Work Framework';
+
+    // Build PDF
     const pdf = await PDFDocument.create();
+    const page = pdf.addPage([612, 792]); // Letter size points
+    const width = page.getWidth();
+    const height = page.getHeight();
+
+    const marginX = 56;
+    const marginY = 56;
+
+    // Fonts
     const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-    // Page & layout
-    const pageWidth = 612; // Letter 8.5in * 72
-    const pageHeight = 792; // Letter 11in * 72
-    const margin = 56; // 0.78in
-    const contentWidth = pageWidth - margin * 2;
+    // Header & footer (page 1)
+    drawHeaderFooter({
+      page,
+      width,
+      height,
+      marginX,
+      marginY,
+      title,
+      subtitle,
+      headerFont: fontBold,
+      captionFont: fontRegular,
+      pageNumber: 1,
+      brandPrimary,
+    });
 
-    // Brand/meta
-    const title =
-      meta.title?.trim() ||
-      'Root Work Framework Lesson Plan';
-    const subtitleParts: string[] = [];
-    if (meta.gradeLevel) subtitleParts.push(meta.gradeLevel);
-    if (meta.subjects && meta.subjects.length > 0)
-      subtitleParts.push(meta.subjects.join(', '));
-    const subtitle = subtitleParts.join(' • ');
+    // Watermark-ish org label in the header band (right side)
+    const orgSize = 9;
+    const orgText = brandOrg;
+    const orgWidth = fontRegular.widthOfTextAtSize(orgText, orgSize);
+    page.drawText(orgText, {
+      x: width - marginX - orgWidth,
+      y: height - 24,
+      size: orgSize,
+      font: fontRegular,
+      color: rgb(1, 1, 1),
+    });
 
-    // Typography
-    const sizeBody = 11;
-    const sizeH1 = 18;
-    const sizeH2 = 15;
-    const sizeH3 = 13;
-    const sizeBrand = 9;
-    const lineGap = 4; // extra gap between lines
+    // Body background box for readability
+    page.drawRectangle({
+      x: marginX - 8,
+      y: marginY + 8,
+      width: width - (marginX - 8) * 2,
+      height: height - (marginY + 8) - (marginY + 30),
+      color: LIGHT_GRAY,
+      opacity: 0.3,
+      borderOpacity: 0,
+    });
 
-    // Draw helpers
-    let page = pdf.addPage([pageWidth, pageHeight]);
-    let y = pageHeight - margin;
+    // Body text
+    const startY = height - 100;
+    const maxWidth = width - marginX * 2;
+    let cursorY = startY;
 
-    const newPage = () => {
-      page = pdf.addPage([pageWidth, pageHeight]);
-      y = pageHeight - margin;
-      drawHeader();
-      y -= 14;
-    };
-
-    const drawHeader = () => {
-      // Brand line
-      const brand = 'Root Work Framework • S.T.E.A.M. Powered, Trauma Informed, Project Based';
-      page.drawText(brand, {
-        x: margin,
-        y: y,
-        size: sizeBrand,
-        font: fontRegular,
-        color: rgb(0.12, 0.35, 0.28), // deep green
-      });
-      // Title on right
-      const titleWidth = fontBold.widthOfTextAtSize(title, sizeBrand);
-      page.drawText(title, {
-        x: pageWidth - margin - titleWidth,
-        y: y,
-        size: sizeBrand,
+    // Optional document heading inside body area (bigger)
+    const bodyHeading = title;
+    const bodyHeadingSize = 14;
+    const headingLines = wrapTextByWidth(bodyHeading, fontBold, bodyHeadingSize, maxWidth);
+    for (const ln of headingLines) {
+      page.drawText(ln, {
+        x: marginX,
+        y: cursorY,
+        size: bodyHeadingSize,
         font: fontBold,
-        color: rgb(0.12, 0.12, 0.12),
+        color: brandPrimary,
       });
-    };
-
-    const drawFooter = (pageIndex: number, total: number) => {
-      const footer = `Page ${pageIndex + 1} of ${total}`;
-      const footerWidth = fontRegular.widthOfTextAtSize(footer, 9);
-      page.drawText(footer, {
-        x: (pageWidth - footerWidth) / 2,
-        y: margin / 2,
-        size: 9,
-        font: fontRegular,
-        color: rgb(0.4, 0.4, 0.4),
-      });
-    };
-
-    const space = (px: number) => {
-      y -= px;
-      if (y < margin + 40) {
-        // leave room for footer
-        drawFooter(pdf.getPageCount() - 1, 0); // temporary, fixed later
-        newPage();
-      }
-    };
-
-    const writeWrapped = (
-      text: string,
-      options: { font: PDFFont; size: number; color?: { r: number; g: number; b: number }; indent?: number }
-    ) => {
-      const indent = options.indent ?? 0;
-      const maxWidth = contentWidth - indent;
-      const lines = wrapText(text, options.font, options.size, maxWidth);
-      for (const line of lines) {
-        const lineHeight = options.size + lineGap;
-        if (y - lineHeight < margin + 40) {
-          drawFooter(pdf.getPageCount() - 1, 0);
-          newPage();
-        }
-        page.drawText(line, {
-          x: margin + indent,
-          y: y - options.size,
-          size: options.size,
-          font: options.font,
-          color: options.color ?? rgb(0.12, 0.12, 0.12),
-        });
-        y -= lineHeight;
-      }
-    };
-
-    // First page header
-    drawHeader();
-    y -= 18;
-
-    // Title
-    writeWrapped(title, { font: fontBold, size: 20 });
+      cursorY -= 20;
+    }
     if (subtitle) {
-      space(2);
-      writeWrapped(subtitle, { font: fontRegular, size: 12, color: rgb(0.25, 0.25, 0.25) });
-    }
-    space(10);
-
-    // Body
-    for (const block of blocks) {
-      // pagination safety margin before headings
-      if (['h1', 'h2', 'h3'].includes(block.type) && y < margin + 80) {
-        drawFooter(pdf.getPageCount() - 1, 0);
-        newPage();
-      }
-
-      switch (block.type) {
-        case 'h1':
-          writeWrapped(block.text, { font: fontBold, size: sizeH1 });
-          space(6);
-          break;
-        case 'h2':
-          writeWrapped(block.text, { font: fontBold, size: sizeH2 });
-          space(4);
-          break;
-        case 'h3':
-          writeWrapped(block.text, { font: fontBold, size: sizeH3 });
-          space(2);
-          break;
-        case 'bullet': {
-          const bullet = '• ';
-          const bulletWidth = fontRegular.widthOfTextAtSize(bullet, sizeBody);
-          // draw bullet
-          if (y - (sizeBody + lineGap) < margin + 40) {
-            drawFooter(pdf.getPageCount() - 1, 0);
-            newPage();
-          }
-          page.drawText(bullet, {
-            x: margin,
-            y: y - sizeBody,
-            size: sizeBody,
-            font: fontRegular,
-            color: rgb(0.12, 0.12, 0.12),
-          });
-          // draw wrapped bullet text with indent
-          writeWrapped(block.text, {
-            font: fontRegular,
-            size: sizeBody,
-            indent: bulletWidth + 6,
-          });
-          break;
-        }
-        case 'paragraph':
-          writeWrapped(block.text, { font: fontRegular, size: sizeBody });
-          break;
-        case 'blank':
-          space(8);
-          break;
-        default:
-          writeWrapped(block.text, { font: fontRegular, size: sizeBody });
-      }
+      cursorY -= 4;
+      const subSize = 11;
+      page.drawText(subtitle, {
+        x: marginX,
+        y: cursorY,
+        size: subSize,
+        font: fontRegular,
+        color: rgb(0.25, 0.25, 0.25),
+      });
+      cursorY -= 18;
     }
 
-    // Add footer page numbers now that total count is final
-    const total = pdf.getPageCount();
-    for (let i = 0; i < total; i++) {
-      const p = pdf.getPage(i);
-      // temporarily set page ref to draw footer with correct page object
-      page = p;
-      drawFooter(i, total);
+    // Content
+    const textSize = 11;
+    const lineHeight = 15;
+    const paragraphs = contentRaw ? contentRaw.split(/\n{2,}/) : ['(no content)'];
+
+    for (const para of paragraphs) {
+      // Add new page if needed
+      if (cursorY - lineHeight * 3 < marginY + 24) {
+        const p = pdf.addPage([612, 792]);
+        drawHeaderFooter({
+          page: p,
+          width,
+          height,
+          marginX,
+          marginY,
+          title,
+          subtitle,
+          headerFont: fontBold,
+          captionFont: fontRegular,
+          pageNumber: pdf.getPageCount(),
+          brandPrimary,
+        });
+        // new page body box
+        p.drawRectangle({
+          x: marginX - 8,
+          y: marginY + 8,
+          width: width - (marginX - 8) * 2,
+          height: height - (marginY + 8) - (marginY + 30),
+          color: LIGHT_GRAY,
+          opacity: 0.3,
+          borderOpacity: 0,
+        });
+        // reset cursor on new page
+        (cursorY as number) = height - 100;
+        (page as any) = p;
+      }
+
+      cursorY = drawParagraph({
+        page,
+        text: para,
+        x: marginX,
+        y: cursorY,
+        maxWidth,
+        lineHeight,
+        font: fontRegular,
+        size: textSize,
+        color: DEFAULT_TEXT_COLOR,
+      }) - 10; // gap between paragraphs
     }
 
     const bytes = await pdf.save();
-    const base64 = Buffer.from(bytes).toString('base64');
-    const dataUrl = `data:application/pdf;base64,${base64}`;
-
-    return NextResponse.json(
-      {
-        url: dataUrl,
-        filename:
-          (meta.title ? meta.title.replace(/\s+/g, '_') : 'Rootwork_Lesson') + '.pdf',
+    return new NextResponse(Buffer.from(bytes), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="rwf-lesson-plan.pdf"`,
+        'Cache-Control': 'no-store',
       },
-      { status: 200 }
-    );
-  } catch (err) {
+    });
+  } catch (err: unknown) {
     const message =
-      err instanceof Error ? err.message : 'Unknown server error';
+      err instanceof Error ? err.message : 'PDF export failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
