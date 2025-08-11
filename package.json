@@ -2,6 +2,7 @@
   "name": "rwfw-lesson-plan-generator",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,15 +11,14 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@next/font": "13.5.4",
-    "@tailwindcss/forms": "^0.5.6",
+    "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "10.4.16",
     "clsx": "^2.0.0",
-    "encoding": "^0.1.13",
     "firebase": "^9.23.0",
     "next": "13.5.4",
     "openai": "^4.56.0",
+    "pdf-lib": "^1.17.1",
     "postcss": "8.4.31",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -29,20 +29,19 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss": "3.3.3",
     "zod": "^3.23.8"
-    "pdf-lib": "^1.17.1"
-
   },
   "devDependencies": {
     "@types/node": "20.7.0",
     "@types/react": "18.2.23",
     "@types/react-dom": "18.2.8",
-    "@typescript-eslint/eslint-plugin": "^5.59.0",
-    "@typescript-eslint/parser": "^5.59.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
     "eslint": "8.57.1",
     "eslint-config-next": "13.5.4",
     "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-simple-import-sort": "^10.0.0",
-    "eslint-plugin-unused-imports": "^2.0.0",
+    "eslint-plugin-unused-imports": "^3.0.0",
     "husky": "^8.0.0",
     "prettier": "^2.8.8",
     "typescript": "5.2.2"
