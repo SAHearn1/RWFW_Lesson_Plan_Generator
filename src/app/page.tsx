@@ -2,62 +2,36 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
-// Firebase
-import type { User } from 'firebase/auth';
-import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { firebaseConfig } from '@/lib/firebase';
-
-// Utils
-import {
-  RootWorkEntry,
-  RootWorkFramework,
-  checkComplianceFlags,
-  cn,
-  exportToCSV,
-  formatDate,
-  generateId,
-  getCategoryColor,
-  getStatusColor,
-  loadFromLocalStorage,
-  saveToLocalStorage,
-  searchEntries,
-  sortEntriesByPriority,
-  validateRootWorkEntry,
-} from '@/lib/utils';
-
-// ———————————————————————————————————————————————————————————
-// Types for asset generation response
-type GeneratedImage = {
-  fileName: string;
-  alt: string;
-  b64: string; // base64 image from the API
+/** Minimal runtime type for the structured JSON your API returns */
+type LessonPlanData = {
+  meta: {
+    unitTitle: string;
+    gradeLevel: string;
+    subjects: string[];
+    durationDays: number;
+  };
+  days: Array<{
+    dayNumber: number;
+    title: string;
+  }>;
+  appendixA?: Array<{
+    fileName: string;
+    type?: string;
+    description?: string;
+    altText?: string;
+    figure?: string;
+    link?: string;
+  }>;
 };
-
-type GenerateAssetsResponse = {
-  images: GeneratedImage[];
-  message?: string;
-};
-// ———————————————————————————————————————————————————————————
 
 export default function HomePage() {
-  // Navigation is removed — this is now a pure generator screen.
-  // Lesson Generator State
-  const [view, setView] = useState<'loading' | 'form' | 'results'>('loading');
-  const [lessonPlan, setLessonPlan] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [assetsLoading, setAssetsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // View state
+  const [view, setView] = useState<'form' | 'loading' | 'results'>('form');
 
-  // User & Usage State
-  const [user, setUser] = useState<User | null>(null);
-  const [usageInfo, setUsageInfo] = useState({ count: 0, limit: 5 });
-
-  // Form State
+  // Form state
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
   const [duration, setDuration] = useState('3');
@@ -65,261 +39,74 @@ export default function HomePage() {
   const [standards, setStandards] = useState('');
   const [focus, setFocus] = useState('');
 
-  // Generated visual assets
-  const [images, setImages] = useState<GeneratedImage[]>([]);
+  // Output state
+  const [planJson, setPlanJson] = useState<LessonPlanData | null>(null);
+  const [lessonPlanTeacher, setLessonPlanTeacher] = useState(''); // Teacher Markdown
+  const [lessonPlanStudent, setLessonPlanStudent] = useState(''); // Student Markdown
+  const [activeView, setActiveView] = useState<'teacher' | 'student' | 'print'>('teacher');
 
-  // Root Work Framework (kept for export + future analytics, but not UI)
-  const [rootWorkFramework, setRootWorkFramework] = useState<RootWorkFramework>({
-    entries: [],
-    metadata: { lastUpdated: new Date(), version: '1.0.0', createdBy: 'Root Work Framework User' },
-  });
+  // UI state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load saved framework once (so usage can be exported if needed later)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = loadFromLocalStorage('rootWorkFramework', rootWorkFramework);
-    setRootWorkFramework(saved);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Persist framework on changes
-  useEffect(() => {
-    saveToLocalStorage('rootWorkFramework', rootWorkFramework);
-  }, [rootWorkFramework]);
-
-  // Firebase anonymous auth
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (!firebaseConfig?.apiKey) {
-      setError('Firebase configuration is missing. Please set it in your Vercel environment variables.');
-      setView('form');
-      return;
-    }
-
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setView('form');
-      } else {
-        signInAnonymously(auth).catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error('Anonymous sign-in error:', err);
-          setError(err?.code ? `Auth error: ${err.code}` : 'Could not sign in. Please try again later.');
-          setView('form');
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Handlers
+  // Helpers
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = Array.from(e.target.selectedOptions);
     const values = options.map((o) => o.value);
     setSubjects(values);
   };
 
-  const handleDownload = () => {
-    if (!lessonPlan) return;
-    const blob = new Blob([lessonPlan], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const name = unitTitle || 'rootwork-lesson-plan';
-    a.download = `${name.replace(/\s+/g, '-').toLowerCase()}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleGenerateAssets = async () => {
-    if (!lessonPlan || !user) return;
-    setAssetsLoading(true);
+  const handleNewPlan = () => {
+    setView('form');
+    setPlanJson(null);
+    setLessonPlanTeacher('');
+    setLessonPlanStudent('');
+    setActiveView('teacher');
     setError(null);
-
-    try {
-      const token = await user.getIdToken();
-      const response = await fetch('/api/generateAssets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ lessonPlan }),
-      });
-
-      const raw = await response.text();
-      let data: GenerateAssetsResponse | null = null;
-      try {
-        data = raw ? JSON.parse(raw) : null;
-      } catch {
-        /* ignore parse err, show raw below if !ok */
-      }
-
-      if (!response.ok) {
-        const msg = (data && (data as any).error) || raw || `HTTP ${response.status}`;
-        throw new Error(msg);
-      }
-
-      if (!data || !Array.isArray(data.images)) {
-        throw new Error('Empty or invalid JSON from /api/generateAssets');
-      }
-
-      setImages(data.images);
-    } catch (err: any) {
-      setError(`Failed to generate visual assets: ${err?.message || 'Unknown error'}`);
-    } finally {
-      setAssetsLoading(false);
-    }
   };
 
+  // --- Generate plan ---
   const handleGeneratePlan = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!user) {
-      setError('You are not signed in.');
-      return;
-    }
     if (!gradeLevel || subjects.length === 0) {
       setError('Please select a grade level and at least one subject.');
-      return;
-    }
-    if (usageInfo.count >= usageInfo.limit) {
-      setError(`You have reached your monthly limit of ${usageInfo.limit} lesson plans.`);
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    setImages([]);
     setView('loading');
 
-    const prompt = `
-You are an expert curriculum designer (20+ years) specializing in K–12, PBL, Trauma-Informed Care, Living Learning Labs, CASEL SEL, MTSS, GRR, and STEAM integration.
-Use the Root Work Framework therapeutic context and generate a ${duration}-day lesson plan.
-
-Inputs:
-- Grade Level: ${gradeLevel}
-- Subject Area(s): ${subjects.join(', ')}
-- Duration: ${duration} days (90 minutes per day)
-- Unit Title: ${unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression'}
-- Standards Alignment Input: ${standards || 'Please align with CCSS or relevant state standards.'}
-- Additional Focus Areas: ${focus || 'None specified.'}
-
-MANDATORY Teacher & Student Notes protocol:
-- After every major component (Opening, I Do, We Do, You Do Together, You Do Alone, Closing) include:
-  [Teacher Note: ...] (1–3 sentences; trauma-informed facilitation, rationale, differentiation, assessment cues)
-  [Student Note: ...] (1–2 sentences; warm second-person coaching, self-advocacy, regulation)
-- Notes must appear immediately after the activity description and BEFORE MTSS supports.
-
-Mandatory format per Day (in this order):
-HEADER:
-- Day #, Lesson Title, Essential Question, Learning Target, Standards
-[Teacher Note: ...]
-[Student Note: ...]
-
-STRUCTURED LESSON FLOW (total 90 minutes):
-- Opening (X min)
-  Activity...
-  [Teacher Note: ...]
-  [Student Note: ...]
-- I Do: Direct Instruction (X min)
-  Content/modeling...
-  [Teacher Note: ...]
-  [Student Note: ...]
-- Work Session (X min) — include:
-  We Do (X min) → description + notes
-  You Do Together (X min) → description + notes
-  You Do Alone (X min) → description + notes
-- Closing (X min)
-  Reflection...
-  [Teacher Note: ...]
-  [Student Note: ...]
-
-Additional required sections per day:
-- Student-facing instructions and scaffolds
-- Facilitator modeling guidance
-- MTSS tiered supports (Tier 1–3)
-- SEL competencies addressed
-- Regulation rituals (garden/nature-based when appropriate)
-- Choices for student expression
-- Multimedia integration (use placeholders like [Insert Flip link here])
-- Clear assessment tasks (formative or summative)
-- Reflection/peer feedback mechanisms
-- Optional extension or enrichment
-
-Appendix A (exact Markdown table, 8 columns):
-| File Name | Type | Description/Purpose | Alt-text | How to Generate/Use | Link Placeholder | Media Source Instructions | Figure Ref |
-|-----------|------|---------------------|----------|---------------------|------------------|--------------------------|------------|
-(List all assets referenced. Include at least 2 image assets with explicit natural-language prompts and alt-text.)
-
-Quality Pass (DO THIS BEFORE RETURNING):
-- Verify every section includes BOTH [Teacher Note:] and [Student Note:].
-- Fix Markdown tables to be valid GFM (header + pipes).
-- Keep tone professional, warm, student-facing where applicable.
-- Do NOT include meta commentary—return only the lesson content in Markdown.
-    `.trim();
-
     try {
-      const token = await user.getIdToken();
-      const response = await fetch('/api/generatePlan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ prompt }),
-      });
-
-      const raw = await response.text();
-      let data: any = null;
-      try {
-        data = raw ? JSON.parse(raw) : null;
-      } catch {
-        // Keep data as null; we'll show a useful error below if needed.
-      }
-
-      if (!response.ok) {
-        const msg = (data && (data.error || data.message)) || raw || `HTTP ${response.status}`;
-        throw new Error(msg);
-      }
-
-      if (!data || typeof data !== 'object') {
-        throw new Error('Empty or invalid JSON from /api/generatePlan');
-      }
-
-      setLessonPlan(data.lessonPlan || '');
-      if (data.usageInfo) setUsageInfo(data.usageInfo);
-      setView('results');
-
-      // (Optional) Record a simple entry for internal analytics
-      const entry: RootWorkEntry = {
-        id: generateId(),
-        title: `Lesson Plan: ${unitTitle || 'Rooted in Me'}`,
-        description: `${gradeLevel} ${subjects.join(', ')} lesson plan - ${duration} days`,
-        category: 'educational',
-        priority: 'medium',
-        status: 'completed',
-        tags: [
-          'lesson-plan',
-          'rootwork-framework',
-          ...subjects.map((s) => s.toLowerCase().replace(/\s+/g, '-')),
-        ],
-        assignee: 'Generated by AI',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        complianceFlags: [],
+      const payload = {
+        gradeLevel,
+        subjects,
+        duration, // server will coerce string -> number
+        unitTitle,
+        standards,
+        focus,
       };
 
-      setRootWorkFramework((prev) => ({
-        ...prev,
-        entries: [...prev.entries, entry],
-        metadata: { ...prev.metadata, lastUpdated: new Date() },
-      }));
+      const response = await fetch('/api/generatePlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const msg = (data && (data.error || data.message)) || `HTTP ${response.status}`;
+        throw new Error(typeof msg === 'string' ? msg : 'Generation failed');
+      }
+
+      // Expect: { lessonPlan: <JSON>, markdown: { teacher: string, student: string } }
+      setPlanJson(data.lessonPlan || null);
+      setLessonPlanTeacher((data.markdown && data.markdown.teacher) || '');
+      setLessonPlanStudent((data.markdown && data.markdown.student) || '');
+      setActiveView('teacher');
+      setView('results');
     } catch (err: any) {
       setError(`Failed to generate lesson plan: ${err?.message || 'Unknown error'}`);
       setView('form');
@@ -328,21 +115,9 @@ Quality Pass (DO THIS BEFORE RETURNING):
     }
   };
 
-  // Simple export (kept for convenience)
-  const exportFramework = () => {
-    const csv = exportToCSV(rootWorkFramework.entries);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `root-work-framework-${formatDate(new Date())}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  // ————————————————— UI —————————————————
+  // --- UI ---
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-purple-50">
       {/* Branded Hero */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-600 to-purple-700" />
@@ -353,27 +128,26 @@ Quality Pass (DO THIS BEFORE RETURNING):
               <span className="font-medium">Root Work Framework</span>
             </div>
             <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight">
-              S.T.E.A.M. Powered, Trauma Informed, Project Based Lesson planning for real classrooms
+              S.T.E.A.M. Powered, Trauma Informed, Project Base Lesson planning for real classrooms
             </h1>
             <p className="mt-3 text-white/90 max-w-3xl mx-auto">
-              Healing-centered design, GRR flow, and MTSS supports—all aligned to standards and built for student agency.
+              Generate healing-centered, GRR-aligned plans with MTSS, SEL, and student-facing scaffolds—ready to teach.
             </p>
           </div>
         </div>
       </header>
 
-      {/* Main card */}
+      {/* Main content */}
       <main className="container mx-auto px-6 -mt-10 pb-16">
-        <div className="rounded-2xl bg-white shadow-xl ring-1 ring-black/5 p-6 md:p-8">
+        <div className="card p-6 md:p-8">
           {/* FORM */}
           {view === 'form' && (
             <form id="form-section" onSubmit={handleGeneratePlan}>
               <div className="bg-emerald-50 ring-1 ring-emerald-200 text-emerald-900 p-5 rounded-xl mb-8">
-                <h3 className="text-lg font-bold mb-2">🌱 About the Rootwork Generator</h3>
+                <h3 className="text-lg font-bold mb-2">🌿 Root Work Lesson Generator</h3>
                 <p>
-                  Generate robust, student-facing lesson plans grounded in trauma-informed, healing-centered pedagogy with STEAM/PBL integration.
+                  Create comprehensive lesson plans grounded in trauma-informed practice, healing-centered pedagogy, and culturally responsive education.
                 </p>
-                <div className="mt-2 font-semibold">Monthly Usage: {usageInfo.count} / {usageInfo.limit}</div>
               </div>
 
               {error && (
@@ -508,11 +282,7 @@ Quality Pass (DO THIS BEFORE RETURNING):
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 text-white py-3 font-semibold hover:bg-brand-700 transition disabled:opacity-60"
-              >
+              <button type="submit" disabled={isLoading} className="btn-primary w-full py-3 text-lg disabled:opacity-60">
                 {isLoading ? 'Generating…' : 'Generate Comprehensive Lesson Plan'}
               </button>
             </form>
@@ -522,112 +292,145 @@ Quality Pass (DO THIS BEFORE RETURNING):
           {view === 'loading' && (
             <div id="loading-section" className="text-center p-12">
               <div className="w-10 h-10 border-4 border-slate-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-slate-600">Building your lesson with the Root Work Framework…</p>
+              <p className="text-slate-600">Building your lesson plan…</p>
             </div>
           )}
 
           {/* RESULTS */}
-          {view === 'results' && (
-            <div id="results-section" className="space-y-8">
-              <div className="text-center">
-                <h2 className="text-3xl font-bold text-slate-800">
-                  ✨ Your Rootwork Framework Lesson Plan is Ready!
-                </h2>
-                <p className="text-slate-500 mt-1">Professionally formatted with GRR, MTSS, SEL, and TIC.</p>
+          {view === 'results' && planJson && (
+            <div id="results-section">
+              <div className="text-center mb-6">
+                <h2 className="text-3xl font-bold text-slate-800">✨ Your Lesson Plan is Ready</h2>
+                <p className="text-slate-600 mt-1">Switch views, export, or grab the full Ready-to-Teach pack.</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-center gap-3">
-                <button onClick={handleDownload} className="rounded-lg bg-brand-600 text-white px-5 py-2 font-semibold hover:bg-brand-700 transition">
-                  📥 Download (.md)
-                </button>
+              {/* Tabs */}
+              <div className="flex justify-center gap-2 mb-4">
                 <button
-                  onClick={handleGenerateAssets}
-                  disabled={assetsLoading}
-                  className="rounded-lg bg-purple-600 text-white px-5 py-2 font-semibold hover:bg-purple-700 transition disabled:opacity-60"
+                  className={activeView === 'teacher' ? 'btn-primary' : 'btn-ghost'}
+                  onClick={() => setActiveView('teacher')}
                 >
-                  {assetsLoading ? 'Generating Visual Assets…' : '🎨 Generate Visual Assets'}
+                  Teacher
                 </button>
                 <button
-                  onClick={() => {
-                    setView('form');
-                    setLessonPlan('');
-                    setImages([]);
-                    setError(null);
+                  className={activeView === 'student' ? 'btn-primary' : 'btn-ghost'}
+                  onClick={() => setActiveView('student')}
+                >
+                  Student
+                </button>
+                <button
+                  className={activeView === 'print' ? 'btn-primary' : 'btn-ghost'}
+                  onClick={() => setActiveView('print')}
+                >
+                  Print
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap justify-center gap-3 mb-8">
+                {/* DOCX export (respects current tab) */}
+                <button
+                  className="btn-primary"
+                  onClick={async () => {
+                    if (!planJson) return;
+                    const res = await fetch('/api/export/docx', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ lessonPlan: planJson, variant: activeView }),
+                    });
+                    if (res.ok) {
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${planJson.meta.unitTitle}-${activeView}.docx`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } else {
+                      alert('DOCX export failed');
+                    }
                   }}
-                  className="rounded-lg border border-slate-300 text-slate-700 px-5 py-2 font-semibold hover:bg-slate-50 transition"
                 >
+                  Download DOCX
+                </button>
+
+                {/* PDF export (always uses "print" content for clean printing) */}
+                <button
+                  className="btn-ghost"
+                  onClick={async () => {
+                    if (!planJson) return;
+                    const res = await fetch('/api/export/pdf', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ lessonPlan: planJson, variant: 'print' }),
+                    });
+                    if (res.ok) {
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${planJson.meta.unitTitle}-print.pdf`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } else {
+                      alert('PDF export failed');
+                    }
+                  }}
+                >
+                  Download PDF
+                </button>
+
+                {/* Ready-to-Teach Pack */}
+                <button
+                  className="btn-primary"
+                  onClick={async () => {
+                    if (!planJson) return;
+
+                    // Fire-and-forget asset generation (safe to ignore errors)
+                    fetch('/api/generateAssets', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        unitTitle: planJson.meta.unitTitle,
+                        gradeLevel: planJson.meta.gradeLevel,
+                        subject: planJson.meta.subjects[0],
+                        appendixA: planJson.appendixA ?? [],
+                      }),
+                    }).catch(() => {});
+
+                    // Immediately deliver Teacher DOCX
+                    const res = await fetch('/api/export/docx', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ lessonPlan: planJson, variant: 'teacher' }),
+                    });
+                    if (res.ok) {
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${planJson.meta.unitTitle}-TeacherPack.docx`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } else {
+                      alert('Could not create Teacher Pack');
+                    }
+                  }}
+                >
+                  Ready-to-Teach Pack
+                </button>
+
+                {/* Start over */}
+                <button onClick={handleNewPlan} className="btn-ghost">
                   Create New Plan
                 </button>
               </div>
 
-              {error && (
-                <div className="bg-rose-50 ring-1 ring-rose-200 text-rose-700 p-4 rounded-xl">
-                  {error}
-                </div>
-              )}
-
-              {/* Branded wrapper + responsive tables */}
-              <div className="rounded-xl ring-1 ring-slate-200 overflow-hidden">
-                {/* Branded banner above the plan */}
-                <div className="bg-gradient-to-r from-brand-600 to-purple-600 text-white px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🌱</span>
-                    <div>
-                      <div className="font-semibold leading-tight">Root Work Framework</div>
-                      <div className="text-white/80 text-sm">
-                        Healing-Centered Education • STEAM • PBL • GRR • MTSS
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white p-0">
-                  <div className="overflow-x-auto p-6">
-                    <article className="prose prose-slate prose-headings:scroll-mt-24 prose-a:text-brand-700 max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {lessonPlan}
-                      </ReactMarkdown>
-                    </article>
-                  </div>
-                </div>
-              </div>
-
-              {/* Render generated images (if any) */}
-              {images.length > 0 && (
-                <section className="space-y-3">
-                  <h3 className="text-xl font-semibold text-slate-800">Generated Visual Assets</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {images.map((img) => {
-                      const dataUrl = `data:image/png;base64,${img.b64}`;
-                      return (
-                        <figure key={img.fileName} className="rounded-xl ring-1 ring-slate-200 overflow-hidden bg-white">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={dataUrl} alt={img.alt} className="w-full h-56 object-cover" />
-                          <figcaption className="p-4">
-                            <div className="font-medium text-slate-800">{img.fileName}</div>
-                            <div className="text-slate-500 text-sm line-clamp-2">{img.alt}</div>
-                            <div className="mt-3">
-                              <a
-                                href={dataUrl}
-                                download={img.fileName}
-                                className="inline-flex items-center gap-2 rounded-lg bg-slate-900 text-white px-3 py-1.5 text-sm hover:bg-slate-800 transition"
-                              >
-                                ⤓ Download
-                              </a>
-                            </div>
-                          </figcaption>
-                        </figure>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              {/* Tiny admin action (optional) */}
-              <div className="text-center">
-                <button onClick={exportFramework} className="text-sm text-slate-500 hover:text-slate-700 underline">
-                  Export generation log (CSV)
-                </button>
+              {/* Content */}
+              <div className="prose prose-brand lg:prose-lg max-w-none rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+                {activeView === 'teacher' && <ReactMarkdown>{lessonPlanTeacher}</ReactMarkdown>}
+                {activeView === 'student' && <ReactMarkdown>{lessonPlanStudent}</ReactMarkdown>}
+                {activeView === 'print' && <ReactMarkdown>{lessonPlanTeacher}</ReactMarkdown>}
               </div>
             </div>
           )}
