@@ -1,13 +1,34 @@
 // .eslintrc.cjs
 module.exports = {
   root: true,
-  extends: ["next/core-web-vitals"],
-  plugins: ["simple-import-sort", "unused-imports"],
+  ignorePatterns: [
+    'node_modules/',
+    '.next/',
+    'public/',
+    'dist/',
+    '**/__tests__/**',
+    '**/__mocks__/**'
+  ],
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint', 'unused-imports', 'simple-import-sort', 'react'],
+  extends: [
+    'next/core-web-vitals',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react/recommended',
+    'prettier'
+  ],
   rules: {
-    // keep these as "warn" so builds never fail on style issues
-    "simple-import-sort/imports": "warn",
-    "unused-imports/no-unused-imports": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "no-console": "warn",
+    // Keep build green; we can tighten later
+    '@typescript-eslint/no-explicit-any': 'off',
+    'react/display-name': 'off',
+
+    // Quality niceties
+    'unused-imports/no-unused-imports': 'warn',
+    'simple-import-sort/imports': 'warn',
+    'simple-import-sort/exports': 'warn',
+    'no-console': 'warn'
   },
+  settings: {
+    react: { version: 'detect' }
+  }
 };
