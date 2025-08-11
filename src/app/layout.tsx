@@ -1,6 +1,7 @@
-import './globals.css';
 import type { Metadata } from 'next';
 import React from 'react';
+
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Root Work Framework',
@@ -12,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        {/* Load Plus Jakarta Sans at runtime so builds don’t hit Google Fonts */}
+        {/* Load Plus Jakarta Sans at runtime so builds don't hit Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
