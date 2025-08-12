@@ -6,9 +6,20 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 
+// Assets-specific runtime config
+export const maxDuration = 30;
+
 // IMPORTANT: Unique constant that is USED in the response so bundlers can't remove it.
 // This prevents Vercel from deduping this function bundle with generatePlan.
 const ROUTE_ID = 'generateAssets-v3-2025-08-12';
+
+// Force unique bundle by adding specific asset-only logic
+const ASSET_TYPES = ['image', 'pdf', 'docx', 'sheet', 'link'] as const;
+const ASSETS_SPECIFIC_CONFIG = {
+  maxAssets: 10,
+  requiredTypes: ASSET_TYPES,
+  assetNamingConvention: 'snake_case'
+};
 
 type AssetsInput = {
   topic?: string;
@@ -44,7 +55,7 @@ export async function POST(req: NextRequest) {
     const subject = body.subject ?? 'STEAM';
     const gradeLevel = body.gradeLevel ?? '6–8';
     const brandName = body.brandName ?? 'Root Work Framework';
-    const days = Math.min(Math.max(body.days ?? 3, 1), 10);
+    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_SPECIFIC_CONFIG.maxAssets);
 
     const system =
       'You create concise asset manifests for teachers. Return STRICT JSON with key "assets": Asset[]. ' +
