@@ -5,27 +5,16 @@ import Anthropic from '@anthropic-ai/sdk';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
-
-// Assets-specific runtime config
 export const maxDuration = 60;
 
-// ASSETS SPECIFIC - Forces unique bundle (internal constant)
-const ASSETS_METADATA = {
-  name: 'assets-generator',
-  version: '4.0.0',
-  type: 'asset-manifest'
-};
+const ROUTE_ID = 'generateAssets-v4-anthropic-2025-08-12-unique';
 
-// IMPORTANT: Unique constant that is USED in the response so bundlers can't remove it.
-// This prevents Vercel from deduping this function bundle with generatePlan.
-const ROUTE_ID = 'generateAssets-v4-anthropic-2025-08-12';
-
-// Force unique bundle by adding specific asset-only logic
-const ASSET_TYPES = ['image', 'pdf', 'docx', 'sheet', 'link'] as const;
-const ASSETS_SPECIFIC_CONFIG = {
+// Assets specific configuration for unique bundling
+const ASSETS_CONFIG = {
   maxAssets: 10,
-  requiredTypes: ASSET_TYPES,
-  assetNamingConvention: 'snake_case'
+  supportedTypes: ['image', 'pdf', 'docx', 'sheet', 'link'] as const,
+  namingConvention: 'snake_case',
+  generator: 'assets-generator-v4'
 };
 
 type AssetsInput = {
@@ -49,7 +38,7 @@ type AssetsPayload = { assets: Asset[] };
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// ASSETS SPECIFIC FUNCTION - Forces unique bundle
+// Assets specific validation function
 function validateAssetStructure(assets: any[]): boolean {
   return assets?.every(asset => asset?.fileName && asset?.type && asset?.description);
 }
@@ -68,7 +57,7 @@ export async function POST(req: NextRequest) {
     const subject = body.subject ?? 'STEAM';
     const gradeLevel = body.gradeLevel ?? '6–8';
     const brandName = body.brandName ?? 'Root Work Framework';
-    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_SPECIFIC_CONFIG.maxAssets);
+    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_CONFIG.maxAssets);
 
     const prompt = `Create a list of 6-8 educational assets for a ${days}-day ${subject} unit titled "${topic}" for grade ${gradeLevel}.
 
@@ -167,18 +156,23 @@ Respond with ONLY the JSON object, no additional text.`;
       };
     }
 
-    // Validate asset structure (unique to assets route)
+    // Validate asset structure
     if (!validateAssetStructure(parsed.assets)) {
       parsed = { assets: [] };
     }
 
-    // Use ROUTE_ID in the response so the bundler keeps this code unique.
-    return NextResponse.json({ ok: true, routeId: ROUTE_ID, generator: ASSETS_METADATA.name, ...parsed });
+    return NextResponse.json({ 
+      ok: true, 
+      routeId: ROUTE_ID, 
+      generator: ASSETS_CONFIG.generator,
+      ...parsed 
+    });
   } catch (err) {
     return NextResponse.json(
       {
         ok: true,
         routeId: ROUTE_ID,
+        generator: ASSETS_CONFIG.generator,
         assets: [
           {
             fileName: 'fallback_cover.png',
