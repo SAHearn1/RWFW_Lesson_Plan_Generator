@@ -9,6 +9,13 @@ export const preferredRegion = ['iad1'];
 // Assets-specific runtime config
 export const maxDuration = 60;
 
+// ASSETS SPECIFIC - Forces unique bundle  
+export const metadata = {
+  name: 'assets-generator',
+  version: '4.0.0',
+  type: 'asset-manifest'
+};
+
 // IMPORTANT: Unique constant that is USED in the response so bundlers can't remove it.
 // This prevents Vercel from deduping this function bundle with generatePlan.
 const ROUTE_ID = 'generateAssets-v4-anthropic-2025-08-12';
@@ -41,6 +48,11 @@ type Asset = {
 type AssetsPayload = { assets: Asset[] };
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+// ASSETS SPECIFIC FUNCTION - Forces unique bundle
+function validateAssetStructure(assets: any[]): boolean {
+  return assets?.every(asset => asset?.fileName && asset?.type && asset?.description);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -153,6 +165,11 @@ Respond with ONLY the JSON object, no additional text.`;
           },
         ],
       };
+    }
+
+    // Validate asset structure (unique to assets route)
+    if (!validateAssetStructure(parsed.assets)) {
+      parsed = { assets: [] };
     }
 
     // Use ROUTE_ID in the response so the bundler keeps this code unique.
