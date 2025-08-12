@@ -1,13 +1,7 @@
 // src/app/api/export/pdf/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  PDFDocument,
-  rgb,
-  StandardFonts,
-  type Color,
-  type PDFFont,
-  type RGB,
-} from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import type { Color, PDFFont, RGB } from 'pdf-lib';
 
 export const runtime = 'nodejs';
 
