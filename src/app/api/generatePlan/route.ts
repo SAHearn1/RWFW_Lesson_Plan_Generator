@@ -6,8 +6,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 
-// Lesson plan specific runtime config  
-export const maxDuration = 45;
+// Lesson plan specific runtime config - increased timeout for OpenAI calls
+export const maxDuration = 60;
 
 const ROUTE_ID = 'generatePlan-v7-2025-08-12';
 
@@ -220,10 +220,8 @@ export async function POST(req: NextRequest) {
     const input = normalizeInput(body);
 
     const system =
-      'You are a senior curriculum designer (PBL, STEAM, Trauma-Informed, GRR, MTSS, CASEL). ' +
-      'Return STRICT JSON with keys: meta, days[], appendixA, markdown. ' +
-      'Every major component MUST include [Teacher Note:] and [Student Note:] exactly as brackets. ' +
-      'Do not include markdown fences in JSON.';
+      'You are a curriculum designer. Return STRICT JSON with keys: meta, days[], appendixA, markdown. ' +
+      'Include [Teacher Note:] and [Student Note:] in activities. No markdown fences in JSON.';
 
     // Safely join standards with proper null checking
     const standardsString = Array.isArray(input.standards) && input.standards.length > 0
@@ -231,82 +229,43 @@ export async function POST(req: NextRequest) {
       : 'No standards specified';
 
     const user = `
-Build a ${input.days}-day lesson integrating:
-- Trauma-informed care (SAMHSA principles)
-- STEAM & PBL
-- Living Learning Lab (garden/nature metaphors)
-- CASEL SEL
-- MTSS (Tier 1–3)
-- GRR (Opening, I Do, We Do, You Do Together, You Do Alone, Closing)
-- Student agency and choice
-- ${input.durationMinutes} minute block schedule
+Build ${input.days}-day lesson plan:
+- Grade: ${input.gradeLevel}, Subject: ${input.subject}, Topic: ${input.topic}
+- Standards: ${standardsString}, Brand: ${input.brandName}
+- Duration: ${input.durationMinutes} min blocks
+- Include: STEAM, PBL, trauma-informed, MTSS, SEL
+- Structure: Opening, I Do, We Do, You Do Together, You Do Alone, Closing
 
-Context:
-- Grade Level: ${input.gradeLevel}
-- Subject: ${input.subject}
-- Topic: ${input.topic}
-- Standards: ${standardsString}
-- Branding: ${input.brandName}
-
-OUTPUT SHAPE (JSON OBJECT):
-{
-  "meta": { "title": string, "subtitle": string, "gradeLevel": string, "subject": string, "days": number, "durationMinutes": number, "essentialQuestion": string, "standards": string[] },
-  "days": [
-    {
-      "day": number,
-      "title": string,
-      "learningTarget": string,
-      "essentialQuestion": string,
-      "standards": string[],
-      "flow": {
-        "opening": { "minutes": number, "activity": string, "teacherNote": string, "studentNote": string },
-        "iDo": { "minutes": number, "activity": string, "teacherNote": string, "studentNote": string },
-        "weDo": { "minutes": number, "activity": string, "teacherNote": string, "studentNote": string },
-        "youDoTogether": { "minutes": number, "activity": string, "teacherNote": string, "studentNote": string },
-        "youDoAlone": { "minutes": number, "activity": string, "teacherNote": string, "studentNote": string },
-        "closing": { "minutes": number, "activity": string, "teacherNote": string, "studentNote": string }
-      },
-      "mtss": { "tier1": string[], "tier2": string[], "tier3": string[] },
-      "selCompetencies": string[],
-      "regulationRituals": string[],
-      "assessment": { "formative": string[], "summative": string[] },
-      "resources": string[]
-    }
-  ],
-  "appendixA": {
-    "namingConvention": string,
-    "assets": [{ "fileName": string, "type": "image"|"pdf"|"docx"|"sheet"|"link", "description": string, "altText": string, "howToGenerate": string, "linkPlaceholder": string, "figure": string }]
-  },
-  "markdown": string
-}
-
-Constraints:
-- Place [Teacher Note:] and [Student Note:] immediately after each activity text in flow.
-- Use warm, empowering tone for student notes.
-- Keep times roughly balanced to fit ${input.durationMinutes} minutes per day.
-- Include a concise but complete Appendix A asset list using the naming convention: {LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}
-${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
+JSON format: {"meta": {...}, "days": [{...}], "appendixA": {...}, "markdown": "..."}
+${input.userPrompt ? `\nNotes: ${input.userPrompt}` : ''}
 `.trim();
 
     let plan: LessonPlanJSON | null = null;
     let raw = '';
 
-    // Primary call
+    // Primary call with timeout handling
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+      
       const r = await client.chat.completions.create({
         model: 'gpt-4o-mini',
         temperature: 0.35,
-        max_tokens: 4500,
+        max_tokens: 3000, // Reduced for faster response
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
-      });
+      }, {
+        signal: controller.signal,
+      } as any);
+      
+      clearTimeout(timeoutId);
       raw = r.choices[0]?.message?.content?.trim() || '';
       plan = safeParse<LessonPlanJSON>(raw);
     } catch (error) {
-      // OpenAI API call failed, handled by fallback below
+      // OpenAI API call failed or timed out, handled by fallback below
     }
 
     // One repair attempt if model wrapped JSON in prose
