@@ -1,15 +1,22 @@
 // src/app/api/generatePlan/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 
-// Lesson plan specific runtime config - increased timeout for OpenAI calls
+// Lesson plan specific runtime config
 export const maxDuration = 60;
 
-const ROUTE_ID = 'generatePlan-v7-2025-08-12';
+// LESSON PLAN SPECIFIC - Forces unique bundle (internal constant)
+const LESSON_PLAN_METADATA = {
+  name: 'lesson-plan-generator',
+  version: '8.0.0',
+  type: 'educational-content'
+};
+
+const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12';
 
 // Force unique bundle by adding specific lesson plan logic
 const LESSON_PLAN_CONFIG = {
@@ -105,7 +112,12 @@ type LessonPlanJSON = {
   markdown?: string;
 };
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+// LESSON PLAN SPECIFIC FUNCTION - Forces unique bundle
+function validateLessonPlanStructure(plan: any): boolean {
+  return !!(plan?.meta?.title && plan?.days?.length && plan?.days[0]?.flow);
+}
 
 function safeParse<T>(text: string): T | null {
   try {
@@ -209,9 +221,9 @@ function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { ok: false, routeId: ROUTE_ID, error: 'Missing OPENAI_API_KEY' },
+        { ok: false, routeId: ROUTE_ID, error: 'Missing ANTHROPIC_API_KEY' },
         { status: 500 },
       );
     }
@@ -219,101 +231,122 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => null)) as GeneratePlanInput | null;
     const input = normalizeInput(body);
 
-    const system =
-      'You are a curriculum designer. Return STRICT JSON with keys: meta, days[], appendixA, markdown. ' +
-      'Include [Teacher Note:] and [Student Note:] in activities. No markdown fences in JSON.';
-
     // Safely join standards with proper null checking
     const standardsString = Array.isArray(input.standards) && input.standards.length > 0
       ? input.standards.join(', ')
       : 'No standards specified';
 
-    const user = `
-Build ${input.days}-day lesson plan:
-- Grade: ${input.gradeLevel}, Subject: ${input.subject}, Topic: ${input.topic}
-- Standards: ${standardsString}, Brand: ${input.brandName}
-- Duration: ${input.durationMinutes} min blocks
-- Include: STEAM, PBL, trauma-informed, MTSS, SEL
-- Structure: Opening, I Do, We Do, You Do Together, You Do Alone, Closing
+    const prompt = `Create a ${input.days}-day lesson plan with the following requirements:
 
-JSON format: {"meta": {...}, "days": [{...}], "appendixA": {...}, "markdown": "..."}
-${input.userPrompt ? `\nNotes: ${input.userPrompt}` : ''}
-`.trim();
+**Context:**
+- Grade Level: ${input.gradeLevel}
+- Subject: ${input.subject}
+- Topic: ${input.topic}
+- Standards: ${standardsString}
+- Brand: ${input.brandName}
+- Block Duration: ${input.durationMinutes} minutes per day
+
+**Framework Requirements:**
+- STEAM integration and Project-Based Learning
+- Trauma-informed care principles
+- MTSS (Multi-Tiered System of Supports) with Tier 1-3 strategies
+- SEL (Social-Emotional Learning) competencies
+- Gradual Release of Responsibility: Opening, I Do, We Do, You Do Together, You Do Alone, Closing
+
+**Output Requirements:**
+Return ONLY a valid JSON object with this exact structure:
+
+{
+  "meta": {
+    "title": "string",
+    "subtitle": "string", 
+    "gradeLevel": "string",
+    "subject": "string",
+    "days": number,
+    "durationMinutes": number,
+    "essentialQuestion": "string",
+    "standards": ["string"]
+  },
+  "days": [
+    {
+      "day": number,
+      "title": "string",
+      "learningTarget": "string", 
+      "essentialQuestion": "string",
+      "standards": ["string"],
+      "flow": {
+        "opening": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
+        "iDo": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
+        "weDo": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
+        "youDoTogether": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
+        "youDoAlone": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
+        "closing": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"}
+      },
+      "mtss": {
+        "tier1": ["string"],
+        "tier2": ["string"], 
+        "tier3": ["string"]
+      },
+      "selCompetencies": ["string"],
+      "regulationRituals": ["string"],
+      "assessment": {
+        "formative": ["string"],
+        "summative": ["string"]
+      },
+      "resources": ["string"]
+    }
+  ],
+  "appendixA": {
+    "namingConvention": "string",
+    "assets": [
+      {
+        "fileName": "string",
+        "type": "image|pdf|docx|sheet|link",
+        "description": "string",
+        "altText": "string",
+        "howToGenerate": "string",
+        "linkPlaceholder": "string",
+        "figure": "string"
+      }
+    ]
+  },
+  "markdown": "string"
+}
+
+**Important Notes:**
+- Each activity must include [Teacher Note:] and [Student Note:] 
+- Balance timing to fit ${input.durationMinutes}-minute blocks
+- Use empowering, trauma-informed language in student notes
+- Include diverse, inclusive examples
+${input.userPrompt ? `\nAdditional Requirements: ${input.userPrompt}` : ''}
+
+Respond with ONLY the JSON object, no additional text or formatting.`;
 
     let plan: LessonPlanJSON | null = null;
     let raw = '';
 
-    // Primary call with timeout handling
+    // Primary call using Claude Haiku (cost-effective and reliable)
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
-      
-      const r = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.35,
-        max_tokens: 3000, // Reduced for faster response
-        response_format: { type: 'json_object' },
+      const response = await client.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 4000,
+        temperature: 0.3,
         messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-      }, {
-        signal: controller.signal,
-      } as any);
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      });
       
-      clearTimeout(timeoutId);
-      raw = r.choices[0]?.message?.content?.trim() || '';
+      raw = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
       plan = safeParse<LessonPlanJSON>(raw);
     } catch (error) {
-      // OpenAI API call failed or timed out, handled by fallback below
+      // Claude API call failed, handled by fallback below
     }
 
     // One repair attempt if model wrapped JSON in prose
     if (!plan && raw) {
       const s = raw.indexOf('{');
       const e = raw.lastIndexOf('}');
-      if (s !== -1 && e !== -1 && e > s) {
-        plan = safeParse<LessonPlanJSON>(raw.slice(s, e + 1));
-      }
-    }
-
-    // Last resort
-    if (!plan) {
-      plan = fallbackPlan(input);
-      plan.markdown =
-        (plan.markdown || '') +
-        `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
-    }
-
-    // Ensure minimal fields exist with proper null checking
-    if (!plan.meta?.title) {
-      plan.meta = plan.meta || ({} as any);
-      plan.meta.title = `${input.subject} — ${input.topic}`;
-    }
-    if (!plan.markdown) {
-      plan.markdown = `# ${plan.meta.title}\n\n${plan.meta.subtitle || ''}\n\n**Grade:** ${
-        plan.meta.gradeLevel
-      } • **Subject:** ${plan.meta.subject} • **Block:** ${
-        plan.meta.durationMinutes
-      } min • **Days:** ${plan.meta.days}\n\n---\n\n${
-        plan.days?.[0]?.flow?.opening?.activity || 'See daily flow in JSON.'
-      }\n`;
-    }
-
-    return NextResponse.json({ ok: true, routeId: ROUTE_ID, plan });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    const safe = fallbackPlan(
-      normalizeInput({
-        subject: 'ELA',
-        topic: 'Citing Textual Evidence',
-        gradeLevel: '10',
-        days: 3,
-      }),
-    );
-    return NextResponse.json(
-      { ok: true, routeId: ROUTE_ID, plan: safe, warning: `Generator error: ${msg}` },
-      { status: 200 },
-    );
-  }
-}
+      if (s !== -
