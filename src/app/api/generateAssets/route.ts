@@ -6,8 +6,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 
-// Assets-specific runtime config
-export const maxDuration = 30;
+// Assets-specific runtime config - increased timeout for OpenAI calls
+export const maxDuration = 60;
 
 // IMPORTANT: Unique constant that is USED in the response so bundlers can't remove it.
 // This prevents Vercel from deduping this function bundle with generatePlan.
@@ -58,42 +58,43 @@ export async function POST(req: NextRequest) {
     const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_SPECIFIC_CONFIG.maxAssets);
 
     const system =
-      'You create concise asset manifests for teachers. Return STRICT JSON with key "assets": Asset[]. ' +
-      'Each asset needs: fileName (snake_case), type (image|pdf|docx|sheet|link), description, altText, and when type=image add dallePrompt.';
+      'Create asset lists for teachers. Return JSON: {"assets": [...]}.';
 
     const user = `
-Create 6–10 assets for a ${days}-day ${subject} unit titled "${topic}" (grade ${gradeLevel}).
-Branding to reflect: ${brandName}.
+Create 6 assets for ${days}-day ${subject} unit "${topic}" (grade ${gradeLevel}, brand: ${brandName}).
 
-Return JSON:
-{
-  "assets": [
-    { "fileName": "unit_cover_poster.png", "type": "image", "description": "...", "altText": "...", "dallePrompt": "..." },
-    { "fileName": "day1_handout.docx", "type": "docx", "description": "...", "altText": "..." }
-  ]
-}
-
-Rules:
-- fileName: snake_case, include extension matching type.
-- dallePrompt: text only; no brackets; vivid but school-appropriate.
-- Keep descriptions short, teacher-facing; altText student-facing.
+JSON: {"assets": [{"fileName": "...", "type": "image|pdf|docx|sheet|link", "description": "...", "altText": "..."}]}
+For images, add "dallePrompt" field.
 `.trim();
 
     const openai = new OpenAI({ apiKey });
 
-    // Ask for strict JSON to minimize repair work.
-    const res = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.4,
-      max_tokens: 1200,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    });
+    // Ask for strict JSON to minimize repair work, with timeout handling
+    let res;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+      
+      res = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.4,
+        max_tokens: 800, // Reduced for faster response
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+      }, {
+        signal: controller.signal,
+      } as any);
+      
+      clearTimeout(timeoutId);
+    } catch (error) {
+      // If OpenAI times out or fails, we'll use the fallback below
+      res = null;
+    }
 
-    const text = res.choices[0]?.message?.content?.trim() ?? '';
+    const text = res?.choices[0]?.message?.content?.trim() ?? '';
     let parsed: AssetsPayload | null = null;
 
     try {
