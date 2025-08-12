@@ -1,4 +1,4 @@
-// src/app/api/generateAssets/route.ts
+// src/app/api/createAssets/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -7,14 +7,14 @@ export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 export const maxDuration = 60;
 
-const ROUTE_ID = 'generateAssets-v4-anthropic-2025-08-12-unique';
+const ROUTE_ID = 'createAssets-v1-anthropic-2025-08-12-unique';
 
 // Assets specific configuration for unique bundling
 const ASSETS_CONFIG = {
   maxAssets: 10,
   supportedTypes: ['image', 'pdf', 'docx', 'sheet', 'link'] as const,
   namingConvention: 'snake_case',
-  generator: 'assets-generator-v4'
+  generator: 'create-assets-generator-v1'
 };
 
 type AssetsInput = {
