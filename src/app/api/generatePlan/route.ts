@@ -122,6 +122,15 @@ Must strictly follow the output contract and structure above. Return only JSON.
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json().catch(() => null)) as GeneratePayload | null;
+    
+    // 🔍 TEMPORARY DEBUG LOGGING - remove after fixing
+    console.log('=== DEBUG: Received request body ===');
+    console.log('Full body:', JSON.stringify(body, null, 2));
+    console.log('gradeLevel:', body?.gradeLevel, 'Type:', typeof body?.gradeLevel);
+    console.log('subjects:', body?.subjects, 'Type:', typeof body?.subjects, 'IsArray:', Array.isArray(body?.subjects));
+    console.log('subjects length:', body?.subjects?.length);
+    console.log('===================================');
+    
     if (!body || !body.gradeLevel || !Array.isArray(body.subjects) || body.subjects.length === 0) {
       return NextResponse.json({ error: 'Missing required fields: gradeLevel and subjects' }, { status: 400 });
     }
