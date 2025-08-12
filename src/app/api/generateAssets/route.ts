@@ -82,7 +82,7 @@ Rules:
       ],
     });
 
-    let text = res.choices[0]?.message?.content?.trim() ?? '';
+    const text = res.choices[0]?.message?.content?.trim() ?? '';
     let parsed: AssetsPayload | null = null;
 
     try {
@@ -162,4 +162,3 @@ Rules:
     );
   }
 }
-
