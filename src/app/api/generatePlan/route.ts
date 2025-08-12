@@ -5,24 +5,16 @@ import Anthropic from '@anthropic-ai/sdk';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
-
-// Lesson plan specific runtime config
 export const maxDuration = 60;
 
-// LESSON PLAN SPECIFIC - Forces unique bundle (internal constant)
-const LESSON_PLAN_METADATA = {
-  name: 'lesson-plan-generator',
-  version: '8.0.0',
-  type: 'educational-content'
-};
+const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12-unique';
 
-const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12';
-
-// Force unique bundle by adding specific lesson plan logic
+// Lesson plan specific configuration for unique bundling
 const LESSON_PLAN_CONFIG = {
   maxDays: 5,
   gradeRanges: ['K-2', '3-5', '6-8', '9-12'],
-  instructionalFrameworks: ['GRR', 'PBL', 'STEAM', 'MTSS', 'CASEL']
+  instructionalFrameworks: ['GRR', 'PBL', 'STEAM', 'MTSS', 'CASEL'],
+  generator: 'lesson-plan-generator-v8'
 };
 
 // Incoming payload (may be partial/optional)
@@ -114,7 +106,7 @@ type LessonPlanJSON = {
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// LESSON PLAN SPECIFIC FUNCTION - Forces unique bundle
+// Lesson plan specific validation function
 function validateLessonPlanStructure(plan: any): boolean {
   return !!(plan?.meta?.title && plan?.days?.length && plan?.days[0]?.flow);
 }
@@ -349,4 +341,58 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
     if (!plan && raw) {
       const s = raw.indexOf('{');
       const e = raw.lastIndexOf('}');
-      if (s !== -
+      if (s !== -1 && e !== -1 && e > s) {
+        plan = safeParse<LessonPlanJSON>(raw.slice(s, e + 1));
+      }
+    }
+
+    // Last resort fallback
+    if (!plan) {
+      plan = fallbackPlan(input);
+      plan.markdown =
+        (plan.markdown || '') +
+        `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
+    }
+
+    // Validate lesson plan structure
+    if (!validateLessonPlanStructure(plan)) {
+      plan = fallbackPlan(input);
+    }
+
+    // Ensure minimal fields exist with proper null checking
+    if (!plan.meta?.title) {
+      plan.meta = plan.meta || ({} as any);
+      plan.meta.title = `${input.subject} — ${input.topic}`;
+    }
+    if (!plan.markdown) {
+      plan.markdown = `# ${plan.meta.title}\n\n${plan.meta.subtitle || ''}\n\n**Grade:** ${
+        plan.meta.gradeLevel
+      } • **Subject:** ${plan.meta.subject} • **Block:** ${
+        plan.meta.durationMinutes
+      } min • **Days:** ${plan.meta.days}\n\n---\n\n${
+        plan.days?.[0]?.flow?.opening?.activity || 'See daily flow in JSON.'
+      }\n`;
+    }
+
+    return NextResponse.json({ 
+      ok: true, 
+      routeId: ROUTE_ID, 
+      plan, 
+      generator: LESSON_PLAN_CONFIG.generator 
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    const safe = fallbackPlan(
+      normalizeInput({
+        subject: 'ELA',
+        topic: 'Citing Textual Evidence',
+        gradeLevel: '10',
+        days: 3,
+      }),
+    );
+    return NextResponse.json(
+      { ok: true, routeId: ROUTE_ID, plan: safe, warning: `Generator error: ${msg}` },
+      { status: 200 },
+    );
+  }
+}
