@@ -5,24 +5,16 @@ import Anthropic from '@anthropic-ai/sdk';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
-
-// Lesson plan specific runtime config
 export const maxDuration = 60;
 
-// LESSON PLAN SPECIFIC - Forces unique bundle
-export const metadata = {
-  name: 'lesson-plan-generator',
-  version: '8.0.0',
-  type: 'educational-content'
-};
+const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12-unique';
 
-const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12';
-
-// Force unique bundle by adding specific lesson plan logic
+// Lesson plan specific configuration for unique bundling
 const LESSON_PLAN_CONFIG = {
   maxDays: 5,
   gradeRanges: ['K-2', '3-5', '6-8', '9-12'],
-  instructionalFrameworks: ['GRR', 'PBL', 'STEAM', 'MTSS', 'CASEL']
+  instructionalFrameworks: ['GRR', 'PBL', 'STEAM', 'MTSS', 'CASEL'],
+  generator: 'lesson-plan-generator-v8'
 };
 
 // Incoming payload (may be partial/optional)
@@ -114,7 +106,7 @@ type LessonPlanJSON = {
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// LESSON PLAN SPECIFIC FUNCTION - Forces unique bundle
+// Lesson plan specific validation function
 function validateLessonPlanStructure(plan: any): boolean {
   return !!(plan?.meta?.title && plan?.days?.length && plan?.days[0]?.flow);
 }
@@ -362,7 +354,7 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
         `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
     }
 
-    // Validate lesson plan structure (unique to lesson plan route)
+    // Validate lesson plan structure
     if (!validateLessonPlanStructure(plan)) {
       plan = fallbackPlan(input);
     }
@@ -382,7 +374,12 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
       }\n`;
     }
 
-    return NextResponse.json({ ok: true, routeId: ROUTE_ID, plan });
+    return NextResponse.json({ 
+      ok: true, 
+      routeId: ROUTE_ID, 
+      plan, 
+      generator: LESSON_PLAN_CONFIG.generator 
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const safe = fallbackPlan(
