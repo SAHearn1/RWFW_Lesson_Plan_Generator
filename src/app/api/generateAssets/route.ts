@@ -1,106 +1,95 @@
+// src/app/api/generateAssets/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 export const runtime = 'nodejs';
+export const preferredRegion = ['pdx1']; // different from generatePlan to avoid dedupe
+const UNIQUE_SALT = 'generateAssets-route-v1';
 
-type AppendixItem = {
-  fileName: string;
-  type?: string;
-  description?: string;
-  altText?: string;
-  figure?: string;
-  link?: string;
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
+
+type AssetItem = {
+  name: string;           // e.g., "RootedInMe_10ELA_RitualGuidebook.pdf"
+  description: string;    // what it is / where used
+  prompt?: string;        // natural language image prompt
+  altText?: string;       // accessibility
+  type?: 'image' | 'pdf' | 'docx' | 'png' | 'jpg';
 };
 
-type Payload = {
-  unitTitle: string;
-  gradeLevel: string;
-  subject: string;
-  appendixA?: AppendixItem[];
+type GenerateAssetsRequest = {
+  planTitle?: string;
+  appendixA?: AssetItem[];          // optional seed list from the plan
+  allowImageGen?: boolean;          // gated by org verification
+  brand?: { org?: string };
 };
-
-function defaultPrompts(item: AppendixItem, unitTitle: string, grade: string, subject: string) {
-  // A reasonable, general DALL·E prompt for instructional visuals
-  const base = `Design a clean, classroom-friendly visual for the "${unitTitle}" unit (${grade}, ${subject}). Use a calming, high-contrast palette and clear labels. Include accessible design and large text.`;
-  const desc = item.description || 'Instructional asset for the lesson.';
-  const alt = item.altText || 'Instructional classroom visual.';
-
-  return {
-    prompt: `${base} Asset intent: ${desc}.`,
-    altText: alt,
-  };
-}
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as Payload | null;
-    if (!body || !body.unitTitle || !body.gradeLevel || !body.subject) {
-      return NextResponse.json({ error: 'Missing required fields: unitTitle, gradeLevel, subject' }, { status: 400 });
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'Missing OPENAI_API_KEY' },
+        { status: 500 }
+      );
     }
 
-    const items = (body.appendixA ?? []).filter((a) => a?.fileName);
+    const body = (await req.json()) as GenerateAssetsRequest;
+    const planTitle = body.planTitle ?? 'Root Work Framework — Lesson';
+    const org = body.brand?.org ?? 'Root Work Framework';
 
-    // If image generation is allowed, try to call OpenAI Images; otherwise return prompts-only
-    const enableImages = process.env.OPENAI_IMAGE_ENABLED === '1';
-    const results: Array<
-      AppendixItem & {
-        image?: { dataUrl?: string; mime?: string };
-        generation?: { prompt: string; model: string; status: 'CREATED' | 'PROMPT_ONLY' | 'FAILED'; error?: string };
-      }
-    > = [];
+    // If image generation is not allowed (or org not verified), return structured TODOs instead of failing.
+    const canGenerateImages = !!body.allowImageGen && !!process.env.OPENAI_API_KEY;
 
-    if (!enableImages) {
-      for (const it of items) {
-        const { prompt, altText } = defaultPrompts(it, body.unitTitle, body.gradeLevel, body.subject);
-        results.push({
-          ...it,
-          altText,
-          generation: { prompt, model: 'gpt-image-1', status: 'PROMPT_ONLY' },
-        });
-      }
-      return NextResponse.json({ assets: results, note: 'Prompts only (image generation disabled).' }, { status: 200 });
+    // Create/augment an assets list using text-only guidance (safe for all org states)
+    const system = `You create a concise asset checklist for a lesson plan, including filenames following the convention:
+{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{ext}
+Each item includes: name, type, description, altText, and an image prompt if type is "image".
+UNIQUE_SALT=${UNIQUE_SALT}`;
+
+    const user = `Plan Title: ${planTitle}
+Org: ${org}
+Return a compact JSON array "assets" with 5–10 items. If an item requires an image, include a strong, accessible prompt and altText.`;
+
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      response_format: { type: 'json_object' },
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() || '{"assets":[]}';
+    let parsed: { assets: AssetItem[] } = { assets: [] };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Fallback to empty list if model response is malformed
     }
 
-    // Try to generate images (may fail if org not verified)
-    const apiKey = process.env.OPENAI_API_KEY || '';
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OPENAI_API_KEY not set.' }, { status: 500 });
-    }
-    const openai = new OpenAI({ apiKey });
-
-    for (const it of items) {
-      const { prompt, altText } = defaultPrompts(it, body.unitTitle, body.gradeLevel, body.subject);
-      try {
-        const img = await openai.images.generate({
-          model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
-          prompt,
-          size: '1024x1024',
-          // You can add style parameters here if needed
-        });
-        const b64 = img.data?.[0]?.b64_json;
-        if (!b64) throw new Error('No image returned');
-        results.push({
-          ...it,
-          altText,
-          image: { dataUrl: `data:image/png;base64,${b64}`, mime: 'image/png' },
-          generation: { prompt, model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1', status: 'CREATED' },
-        });
-      } catch (e: any) {
-        results.push({
-          ...it,
-          altText,
-          generation: {
-            prompt,
-            model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
-            status: 'FAILED',
-            error: e?.message || 'Image generation failed (likely org not verified)',
-          },
-        });
-      }
+    // If we can't call image models, mark each image with a note to generate later.
+    if (!canGenerateImages) {
+      const annotated = (parsed.assets ?? []).map((a) =>
+        a.type === 'image'
+          ? {
+              ...a,
+              note:
+                'Image not auto-generated (org not verified for image models). Use the prompt to generate later in the Visuals tab.',
+            }
+          : a
+      );
+      return NextResponse.json({ ok: true, assets: annotated, generated: false }, { status: 200 });
     }
 
-    return NextResponse.json({ assets: results }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || 'Asset generation failed' }, { status: 500 });
+    // (Optional) If you later enable image gen, you can loop prompts here and call images.generate
+    // Keeping out actual calls to avoid 403s until org is verified.
+
+    return NextResponse.json({ ok: true, assets: parsed.assets ?? [], generated: false }, { status: 200 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
