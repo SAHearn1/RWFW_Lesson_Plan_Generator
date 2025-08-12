@@ -1,24 +1,20 @@
 // src/app/api/generateAssets/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
-
-// Assets-specific runtime config - increased timeout for OpenAI calls
 export const maxDuration = 60;
 
-// IMPORTANT: Unique constant that is USED in the response so bundlers can't remove it.
-// This prevents Vercel from deduping this function bundle with generatePlan.
-const ROUTE_ID = 'generateAssets-v3-2025-08-12';
+const ROUTE_ID = 'generateAssets-v4-anthropic-2025-08-12-unique';
 
-// Force unique bundle by adding specific asset-only logic
-const ASSET_TYPES = ['image', 'pdf', 'docx', 'sheet', 'link'] as const;
-const ASSETS_SPECIFIC_CONFIG = {
+// Assets specific configuration for unique bundling
+const ASSETS_CONFIG = {
   maxAssets: 10,
-  requiredTypes: ASSET_TYPES,
-  assetNamingConvention: 'snake_case'
+  supportedTypes: ['image', 'pdf', 'docx', 'sheet', 'link'] as const,
+  namingConvention: 'snake_case',
+  generator: 'assets-generator-v4'
 };
 
 type AssetsInput = {
@@ -40,12 +36,18 @@ type Asset = {
 
 type AssetsPayload = { assets: Asset[] };
 
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+// Assets specific validation function
+function validateAssetStructure(assets: any[]): boolean {
+  return assets?.every(asset => asset?.fileName && asset?.type && asset?.description);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { ok: false, routeId: ROUTE_ID, error: 'Missing OPENAI_API_KEY' },
+        { ok: false, routeId: ROUTE_ID, error: 'Missing ANTHROPIC_API_KEY' },
         { status: 500 }
       );
     }
@@ -55,61 +57,64 @@ export async function POST(req: NextRequest) {
     const subject = body.subject ?? 'STEAM';
     const gradeLevel = body.gradeLevel ?? '6–8';
     const brandName = body.brandName ?? 'Root Work Framework';
-    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_SPECIFIC_CONFIG.maxAssets);
+    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_CONFIG.maxAssets);
 
-    const system =
-      'Create asset lists for teachers. Return JSON: {"assets": [...]}.';
+    const prompt = `Create a list of 6-8 educational assets for a ${days}-day ${subject} unit titled "${topic}" for grade ${gradeLevel}.
 
-    const user = `
-Create 6 assets for ${days}-day ${subject} unit "${topic}" (grade ${gradeLevel}, brand: ${brandName}).
+The assets should reflect the ${brandName} approach and include a variety of types: images, PDFs, documents, spreadsheets, and links.
 
-JSON: {"assets": [{"fileName": "...", "type": "image|pdf|docx|sheet|link", "description": "...", "altText": "..."}]}
-For images, add "dallePrompt" field.
-`.trim();
+**Requirements:**
+- fileName: Use snake_case naming with appropriate file extensions
+- type: Must be one of: "image", "pdf", "docx", "sheet", "link"
+- description: Brief, teacher-facing description of the asset's purpose
+- altText: Student-friendly description for accessibility
+- For images: Include a "dallePrompt" field with a description for AI image generation (school-appropriate, vivid but educational)
 
-    const openai = new OpenAI({ apiKey });
+**Output Format:**
+Return ONLY a valid JSON object with this exact structure:
 
-    // Ask for strict JSON to minimize repair work, with timeout handling
-    let res;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
-      
-      res = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.4,
-        max_tokens: 800, // Reduced for faster response
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-      }, {
-        signal: controller.signal,
-      } as any);
-      
-      clearTimeout(timeoutId);
-    } catch (error) {
-      // If OpenAI times out or fails, we'll use the fallback below
-      res = null;
+{
+  "assets": [
+    {
+      "fileName": "unit_cover_poster.png",
+      "type": "image",
+      "description": "Cover poster for unit display and presentations",
+      "altText": "Colorful poster showing ${topic} theme",
+      "dallePrompt": "Educational poster about ${topic}, grade ${gradeLevel}, colorful, inclusive classroom, modern design, student-friendly"
+    },
+    {
+      "fileName": "day1_handout.docx",
+      "type": "docx", 
+      "description": "Student handout for Day 1 activities",
+      "altText": "Day 1 student worksheet"
     }
+  ]
+}
 
-    const text = res?.choices[0]?.message?.content?.trim() ?? '';
+Create diverse, practical assets that teachers can actually use. Include at least one image, one document, one PDF, and consider including links to relevant resources.
+
+Respond with ONLY the JSON object, no additional text.`;
+
     let parsed: AssetsPayload | null = null;
 
     try {
+      const response = await client.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 1500,
+        temperature: 0.4,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      });
+      
+      const text = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
       parsed = JSON.parse(text) as AssetsPayload;
-    } catch {
-      // quick repair if the model wrapped JSON in prose
-      const s = text.indexOf('{');
-      const e = text.lastIndexOf('}');
-      if (s !== -1 && e !== -1 && e > s) {
-        try {
-          parsed = JSON.parse(text.slice(s, e + 1)) as AssetsPayload;
-        } catch {
-          // ignore; fallback below
-        }
-      }
+    } catch (error) {
+      // If Claude fails or returns invalid JSON, we'll use the fallback below
+      parsed = null;
     }
 
     if (!parsed?.assets?.length) {
@@ -151,13 +156,23 @@ For images, add "dallePrompt" field.
       };
     }
 
-    // Use ROUTE_ID in the response so the bundler keeps this code unique.
-    return NextResponse.json({ ok: true, routeId: ROUTE_ID, ...parsed });
+    // Validate asset structure
+    if (!validateAssetStructure(parsed.assets)) {
+      parsed = { assets: [] };
+    }
+
+    return NextResponse.json({ 
+      ok: true, 
+      routeId: ROUTE_ID, 
+      generator: ASSETS_CONFIG.generator,
+      ...parsed 
+    });
   } catch (err) {
     return NextResponse.json(
       {
         ok: true,
         routeId: ROUTE_ID,
+        generator: ASSETS_CONFIG.generator,
         assets: [
           {
             fileName: 'fallback_cover.png',
