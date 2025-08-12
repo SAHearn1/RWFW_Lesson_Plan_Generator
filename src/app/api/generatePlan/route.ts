@@ -6,7 +6,17 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 
+// Lesson plan specific runtime config  
+export const maxDuration = 45;
+
 const ROUTE_ID = 'generatePlan-v7-2025-08-12';
+
+// Force unique bundle by adding specific lesson plan logic
+const LESSON_PLAN_CONFIG = {
+  maxDays: 5,
+  gradeRanges: ['K-2', '3-5', '6-8', '9-12'],
+  instructionalFrameworks: ['GRR', 'PBL', 'STEAM', 'MTSS', 'CASEL']
+};
 
 // Incoming payload (may be partial/optional)
 type GeneratePlanInput = {
@@ -106,7 +116,7 @@ function safeParse<T>(text: string): T | null {
 }
 
 function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
-  const days = Math.min(Math.max(body?.days ?? 3, 1), 5);
+  const days = Math.min(Math.max(body?.days ?? 3, 1), LESSON_PLAN_CONFIG.maxDays);
   
   // Ensure standards is always a valid array
   const standards = body?.standards && Array.isArray(body.standards) && body.standards.length > 0
