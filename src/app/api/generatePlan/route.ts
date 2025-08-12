@@ -6,23 +6,40 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
 
-const ROUTE_ID = 'generatePlan-v6-2025-08-12';
+const ROUTE_ID = 'generatePlan-v7-2025-08-12';
 
+// Incoming payload (may be partial/optional)
 type GeneratePlanInput = {
-  // minimal fields the UI might send
   gradeLevel?: string;
   subject?: string;
-  durationMinutes?: number; // default 90
+  durationMinutes?: number;
   topic?: string;
   standards?: string[];
-  days?: number; // 3-5
-  // optional: branding and switches
-  brandName?: string; // e.g., Root Work Framework
+  days?: number;
+
+  brandName?: string;
   includeAppendix?: boolean;
   includeRubrics?: boolean;
   includeAssetsDirectory?: boolean;
-  // raw freeform prompt from user, optional
+
   userPrompt?: string;
+};
+
+// Fully normalized, non-optional version (safe to use everywhere)
+type NormalizedInput = {
+  gradeLevel: string;
+  subject: string;
+  durationMinutes: number;
+  topic: string;
+  standards: string[];
+  days: number;
+
+  brandName: string;
+  includeAppendix: boolean;
+  includeRubrics: boolean;
+  includeAssetsDirectory: boolean;
+
+  userPrompt: string;
 };
 
 type LessonPlanJSON = {
@@ -75,13 +92,11 @@ type LessonPlanJSON = {
     }>;
     namingConvention: string;
   };
-  // branded, teacher-facing HTML/MD we can show/print
   markdown?: string;
 };
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
-// Small safety net JSON parser
 function safeParse<T>(text: string): T | null {
   try {
     return JSON.parse(text) as T;
@@ -90,17 +105,30 @@ function safeParse<T>(text: string): T | null {
   }
 }
 
-// Minimal, “can’t fail” fallback so UI never shows empty
-function fallbackPlan(input: GeneratePlanInput): LessonPlanJSON {
-  const grade = input.gradeLevel || '10';
-  const subject = input.subject || 'ELA';
-  const days = Math.min(Math.max(input.days ?? 3, 1), 5);
-  const duration = input.durationMinutes ?? 90;
-  const topic = input.topic || 'Citing Textual Evidence';
-  const standards = input.standards?.length ? input.standards : ['CCSS.ELA-LITERACY.RI.9-10.1'];
+function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
+  const days = Math.min(Math.max(body?.days ?? 3, 1), 5);
+  return {
+    gradeLevel: body?.gradeLevel ?? '10',
+    subject: body?.subject ?? 'ELA',
+    durationMinutes: body?.durationMinutes ?? 90,
+    topic: body?.topic ?? 'Citing Textual Evidence to Support a Claim',
+    standards:
+      body?.standards && body.standards.length
+        ? body.standards
+        : ['CCSS.ELA-LITERACY.RI.9-10.1'],
+    days,
+    brandName: body?.brandName ?? 'Root Work Framework',
+    includeAppendix: body?.includeAppendix ?? true,
+    includeRubrics: body?.includeRubrics ?? true,
+    includeAssetsDirectory: body?.includeAssetsDirectory ?? true,
+    userPrompt: body?.userPrompt ?? '',
+  };
+}
 
+// Guaranteed non-empty plan if model fails
+function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
   const mkStep = (label: string) => ({
-    minutes: 15,
+    minutes: Math.round(input.durationMinutes / 6),
     activity: `${label}: See teacher script and student-facing directions.`,
     teacherNote:
       '[Teacher Note: Keep directions brief; offer options; monitor regulation; normalize help-seeking.]',
@@ -110,10 +138,10 @@ function fallbackPlan(input: GeneratePlanInput): LessonPlanJSON {
 
   const dayBlock = (day: number) => ({
     day,
-    title: `${topic} — Day ${day}`,
+    title: `${input.topic} — Day ${day}`,
     learningTarget: 'I can cite and explain textual evidence that supports a claim.',
     essentialQuestion: 'How do we choose evidence that truly supports our claim?',
-    standards,
+    standards: input.standards,
     flow: {
       opening: mkStep('Opening'),
       iDo: mkStep('I Do'),
@@ -135,16 +163,16 @@ function fallbackPlan(input: GeneratePlanInput): LessonPlanJSON {
 
   const plan: LessonPlanJSON = {
     meta: {
-      title: `${subject} — ${topic}`,
+      title: `${input.subject} — ${input.topic}`,
       subtitle: 'S.T.E.A.M. Powered, Trauma Informed, Project-Based',
-      gradeLevel: grade,
-      subject,
-      days,
-      durationMinutes: duration,
+      gradeLevel: input.gradeLevel,
+      subject: input.subject,
+      days: input.days,
+      durationMinutes: input.durationMinutes,
       essentialQuestion: 'How can we design learning that heals, includes, and empowers?',
-      standards,
+      standards: input.standards,
     },
-    days: Array.from({ length: days }, (_, i) => dayBlock(i + 1)),
+    days: Array.from({ length: input.days }, (_, i) => dayBlock(i + 1)),
     appendixA: {
       namingConvention:
         '{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}',
@@ -175,26 +203,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = (await req.json()) as GeneratePlanInput | null;
+    const body = (await req.json().catch(() => null)) as GeneratePlanInput | null;
+    const input = normalizeInput(body);
 
-    const input: GeneratePlanInput = {
-      gradeLevel: body?.gradeLevel ?? '10',
-      subject: body?.subject ?? 'ELA',
-      durationMinutes: body?.durationMinutes ?? 90,
-      topic: body?.topic ?? 'Citing Textual Evidence to Support a Claim',
-      standards:
-        body?.standards && body.standards.length
-          ? body.standards
-          : ['CCSS.ELA-LITERACY.RI.9-10.1'],
-      days: Math.min(Math.max(body?.days ?? 3, 1), 5),
-      brandName: body?.brandName ?? 'Root Work Framework',
-      includeAppendix: body?.includeAppendix ?? true,
-      includeRubrics: body?.includeRubrics ?? true,
-      includeAssetsDirectory: body?.includeAssetsDirectory ?? true,
-      userPrompt: body?.userPrompt ?? '',
-    };
-
-    // Concise master prompt tuned for JSON_OBJECT return
     const system =
       'You are a senior curriculum designer (PBL, STEAM, Trauma-Informed, GRR, MTSS, CASEL). ' +
       'Return STRICT JSON with keys: meta, days[], appendixA, markdown. ' +
@@ -248,7 +259,7 @@ OUTPUT SHAPE (JSON OBJECT):
     "namingConvention": string,
     "assets": [{ "fileName": string, "type": "image"|"pdf"|"docx"|"sheet"|"link", "description": string, "altText": string, "howToGenerate": string, "linkPlaceholder": string, "figure": string }]
   },
-  "markdown": string  // branded teacher-facing printable markdown
+  "markdown": string
 }
 
 Constraints:
@@ -259,10 +270,10 @@ Constraints:
 ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
 `.trim();
 
-    // Ask model to return strict JSON
     let plan: LessonPlanJSON | null = null;
-    let modelContent = '';
+    let raw = '';
 
+    // Primary call
     try {
       const r = await client.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -274,41 +285,35 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
           { role: 'user', content: user },
         ],
       });
-
-      modelContent = r.choices[0]?.message?.content?.trim() || '';
-      plan = safeParse<LessonPlanJSON>(modelContent);
-    } catch (_) {
-      // swallow; will try fallback path below
+      raw = r.choices[0]?.message?.content?.trim() || '';
+      plan = safeParse<LessonPlanJSON>(raw);
+    } catch {
+      // handled by fallback below
     }
 
-    // If empty or invalid, try a tiny repair pass once
-    if (!plan) {
-      if (modelContent) {
-        // try to extract JSON substring if model added prose
-        const start = modelContent.indexOf('{');
-        const end = modelContent.lastIndexOf('}');
-        if (start !== -1 && end !== -1 && end > start) {
-          plan = safeParse<LessonPlanJSON>(modelContent.slice(start, end + 1));
-        }
+    // One repair attempt if model wrapped JSON in prose
+    if (!plan && raw) {
+      const s = raw.indexOf('{');
+      const e = raw.lastIndexOf('}');
+      if (s !== -1 && e !== -1 && e > s) {
+        plan = safeParse<LessonPlanJSON>(raw.slice(s, e + 1));
       }
     }
 
-    // Final fallback (guaranteed non-empty)
+    // Last resort
     if (!plan) {
       plan = fallbackPlan(input);
-      // attach small debug so UI can show a banner if desired
       plan.markdown =
         (plan.markdown || '') +
         `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
     }
 
-    // Ensure minimal required fields present
+    // Ensure minimal fields exist
     if (!plan.meta?.title) {
       plan.meta = plan.meta || ({} as any);
       plan.meta.title = `${input.subject} — ${input.topic}`;
     }
     if (!plan.markdown) {
-      // quick branded markdown for print/preview
       plan.markdown = `# ${plan.meta.title}\n\n${plan.meta.subtitle || ''}\n\n**Grade:** ${
         plan.meta.gradeLevel
       } • **Subject:** ${plan.meta.subject} • **Block:** ${
@@ -318,21 +323,17 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
       }\n`;
     }
 
-    // Return both machine JSON and printable markdown in one payload
-    return NextResponse.json({
-      ok: true,
-      routeId: ROUTE_ID,
-      plan,
-    });
+    return NextResponse.json({ ok: true, routeId: ROUTE_ID, plan });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    // Still return a fallback so UI can proceed
-    const safe = fallbackPlan({
-      subject: 'ELA',
-      topic: 'Citing Textual Evidence',
-      gradeLevel: '10',
-      days: 3,
-    });
+    const safe = fallbackPlan(
+      normalizeInput({
+        subject: 'ELA',
+        topic: 'Citing Textual Evidence',
+        gradeLevel: '10',
+        days: 3,
+      }),
+    );
     return NextResponse.json(
       { ok: true, routeId: ROUTE_ID, plan: safe, warning: `Generator error: ${msg}` },
       { status: 200 },
