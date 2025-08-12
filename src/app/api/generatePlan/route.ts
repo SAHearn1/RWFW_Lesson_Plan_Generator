@@ -9,6 +9,13 @@ export const preferredRegion = ['iad1'];
 // Lesson plan specific runtime config
 export const maxDuration = 60;
 
+// LESSON PLAN SPECIFIC - Forces unique bundle
+export const metadata = {
+  name: 'lesson-plan-generator',
+  version: '8.0.0',
+  type: 'educational-content'
+};
+
 const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12';
 
 // Force unique bundle by adding specific lesson plan logic
@@ -106,6 +113,11 @@ type LessonPlanJSON = {
 };
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+// LESSON PLAN SPECIFIC FUNCTION - Forces unique bundle
+function validateLessonPlanStructure(plan: any): boolean {
+  return !!(plan?.meta?.title && plan?.days?.length && plan?.days[0]?.flow);
+}
 
 function safeParse<T>(text: string): T | null {
   try {
@@ -348,6 +360,11 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
       plan.markdown =
         (plan.markdown || '') +
         `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
+    }
+
+    // Validate lesson plan structure (unique to lesson plan route)
+    if (!validateLessonPlanStructure(plan)) {
+      plan = fallbackPlan(input);
     }
 
     // Ensure minimal fields exist with proper null checking
