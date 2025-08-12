@@ -1,211 +1,87 @@
+// src/app/api/generatePlan/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 export const runtime = 'nodejs';
+export const preferredRegion = ['iad1']; // unique per route to avoid dedupe
+const UNIQUE_SALT = 'generatePlan-route-v1';
 
-type GeneratePayload = {
-  gradeLevel: string;
-  subjects: string[];
-  duration: string | number;
-  unitTitle?: string;
-  standards?: string;
-  focus?: string;
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
+
+type GeneratePlanRequest = {
+  gradeLevel?: string;
+  subject?: string;
+  durationMinutes?: number;
+  topic?: string;
+  mode?: 'Full Unit' | 'Single Lesson' | 'Project Only' | 'Student-Facing Task Only' | 'Diagnostic/Exit Activity';
+  // You can add other knobs here as needed
 };
-
-type LessonPlanData = {
-  meta: {
-    unitTitle: string;
-    gradeLevel: string;
-    subjects: string[];
-    durationDays: number;
-  };
-  days: Array<{ dayNumber: number; title: string }>;
-  appendixA?: Array<{
-    fileName: string;
-    type?: string;
-    description?: string;
-    altText?: string;
-    figure?: string;
-    link?: string;
-  }>;
-};
-
-function coerceNumber(n: string | number, fallback = 3) {
-  const num = typeof n === 'string' ? parseInt(n, 10) : n;
-  return Number.isFinite(num) && num > 0 ? (num as number) : fallback;
-}
-
-function makeSystemPrompt() {
-  return `
-You are an expert curriculum designer (20+ yrs) specializing in: K–12, SPED, PBL, STEAM, Living Learning Labs, trauma-informed care, CASEL SEL, MTSS, GRR. You know the Root Work Framework (healing-centered, culturally responsive) and embed it naturally (no labels).
-
-MANDATORY OUTPUT CONTRACT
-- Return ONLY valid JSON (no extra text, no code fences).
-- JSON shape:
-{
-  "lessonPlan": <see schema below>,
-  "markdown": {
-    "teacher": "Full teacher-facing Markdown",
-    "student": "Full student-facing Markdown"
-  }
-}
-
-"lessonPlan" schema:
-{
-  "meta": {
-    "unitTitle": string,
-    "gradeLevel": string,
-    "subjects": string[],
-    "durationDays": number
-  },
-  "days": [
-    { "dayNumber": number, "title": string }
-  ],
-  "appendixA": [
-    {
-      "fileName": string,               // Respect naming convention
-      "type": "image|pdf|docx|sheet|link|other",
-      "description": string,
-      "altText": string,
-      "figure": "Figure X",
-      "link": "[Insert link here]"
-    }
-  ]
-}
-
-TEACHER/STUDENT NOTES PROTOCOL (must appear after EVERY activity in Markdown):
-- [Teacher Note: ...] (1–3 sentences; rationale, trauma-informed facilitation, differentiation, assessment, Rootwork tie-in)
-- [Student Note: ...] (1–2 sentences; coaching voice, self-advocacy, regulation)
-
-STRUCTURE PER DAY (both Teacher and Student markdown must include all):
-- Header: Day #, Lesson Title, Essential Question, Learning Target, Standards
-- Structured Flow with GRR:
-  Opening (X min)
-  I Do: Direct Instruction (X min)
-  We Do: Collaborative (X min)
-  You Do Together (X min)
-  You Do Alone (X min)
-  Closing (X min)
-- For each step: include [Teacher Note:] and [Student Note:] before MTSS.
-- Include: Student-facing instructions/scaffolds, Facilitator modeling, MTSS tiers, SEL competencies, Regulation rituals, Choice options, Multimedia placeholders, Assessment, Reflection/peer feedback.
-- End with "Appendix A: Resource and Visual Asset Directory" with named assets following the standard naming convention:
-  {LessonCode}_{GradeLevel}{SubjectAbbrev}_{DescriptiveTitle}.{ext}
-  e.g., RootedInMe_10ELA_RitualGuidebook.pdf
-
-QUALITY PASS:
-- Ensure EVERY component has both notes in the specified format.
-- Use warm, precise, professional tone. No filler. No external links unless explicitly marked as [Insert link here].
-- Assume 90-minute blocks unless told otherwise.
-`.trim();
-}
-
-function makeUserPrompt(p: GeneratePayload) {
-  const days = coerceNumber(p.duration, 3);
-  const unit = p.unitTitle?.trim() || 'Rooted in Me: Exploring Culture, Identity, and Expression';
-  const standards = p.standards?.trim() || 'Align to relevant state/CCSS/NGSS and CASEL SEL standards.';
-  const focus = p.focus?.trim() || 'Include trauma-informed supports, regulation rituals, and equity-centered scaffolds.';
-  const subj = p.subjects?.join(', ');
-
-  return `
-Generate a ${days}-day, ready-to-teach STEAM/PBL Root Work Framework lesson for:
-
-Grade Level: ${p.gradeLevel}
-Subjects: ${subj}
-Unit Title: ${unit}
-Standards/Input: ${standards}
-Additional Focus Areas: ${focus}
-
-Must strictly follow the output contract and structure above. Return only JSON.
-`.trim();
-}
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as GeneratePayload | null;
-    
-    // 🔍 TEMPORARY DEBUG LOGGING - remove after fixing
-    console.log('=== DEBUG: Received request body ===');
-    console.log('Full body:', JSON.stringify(body, null, 2));
-    console.log('gradeLevel:', body?.gradeLevel, 'Type:', typeof body?.gradeLevel);
-    console.log('subjects:', body?.subjects, 'Type:', typeof body?.subjects, 'IsArray:', Array.isArray(body?.subjects));
-    console.log('subjects length:', body?.subjects?.length);
-    console.log('===================================');
-    
-    if (!body || !body.gradeLevel || !Array.isArray(body.subjects) || body.subjects.length === 0) {
-      return NextResponse.json({ error: 'Missing required fields: gradeLevel and subjects' }, { status: 400 });
-    }
-
-    const system = makeSystemPrompt();
-    const user = makeUserPrompt(body);
-
-    const apiKey = process.env.OPENAI_API_KEY || '';
-    if (!apiKey) {
+    if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: 'OPENAI_API_KEY is not set on the server.' },
-        { status: 500 },
+        { error: 'Missing OPENAI_API_KEY' },
+        { status: 500 }
       );
     }
 
-    const openai = new OpenAI({ apiKey });
+    const body = (await req.json()) as GeneratePlanRequest;
 
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    const completion = await openai.chat.completions.create({
-      model,
-      temperature: 0.5,
+    // Minimal guardrails
+    const grade = body.gradeLevel ?? '10';
+    const subject = body.subject ?? 'ELA';
+    const topic = body.topic ?? 'Citing textual evidence to support a claim';
+    const duration = body.durationMinutes ?? 90;
+    const mode = body.mode ?? 'Single Lesson';
+
+    // Tight, self-contained prompt (you can swap in your master prompt if desired)
+    const system = `You are an expert curriculum designer (20+ yrs) specializing in K–12, PBL, STEAM, Trauma-Informed Care, SEL (CASEL), MTSS, and Gradual Release of Responsibility. 
+Return JSON with a top-level "schemaVersion", "title", "branding", "days" (array), and an "appendixA". 
+Every lesson section MUST include both [Teacher Note:] and [Student Note:] lines right after the activity text. 
+Assume 90 minutes unless provided. 
+UNIQUE_SALT=${UNIQUE_SALT}`;
+
+    const user = `Build a ${mode} lesson for Grade ${grade} ${subject} on "${topic}" in ${duration} minutes. 
+Follow this daily flow exactly: Opening, I Do, We Do, You Do Together, You Do Alone, Closing.
+Include: standards, essential question, learning target, SEL competencies, MTSS supports (Tier 1–3), regulation rituals, projects/choice, and Appendix A resource list. 
+Return strict JSON only (no markdown).`;
+
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.4,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },
       ],
+      response_format: { type: 'json_object' },
     });
 
-    const raw = completion.choices?.[0]?.message?.content || '';
+    const raw = completion.choices[0]?.message?.content?.trim() || '{}';
 
-    // Strip code fences if present
-    const cleaned = raw.replace(/^\s*```(json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-
-    let parsed: any = null;
+    // Validate JSON quickly; if invalid, wrap as error
+    let json: unknown;
     try {
-      parsed = JSON.parse(cleaned);
+      json = JSON.parse(raw);
     } catch {
-      // Try to salvage JSON between first "{" and last "}"
-      const first = cleaned.indexOf('{');
-      const last = cleaned.lastIndexOf('}');
-      if (first >= 0 && last > first) {
-        const candidate = cleaned.slice(first, last + 1);
-        parsed = JSON.parse(candidate);
-      } else {
-        throw new Error('Model did not return valid JSON.');
-      }
+      return NextResponse.json(
+        { error: 'Model did not return valid JSON', raw },
+        { status: 502 }
+      );
     }
 
-    // Coerce minimal shape
-    const lp: LessonPlanData = {
-      meta: {
-        unitTitle: parsed?.lessonPlan?.meta?.unitTitle || body.unitTitle || 'Root Work Lesson',
-        gradeLevel: parsed?.lessonPlan?.meta?.gradeLevel || body.gradeLevel,
-        subjects: parsed?.lessonPlan?.meta?.subjects || body.subjects,
-        durationDays: coerceNumber(parsed?.lessonPlan?.meta?.durationDays || body.duration || 3),
-      },
-      days: Array.isArray(parsed?.lessonPlan?.days) ? parsed.lessonPlan.days : [],
-      appendixA: Array.isArray(parsed?.lessonPlan?.appendixA) ? parsed.lessonPlan.appendixA : [],
-    };
-
-    const teacherMd: string = parsed?.markdown?.teacher || '';
-    const studentMd: string = parsed?.markdown?.student || '';
-
+    // Return JSON to the UI; the UI renders Teacher/Student/Print tabs, etc.
     return NextResponse.json(
       {
-        lessonPlan: lp,
-        markdown: { teacher: teacherMd, student: studentMd },
+        ok: true,
+        plan: json,
       },
-      { status: 200 },
+      { status: 200 }
     );
-  } catch (err: any) {
-    // eslint-disable-next-line no-console
-    console.error('generatePlan error:', err);
-    return NextResponse.json(
-      { error: err?.message || 'Server error' },
-      { status: 500 },
-    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
