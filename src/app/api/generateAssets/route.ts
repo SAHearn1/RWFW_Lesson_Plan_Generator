@@ -9,8 +9,8 @@ export const preferredRegion = ['iad1'];
 // Assets-specific runtime config
 export const maxDuration = 60;
 
-// ASSETS SPECIFIC - Forces unique bundle  
-export const metadata = {
+// ASSETS SPECIFIC - Forces unique bundle (internal constant)
+const ASSETS_METADATA = {
   name: 'assets-generator',
   version: '4.0.0',
   type: 'asset-manifest'
@@ -173,7 +173,7 @@ Respond with ONLY the JSON object, no additional text.`;
     }
 
     // Use ROUTE_ID in the response so the bundler keeps this code unique.
-    return NextResponse.json({ ok: true, routeId: ROUTE_ID, ...parsed });
+    return NextResponse.json({ ok: true, routeId: ROUTE_ID, generator: ASSETS_METADATA.name, ...parsed });
   } catch (err) {
     return NextResponse.json(
       {
