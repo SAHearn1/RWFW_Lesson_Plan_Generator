@@ -52,27 +52,22 @@ export default function HomePage() {
     if (!gradeLevel) return setError('Please select a grade level.');
     if (subjects.length === 0) return setError('Please select at least one subject.');
 
-    // Build the structured prompt (shortened here; your API route already carries the master prompt)
-    const prompt = `
-You are an expert curriculum designer. Generate a 3–5 day lesson using the Root Work Framework.
-Grade Level: ${gradeLevel}
-Subjects: ${subjects.join(', ')}
-Duration: ${duration} day(s)
-Unit Title: ${unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression'}
-Standards Input: ${standards || 'Please align with relevant standards (CCSS/NGSS/etc.)'}
-Additional Focus: ${focus || 'None specified'}
-Format: Clean Markdown. Include the mandatory [Teacher Note:] and [Student Note:] after each component (Opening, I Do, We Do, You Do Together, You Do Alone, Closing). Include Appendix A as an asset directory with filenames using the required naming convention.
-    `.trim();
+    // Build the correct payload format that matches your API expectations
+    const payload = {
+      gradeLevel,
+      subjects,
+      duration: parseInt(duration, 10), // Convert to number
+      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
+      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
+      focus: focus || 'None specified'
+    };
 
     try {
       setIsLoading(true);
       const res = await fetch('/api/generatePlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          meta: { gradeLevel, subjects, duration, unitTitle },
-        }),
+        body: JSON.stringify(payload), // Send the structured data, not a text prompt
       });
 
       if (!res.ok) {
@@ -80,12 +75,19 @@ Format: Clean Markdown. Include the mandatory [Teacher Note:] and [Student Note:
         throw new Error(txt || `HTTP ${res.status}`);
       }
 
-      const data = (await res.json()) as { lessonPlan?: string; error?: string };
-      if (!data?.lessonPlan) {
+      const data = (await res.json()) as { 
+        lessonPlan?: any; 
+        markdown?: { teacher: string; student: string }; 
+        error?: string 
+      };
+
+      // Handle the response format from your API
+      const teacherMarkdown = data?.markdown?.teacher || '';
+      if (!teacherMarkdown) {
         throw new Error(data?.error || 'Empty response from generator');
       }
 
-      setLessonPlan(data.lessonPlan);
+      setLessonPlan(teacherMarkdown);
       setTab('results');
       setViewer('teacher');
     } catch (err: any) {
@@ -141,7 +143,7 @@ Format: Clean Markdown. Include the mandatory [Teacher Note:] and [Student Note:
         const txt = await res.text().catch(() => '');
         throw new Error(txt || `HTTP ${res.status}`);
       }
-      // We don’t need to parse the payload here; the API can inject asset links back into Appendix A
+      // We don't need to parse the payload here; the API can inject asset links back into Appendix A
       // or return a summary. If you return updated markdown, uncomment below:
       // const data = await res.json();
       // if (data?.markdown) setLessonPlan(data.markdown);
