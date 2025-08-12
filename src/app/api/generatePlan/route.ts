@@ -296,8 +296,7 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
       raw = r.choices[0]?.message?.content?.trim() || '';
       plan = safeParse<LessonPlanJSON>(raw);
     } catch (error) {
-      console.error('OpenAI API call failed:', error);
-      // handled by fallback below
+      // OpenAI API call failed, handled by fallback below
     }
 
     // One repair attempt if model wrapped JSON in prose
@@ -334,7 +333,6 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
 
     return NextResponse.json({ ok: true, routeId: ROUTE_ID, plan });
   } catch (err) {
-    console.error('Route error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const safe = fallbackPlan(
       normalizeInput({
