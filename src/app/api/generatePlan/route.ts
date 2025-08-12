@@ -136,7 +136,7 @@ function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
     teacherNote:
       '[Teacher Note: Keep directions brief; offer options; monitor regulation; normalize help-seeking.]',
     studentNote:
-      '[Student Note: You've got this. Ask for clarity, choose a strategy, and pace yourself.]',
+      '[Student Note: You have got this. Ask for clarity, choose a strategy, and pace yourself.]',
   });
 
   const dayBlock = (day: number) => ({
