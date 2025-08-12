@@ -107,15 +107,18 @@ function safeParse<T>(text: string): T | null {
 
 function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
   const days = Math.min(Math.max(body?.days ?? 3, 1), 5);
+  
+  // Ensure standards is always a valid array
+  const standards = body?.standards && Array.isArray(body.standards) && body.standards.length > 0
+    ? body.standards
+    : ['CCSS.ELA-LITERACY.RI.9-10.1'];
+  
   return {
     gradeLevel: body?.gradeLevel ?? '10',
     subject: body?.subject ?? 'ELA',
     durationMinutes: body?.durationMinutes ?? 90,
     topic: body?.topic ?? 'Citing Textual Evidence to Support a Claim',
-    standards:
-      body?.standards && body.standards.length
-        ? body.standards
-        : ['CCSS.ELA-LITERACY.RI.9-10.1'],
+    standards,
     days,
     brandName: body?.brandName ?? 'Root Work Framework',
     includeAppendix: body?.includeAppendix ?? true,
@@ -133,7 +136,7 @@ function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
     teacherNote:
       '[Teacher Note: Keep directions brief; offer options; monitor regulation; normalize help-seeking.]',
     studentNote:
-      '[Student Note: You’ve got this. Ask for clarity, choose a strategy, and pace yourself.]',
+      '[Student Note: You've got this. Ask for clarity, choose a strategy, and pace yourself.]',
   });
 
   const dayBlock = (day: number) => ({
@@ -212,6 +215,11 @@ export async function POST(req: NextRequest) {
       'Every major component MUST include [Teacher Note:] and [Student Note:] exactly as brackets. ' +
       'Do not include markdown fences in JSON.';
 
+    // Safely join standards with proper null checking
+    const standardsString = Array.isArray(input.standards) && input.standards.length > 0
+      ? input.standards.join(', ')
+      : 'No standards specified';
+
     const user = `
 Build a ${input.days}-day lesson integrating:
 - Trauma-informed care (SAMHSA principles)
@@ -227,7 +235,7 @@ Context:
 - Grade Level: ${input.gradeLevel}
 - Subject: ${input.subject}
 - Topic: ${input.topic}
-- Standards: ${input.standards.join(', ')}
+- Standards: ${standardsString}
 - Branding: ${input.brandName}
 
 OUTPUT SHAPE (JSON OBJECT):
@@ -287,7 +295,8 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
       });
       raw = r.choices[0]?.message?.content?.trim() || '';
       plan = safeParse<LessonPlanJSON>(raw);
-    } catch {
+    } catch (error) {
+      console.error('OpenAI API call failed:', error);
       // handled by fallback below
     }
 
@@ -308,7 +317,7 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
         `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
     }
 
-    // Ensure minimal fields exist
+    // Ensure minimal fields exist with proper null checking
     if (!plan.meta?.title) {
       plan.meta = plan.meta || ({} as any);
       plan.meta.title = `${input.subject} — ${input.topic}`;
@@ -325,6 +334,7 @@ ${input.userPrompt ? `\nAdditional teacher notes: ${input.userPrompt}\n` : ''}
 
     return NextResponse.json({ ok: true, routeId: ROUTE_ID, plan });
   } catch (err) {
+    console.error('Route error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const safe = fallbackPlan(
       normalizeInput({
