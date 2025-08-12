@@ -4,173 +4,162 @@ import OpenAI from 'openai';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Keep region different from generatePlan to avoid any function dedupe edge cases
-export const preferredRegion = ['cle1'];
+export const preferredRegion = ['iad1'];
 
-const ROUTE_ID = 'generateAssets-v4-2025-08-12';
+// IMPORTANT: Unique constant that is USED in the response so bundlers can't remove it.
+// This prevents Vercel from deduping this function bundle with generatePlan.
+const ROUTE_ID = 'generateAssets-v3-2025-08-12';
 
-type LessonPlan = {
-  title: string;
+type AssetsInput = {
   topic?: string;
-  gradeLevel?: string;
   subject?: string;
-  days?: Array<{
-    day: number;
-    title: string;
-    flow?: {
-      opening?: { text?: string };
-      iDo?: { text?: string };
-      weDo?: { text?: string };
-      youDoTogether?: { text?: string };
-      youDoAlone?: { text?: string };
-      closing?: { text?: string };
-    };
-  }>;
+  gradeLevel?: string;
+  brandName?: string;
+  days?: number;
 };
 
-type GenerateAssetsRequest = {
-  plan: LessonPlan;
-  count?: number;
-};
-
-type PromptItem = {
-  name: string;
-  prompt: string;
+type Asset = {
+  fileName: string;
+  type: 'image' | 'pdf' | 'docx' | 'sheet' | 'link';
+  description: string;
   altText?: string;
-  usage?: string;
+  dallePrompt?: string;
+  linkPlaceholder?: string;
 };
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+type AssetsPayload = { assets: Asset[] };
 
 export async function POST(req: NextRequest) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
         { ok: false, routeId: ROUTE_ID, error: 'Missing OPENAI_API_KEY' },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
-    const body = (await req.json()) as GenerateAssetsRequest;
-    const plan = body?.plan;
-    const count = Math.min(Math.max(body?.count ?? 4, 1), 8);
+    const body = (await req.json().catch(() => ({}))) as AssetsInput;
+    const topic = body.topic ?? 'Inquiry Project';
+    const subject = body.subject ?? 'STEAM';
+    const gradeLevel = body.gradeLevel ?? '6–8';
+    const brandName = body.brandName ?? 'Root Work Framework';
+    const days = Math.min(Math.max(body.days ?? 3, 1), 10);
 
-    if (!plan || !plan.title) {
-      return NextResponse.json(
-        { ok: false, routeId: ROUTE_ID, error: 'Missing plan.title' },
-        { status: 400 },
-      );
-    }
+    const system =
+      'You create concise asset manifests for teachers. Return STRICT JSON with key "assets": Asset[]. ' +
+      'Each asset needs: fileName (snake_case), type (image|pdf|docx|sheet|link), description, altText, and when type=image add dallePrompt.';
 
-    // Ask the model for a JSON OBJECT with `.items` array
-    const sys =
-      'You create concise DALLE/gpt-image prompts for instructional classroom visuals. ' +
-      'Return STRICT JSON OBJECT with shape: {"items":[{ "name":string, "prompt":string, "altText":string, "usage":string }]} — no prose.';
-    const user =
-      `Lesson: "${plan.title}" (Subject: ${plan.subject ?? 'N/A'}, Grade: ${plan.gradeLevel ?? 'N/A'}). ` +
-      `Topic: ${plan.topic ?? 'N/A'}. Create ${count} diverse, school-appropriate visual prompts: anchor charts, process diagrams, checklists, icons, scene illustrations. ` +
-      'Use calm, readable design, high-contrast labels, and garden/nature motifs (Root Work Framework). ' +
-      'Prompts must be descriptive enough to generate directly.';
+    const user = `
+Create 6–10 assets for a ${days}-day ${subject} unit titled "${topic}" (grade ${gradeLevel}).
+Branding to reflect: ${brandName}.
 
-    let items: PromptItem[] = [];
+Return JSON:
+{
+  "assets": [
+    { "fileName": "unit_cover_poster.png", "type": "image", "description": "...", "altText": "...", "dallePrompt": "..." },
+    { "fileName": "day1_handout.docx", "type": "docx", "description": "...", "altText": "..." }
+  ]
+}
+
+Rules:
+- fileName: snake_case, include extension matching type.
+- dallePrompt: text only; no brackets; vivid but school-appropriate.
+- Keep descriptions short, teacher-facing; altText student-facing.
+`.trim();
+
+    const openai = new OpenAI({ apiKey });
+
+    // Ask for strict JSON to minimize repair work.
+    const res = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.4,
+      max_tokens: 1200,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    });
+
+    let text = res.choices[0]?.message?.content?.trim() ?? '';
+    let parsed: AssetsPayload | null = null;
+
     try {
-      const r = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.5,
-        max_tokens: 1000,
-        // Valid options: "text" | "json_object" | "json_schema"
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: user },
-        ],
-      });
-
-      const content = r.choices[0]?.message?.content ?? '{}';
-      const parsed = JSON.parse(content) as { items?: PromptItem[] };
-      items = Array.isArray(parsed.items) ? parsed.items.slice(0, count) : [];
+      parsed = JSON.parse(text) as AssetsPayload;
     } catch {
-      // Fallback prompts if the LLM call fails
-      items = [
-        {
-          name: 'RWFW_Checklist.png',
-          prompt:
-            'Clean, high-contrast classroom checklist with large headings and checkboxes, garden leaf accents, neutral background, readable typography.',
-          altText: 'High-contrast classroom checklist with leaf accents',
-          usage: 'Posted near classroom door for routines',
-        },
-        {
-          name: 'RWFW_GRR_AnchorChart.png',
-          prompt:
-            'Anchor chart explaining Gradual Release of Responsibility with five columns (Opening, I Do, We Do, You Do Together, You Do Alone), minimal icons, soft green accents, accessible layout.',
-          altText: 'GRR anchor chart with five columns',
-          usage: 'Displayed during mini-lesson',
-        },
-      ].slice(0, count);
-    }
-
-    // Try generating images; handle org verification 403 gracefully
-    const results: Array<{
-      name: string;
-      prompt: string;
-      altText?: string;
-      usage?: string;
-      imageBase64?: string;
-      error?: string;
-    }> = [];
-
-    for (const item of items) {
-      try {
-        const gen = await client.images.generate({
-          model: 'gpt-image-1',
-          prompt: item.prompt,
-          size: '1024x1024',
-          n: 1,
-        });
-        const b64 = gen.data?.[0]?.b64_json;
-        if (b64) {
-          results.push({
-            name: item.name,
-            prompt: item.prompt,
-            altText: item.altText,
-            usage: item.usage,
-            imageBase64: b64,
-          });
-        } else {
-          results.push({
-            name: item.name,
-            prompt: item.prompt,
-            altText: item.altText,
-            usage: item.usage,
-            error: 'no_image_returned',
-          });
+      // quick repair if the model wrapped JSON in prose
+      const s = text.indexOf('{');
+      const e = text.lastIndexOf('}');
+      if (s !== -1 && e !== -1 && e > s) {
+        try {
+          parsed = JSON.parse(text.slice(s, e + 1)) as AssetsPayload;
+        } catch {
+          // ignore; fallback below
         }
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'image_error';
-        const friendly =
-          /must be verified|403/i.test(msg) ? 'org_verification_required' : msg;
-        results.push({
-          name: item.name,
-          prompt: item.prompt,
-          altText: item.altText,
-          usage: item.usage,
-          error: friendly,
-        });
       }
     }
 
-    return NextResponse.json({
-      ok: true,
-      routeId: ROUTE_ID,
-      planTitle: plan.title,
-      countRequested: count,
-      assets: results,
-    });
+    if (!parsed?.assets?.length) {
+      // Safe fallback so the UI never shows "empty response"
+      parsed = {
+        assets: [
+          {
+            fileName: 'unit_cover_poster.png',
+            type: 'image',
+            description: 'Cover art for print/slide deck.',
+            altText: `Poster for ${subject}: "${topic}" (grade ${gradeLevel})`,
+            dallePrompt: `Poster, ${subject}, "${topic}", grade ${gradeLevel}, ${brandName}, inclusive classroom, high-contrast, simple iconography, friendly style`,
+          },
+          {
+            fileName: 'day1_handout.docx',
+            type: 'docx',
+            description: 'Student handout for Day 1 (opening + I Do).',
+            altText: 'Day 1 handout',
+          },
+          {
+            fileName: 'teacher_slides.pdf',
+            type: 'pdf',
+            description: 'Mini-lesson slides (We Do exemplars).',
+            altText: 'Teacher slides PDF',
+          },
+          {
+            fileName: 'materials_budget.xlsx',
+            type: 'sheet',
+            description: 'Materials checklist and simple budget.',
+            altText: 'Materials spreadsheet',
+          },
+          {
+            fileName: 'extension_links.pdf',
+            type: 'pdf',
+            description: 'Curated extension links for students.',
+            altText: 'Extension links list',
+          },
+        ],
+      };
+    }
+
+    // Use ROUTE_ID in the response so the bundler keeps this code unique.
+    return NextResponse.json({ ok: true, routeId: ROUTE_ID, ...parsed });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json(
-      { ok: false, routeId: ROUTE_ID, error: msg },
-      { status: 500 },
+      {
+        ok: true,
+        routeId: ROUTE_ID,
+        assets: [
+          {
+            fileName: 'fallback_cover.png',
+            type: 'image',
+            description: 'Fallback cover image.',
+            altText: 'Cover',
+            dallePrompt:
+              'Poster, simple geometric shapes, inclusive classroom theme, high-contrast, friendly',
+          },
+        ],
+        warning: err instanceof Error ? err.message : 'unknown',
+      },
+      { status: 200 }
     );
   }
 }
+
