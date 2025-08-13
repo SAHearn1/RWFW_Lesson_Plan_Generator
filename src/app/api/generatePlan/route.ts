@@ -4,20 +4,23 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const preferredRegion = ['iad1']; // same region you’ve been using
+export const preferredRegion = ['iad1'];
 export const maxDuration = 60;
 
-// Unique ID to make Vercel function bundling happy
-const ROUTE_ID = 'generatePlan-v10-anthropic-2025-08-12';
+// ----- DO NOT REMOVE -----
+// Unique fingerprint so Vercel won't dedupe this function with other routes
+(globalThis as any).__RWFW_FUNC_FINGERPRINT__ = 'api/generatePlan@2025-08-12-v9';
 
-// --------- Types (kept minimal and permissive to avoid runtime issues) ---------
+const ROUTE_ID = 'generatePlan-v9-anthropic-2025-08-12';
+const GENERATOR_ID = 'lesson-plan-generator-v9';
+
 type GeneratePlanInput = {
   gradeLevel?: string;
   subject?: string;
-  durationMinutes?: number | string;
+  durationMinutes?: number;
   topic?: string;
-  standards?: string[] | string;  // accept string or array
-  days?: number | string;
+  standards?: string[];
+  days?: number;
 
   brandName?: string;
   includeAppendix?: boolean;
@@ -27,32 +30,20 @@ type GeneratePlanInput = {
   userPrompt?: string;
 };
 
-type FlowStep = {
-  minutes: number;
-  activity: string;
-  teacherNote?: string;
-  studentNote?: string;
-};
-
-type DayBlock = {
-  day: number;
-  title: string;
-  learningTarget: string;
-  essentialQuestion: string;
+type NormalizedInput = {
+  gradeLevel: string;
+  subject: string;
+  durationMinutes: number;
+  topic: string;
   standards: string[];
-  flow: {
-    opening: FlowStep;
-    iDo: FlowStep;
-    weDo: FlowStep;
-    youDoTogether: FlowStep;
-    youDoAlone: FlowStep;
-    closing: FlowStep;
-  };
-  mtss?: { tier1?: string[]; tier2?: string[]; tier3?: string[] };
-  selCompetencies?: string[];
-  regulationRituals?: string[];
-  assessment?: { formative?: string[]; summative?: string[] };
-  resources?: string[];
+  days: number;
+
+  brandName: string;
+  includeAppendix: boolean;
+  includeRubrics: boolean;
+  includeAssetsDirectory: boolean;
+
+  userPrompt: string;
 };
 
 type LessonPlanJSON = {
@@ -66,9 +57,27 @@ type LessonPlanJSON = {
     essentialQuestion: string;
     standards: string[];
   };
-  days: DayBlock[];
+  days: Array<{
+    day: number;
+    title: string;
+    learningTarget: string;
+    essentialQuestion: string;
+    standards: string[];
+    flow: {
+      opening: { minutes: number; activity: string; teacherNote: string; studentNote: string };
+      iDo: { minutes: number; activity: string; teacherNote: string; studentNote: string };
+      weDo: { minutes: number; activity: string; teacherNote: string; studentNote: string };
+      youDoTogether: { minutes: number; activity: string; teacherNote: string; studentNote: string };
+      youDoAlone: { minutes: number; activity: string; teacherNote: string; studentNote: string };
+      closing: { minutes: number; activity: string; teacherNote: string; studentNote: string };
+    };
+    mtss: { tier1: string[]; tier2: string[]; tier3: string[] };
+    selCompetencies: string[];
+    regulationRituals: string[];
+    assessment: { formative: string[]; summative?: string[] };
+    resources: string[];
+  }>;
   appendixA?: {
-    namingConvention: string;
     assets: Array<{
       fileName: string;
       type: 'image' | 'pdf' | 'docx' | 'sheet' | 'link';
@@ -78,79 +87,43 @@ type LessonPlanJSON = {
       linkPlaceholder?: string;
       figure?: string;
     }>;
+    namingConvention: string;
   };
   markdown?: string;
 };
 
-// --------- Utilities ---------
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-function toNumber(val: unknown, fallback: number): number {
-  const n =
-    typeof val === 'number'
-      ? val
-      : typeof val === 'string'
-      ? parseInt(val, 10)
-      : NaN;
-  return Number.isFinite(n) && n > 0 ? n : fallback;
+function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
+  const daysRaw = typeof body?.days === 'number' ? body!.days : 3;
+  const days = Math.min(Math.max(daysRaw, 1), 5);
+  const standards =
+    body?.standards && Array.isArray(body.standards) && body.standards.length > 0
+      ? body.standards
+      : ['CCSS.ELA-LITERACY.RI.9-10.1'];
+
+  return {
+    gradeLevel: body?.gradeLevel ?? '10',
+    subject: body?.subject ?? 'ELA',
+    durationMinutes: body?.durationMinutes ?? 90,
+    topic: body?.topic ?? 'Citing Textual Evidence to Support a Claim',
+    standards,
+    days,
+
+    brandName: body?.brandName ?? 'Root Work Framework',
+    includeAppendix: body?.includeAppendix ?? true,
+    includeRubrics: body?.includeRubrics ?? true,
+    includeAssetsDirectory: body?.includeAssetsDirectory ?? true,
+
+    userPrompt: body?.userPrompt ?? '',
+  };
 }
 
-function toArray(val: unknown): string[] {
-  if (Array.isArray(val)) return val.filter(Boolean);
-  if (typeof val === 'string') {
-    return val
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-  return [];
+function validateLessonPlanStructure(plan: any): boolean {
+  return !!(plan?.meta?.title && Array.isArray(plan?.days) && plan.days[0]?.flow);
 }
 
-function renderMarkdownFromPlan(plan: LessonPlanJSON): string {
-  const m = plan.meta;
-  const header = `# ${m.title}
-**Grade:** ${m.gradeLevel} • **Subject:** ${m.subject} • **Block:** ${m.durationMinutes} min • **Days:** ${m.days}
-
-**Standards:** ${m.standards.join(', ')}
-
-`;
-  const body = plan.days
-    .map((d) => {
-      const f = d.flow;
-      const sec = (label: string, s: FlowStep) =>
-        `**${label} (${s.minutes}m):** ${s.activity}
-${s.teacherNote ? `[Teacher Note: ${s.teacherNote}]` : ''}${
-          s.studentNote ? ` [Student Note: ${s.studentNote}]` : ''
-        }`;
-      return `## Day ${d.day}: ${d.title}
-**Learning Target:** ${d.learningTarget}
-**EQ:** ${d.essentialQuestion}
-
-${sec('Opening', f.opening)}
-${sec('I Do', f.iDo)}
-${sec('We Do', f.weDo)}
-${sec('You Do Together', f.youDoTogether)}
-${sec('You Do Alone', f.youDoAlone)}
-${sec('Closing', f.closing)}
-`;
-    })
-    .join('\n');
-
-  const appendix = plan.appendixA
-    ? `\n---\n## Appendix A – Assets & Naming\n- **Convention:** ${plan.appendixA.namingConvention}\n${plan.appendixA.assets
-        .map(
-          (a) =>
-            `- **${a.fileName}** (${a.type}): ${a.description}${
-              a.linkPlaceholder ? `\n  - ${a.linkPlaceholder}` : ''
-            }`,
-        )
-        .join('\n')}\n`
-    : '';
-
-  return header + body + appendix;
-}
-
-function safeJSONParse<T>(text: string): T | null {
+function safeParse<T>(text: string): T | null {
   try {
     return JSON.parse(text) as T;
   } catch {
@@ -158,121 +131,109 @@ function safeJSONParse<T>(text: string): T | null {
   }
 }
 
-function mkStep(minutes: number, label: string): FlowStep {
-  return {
-    minutes,
+function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
+  const mkStep = (label: string) => ({
+    minutes: Math.round(input.durationMinutes / 6),
     activity: `${label}: See teacher script and student-facing directions.`,
     teacherNote:
-      'Keep directions brief; offer options; monitor regulation; normalize help-seeking.',
+      '[Teacher Note: Keep directions brief; offer options; monitor regulation; normalize help-seeking.]',
     studentNote:
-      'You’ve got this. Ask for clarity, choose a strategy, and pace yourself.',
-  };
-}
+      '[Student Note: You’ve got this. Ask for clarity, choose a strategy, and pace yourself.]',
+  });
 
-function fallbackPlan(input: {
-  gradeLevel: string;
-  subject: string;
-  durationMinutes: number;
-  topic: string;
-  standards: string[];
-  days: number;
-}): LessonPlanJSON {
-  const per = Math.max(5, Math.round(input.durationMinutes / 6));
-  const day = (i: number): DayBlock => ({
-    day: i,
-    title: `${input.topic} — Day ${i}`,
+  const dayBlock = (day: number) => ({
+    day,
+    title: `${input.topic} — Day ${day}`,
     learningTarget: 'I can cite and explain textual evidence that supports a claim.',
     essentialQuestion: 'How do we choose evidence that truly supports our claim?',
     standards: input.standards,
     flow: {
-      opening: mkStep(per, 'Opening'),
-      iDo: mkStep(per, 'I Do'),
-      weDo: mkStep(per, 'We Do'),
-      youDoTogether: mkStep(per, 'You Do Together'),
-      youDoAlone: mkStep(per, 'You Do Alone'),
-      closing: mkStep(per, 'Closing'),
+      opening: mkStep('Opening'),
+      iDo: mkStep('I Do'),
+      weDo: mkStep('We Do'),
+      youDoTogether: mkStep('You Do Together'),
+      youDoAlone: mkStep('You Do Alone'),
+      closing: mkStep('Closing'),
     },
     mtss: {
       tier1: ['Clear agenda; sentence starters; timers.'],
       tier2: ['Small-group check-ins; guided frames; extended time.'],
-      tier3: ['1:1 conferencing; alternate modality; reduced load.'],
+      tier3: ['1:1 conferencing; alternative modality; reduced load.'],
     },
     selCompetencies: ['Self-Management', 'Relationship Skills'],
-    regulationRituals: ['Breathing box; brief reset.'],
-    assessment: { formative: ['Exit ticket: claim + cited evidence + why it fits.'] },
+    regulationRituals: ['Box breathing; stretch & reset.'],
+    assessment: { formative: ['Exit ticket: Claim + cited evidence + why it fits.'] },
     resources: ['Projector', 'Timer', 'Student handout'],
   });
 
   const plan: LessonPlanJSON = {
     meta: {
       title: `${input.subject} — ${input.topic}`,
-      subtitle: '',
+      subtitle: 'S.T.E.A.M. Powered, Trauma Informed, Project-Based',
       gradeLevel: input.gradeLevel,
       subject: input.subject,
       days: input.days,
       durationMinutes: input.durationMinutes,
-      essentialQuestion:
-        'How can we design learning that heals, includes, and empowers?',
+      essentialQuestion: 'How can we design learning that heals, includes, and empowers?',
       standards: input.standards,
     },
-    days: Array.from({ length: input.days }, (_, i) => day(i + 1)),
+    days: Array.from({ length: input.days }, (_, i) => dayBlock(i + 1)),
     appendixA: {
-      namingConvention: 'LessonCode_GradeSubject_ShortTitle.extension',
+      namingConvention:
+        '{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}',
       assets: [
         {
-          fileName: 'Rituals_Quick_Guide.pdf',
+          fileName: 'RootedInMe_10ELA_RitualGuidebook.pdf',
           type: 'pdf',
-          description: 'Regulation rituals quick reference for Opening/Closing.',
-          altText: 'Guidebook cover',
-          linkPlaceholder: '[Insert link to PDF]',
+          description: 'Regulation rituals quick reference used in Opening and Closing.',
+          altText: 'Guidebook cover with leaf motif',
+          linkPlaceholder: '[Insert link to RootedInMe_10ELA_RitualGuidebook.pdf]',
           figure: 'Figure 1',
         },
       ],
     },
+    markdown:
+      '# Ready-to-Teach Pack (Fallback)\n\nIf you see this, the generator timed out. The scaffolds above are safe defaults so you can still teach today.',
   };
-
-  plan.markdown = renderMarkdownFromPlan(plan);
   return plan;
 }
 
-function ensureNonEmptyOutputs(plan: LessonPlanJSON) {
-  // Always ensure markdown exists
-  if (!plan.markdown || !plan.markdown.trim()) {
-    plan.markdown = renderMarkdownFromPlan(plan);
-  }
-  const teacherView = plan.markdown;
-  const studentView =
-    '## Student Overview\nUse this plan with your class. Follow your teacher’s directions for each step.';
-  const printView = plan.markdown;
-
-  // Provide multiple mirrors for maximum front-end compatibility (no UI changes needed)
-  return {
-    plan,
-    teacherView,
-    studentView,
-    printView,
-    markdown: plan.markdown,
-    html: plan.markdown, // some UIs look for "html" even though it’s markdown text
-  };
-}
-
 export async function POST(req: NextRequest) {
-  // Read + normalize inputs
-  const body = (await req.json().catch(() => ({}))) as GeneratePlanInput;
+  try {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { ok: false, routeId: ROUTE_ID, error: 'Missing ANTHROPIC_API_KEY' },
+        { status: 500 },
+      );
+    }
 
-  const gradeLevel = (body.gradeLevel || '10').toString();
-  const subject = (body.subject || 'ELA').toString();
-  const durationMinutes = toNumber(body.durationMinutes, 90);
-  const topic =
-    (body.topic || 'Citing Textual Evidence to Support a Claim').toString();
-  const standards = toArray(body.standards);
-  const days = Math.min(Math.max(toNumber(body.days, 3), 1), 5);
+    const body = (await req.json().catch(() => null)) as GeneratePlanInput | null;
+    const input = normalizeInput(body);
 
-  const userPrompt = (body.userPrompt || '').toString();
+    const standardsString =
+      Array.isArray(input.standards) && input.standards.length > 0
+        ? input.standards.join(', ')
+        : 'No standards specified';
 
-  // Build prompt for Anthropic
-  const standardsString = standards.length > 0 ? standards.join(', ') : 'N/A';
-  const prompt = `Create a ${days}-day lesson plan as a pure JSON object matching this schema:
+    const prompt = `Create a ${input.days}-day lesson plan with the following requirements:
+
+**Context:**
+- Grade Level: ${input.gradeLevel}
+- Subject: ${input.subject}
+- Topic: ${input.topic}
+- Standards: ${standardsString}
+- Brand: ${input.brandName}
+- Block Duration: ${input.durationMinutes} minutes per day
+
+**Framework Requirements:**
+- STEAM integration and Project-Based Learning
+- Trauma-informed care principles
+- MTSS (Multi-Tiered System of Supports) with Tier 1-3 strategies
+- SEL (Social-Emotional Learning) competencies
+- Gradual Release of Responsibility: Opening, I Do, We Do, You Do Together, You Do Alone, Closing
+
+**Output Requirements:**
+Return ONLY a valid JSON object with this exact structure (no markdown, no backticks):
 
 {
   "meta": {
@@ -300,101 +261,118 @@ export async function POST(req: NextRequest) {
         "youDoAlone": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
         "closing": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"}
       },
-      "mtss": {"tier1": ["string"], "tier2": ["string"], "tier3": ["string"]},
+      "mtss": { "tier1": ["string"], "tier2": ["string"], "tier3": ["string"] },
       "selCompetencies": ["string"],
       "regulationRituals": ["string"],
-      "assessment": {"formative": ["string"], "summative": ["string"]},
+      "assessment": { "formative": ["string"], "summative": ["string"] },
       "resources": ["string"]
     }
   ],
   "appendixA": {
     "namingConvention": "string",
-    "assets": [{"fileName":"string","type":"image|pdf|docx|sheet|link","description":"string","altText":"string","howToGenerate":"string","linkPlaceholder":"string","figure":"string"}]
-  }
+    "assets": [
+      {
+        "fileName": "string",
+        "type": "image|pdf|docx|sheet|link",
+        "description": "string",
+        "altText": "string",
+        "howToGenerate": "string",
+        "linkPlaceholder": "string",
+        "figure": "string"
+      }
+    ]
+  },
+  "markdown": "string"
 }
 
-Context:
-- Grade: ${gradeLevel}
-- Subject: ${subject}
-- Topic: ${topic}
-- Block Minutes: ${durationMinutes}
-- Standards: ${standardsString}
+**Important Notes:**
+- Each activity includes [Teacher Note:] and [Student Note:].
+- Balance minutes to total ~${input.durationMinutes} per day.
+- Use inclusive, empowering language.
+${input.userPrompt ? `- Additional Requirements: ${input.userPrompt}` : ''}
 
-Rules:
-- Return ONLY valid JSON (no prose).
-- Balance time across Opening / I Do / We Do / You Do Together / You Do Alone / Closing to fit ${durationMinutes} minutes.
-- Include brief [Teacher Note:] and [Student Note:] in each step.
-${userPrompt ? `- Extra: ${userPrompt}` : ''}`;
+Return only JSON (no prose).`;
 
-  // Try Anthropic; if missing/invalid key, skip to fallback.
-  let plan: LessonPlanJSON | null = null;
-  let raw = '';
+    let raw = '';
+    let plan: LessonPlanJSON | null = null;
 
-  if (process.env.ANTHROPIC_API_KEY) {
+    // Primary call to Claude Haiku (fast/economical)
     try {
-      const resp = await client.messages.create({
+      const response = await client.messages.create({
         model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
         temperature: 0.3,
+        max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }],
       });
 
-      raw =
-        resp.content[0]?.type === 'text' ? (resp.content[0] as any).text?.trim?.() || '' : '';
-
-      // First, direct parse
-      plan = safeJSONParse<LessonPlanJSON>(raw);
-
-      // If the model wrapped JSON with prose, slice out the first/last braces
-      if (!plan && raw) {
-        const s = raw.indexOf('{');
-        const e = raw.lastIndexOf('}');
-        if (s !== -1 && e !== -1 && e > s) {
-          plan = safeJSONParse<LessonPlanJSON>(raw.slice(s, e + 1));
-        }
-      }
+      raw = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
+      plan = safeParse<LessonPlanJSON>(raw);
     } catch {
-      // swallow and use fallback below
+      // fall through to fallback
     }
-  }
 
-  // Fallback if model failed or returned unusable JSON
-  if (!plan || !plan.meta?.title || !Array.isArray(plan.days) || plan.days.length === 0) {
-    plan = fallbackPlan({
-      gradeLevel,
-      subject,
-      durationMinutes,
-      topic,
-      standards: standards.length ? standards : ['CCSS.ELA-LITERACY.RI.9-10.1'],
-      days,
+    // Try to extract JSON if model wrapped it
+    if (!plan && raw) {
+      const s = raw.indexOf('{');
+      const e = raw.lastIndexOf('}');
+      if (s !== -1 && e > s) plan = safeParse<LessonPlanJSON>(raw.slice(s, e + 1));
+    }
+
+    if (!plan) {
+      plan = fallbackPlan(input);
+      plan.markdown =
+        (plan.markdown || '') +
+        `\n\n---\n**Debug**: Empty or invalid model response; served fallback. Route: ${ROUTE_ID}`;
+    }
+
+    if (!validateLessonPlanStructure(plan)) {
+      plan = fallbackPlan(input);
+    }
+
+    // Ensure minimum meta + markdown exist
+    plan.meta = plan.meta || ({} as any);
+    if (!plan.meta.title) plan.meta.title = `${input.subject} — ${input.topic}`;
+    if (!plan.markdown) {
+      plan.markdown = `# ${plan.meta.title}
+**Grade:** ${plan.meta.gradeLevel} • **Subject:** ${plan.meta.subject} • **Block:** ${plan.meta.durationMinutes} min • **Days:** ${plan.meta.days}
+
+See JSON for full daily flow.`;
+    }
+
+    // Mirror views so existing UIs keep working without changes
+    const teacherView = plan.markdown;
+    const studentView = plan.markdown;
+    const printView = plan.markdown;
+
+    return NextResponse.json({
+      ok: true,
+      routeId: ROUTE_ID,
+      generator: GENERATOR_ID,
+      plan,
+      markdown: plan.markdown,
+      teacherView,
+      studentView,
+      printView,
     });
-  } else {
-    // Make sure minimal fields exist and markdown is present
-    if (!plan.meta.gradeLevel) plan.meta.gradeLevel = gradeLevel;
-    if (!plan.meta.subject) plan.meta.subject = subject;
-    if (!plan.meta.durationMinutes) plan.meta.durationMinutes = durationMinutes;
-    if (!plan.meta.days) plan.meta.days = days;
-    if (!plan.meta.title) plan.meta.title = `${subject} — ${topic}`;
-    if (!plan.meta.standards || plan.meta.standards.length === 0) {
-      plan.meta.standards = standards.length ? standards : ['CCSS.ELA-LITERACY.RI.9-10.1'];
-    }
-    if (!plan.markdown || !plan.markdown.trim()) {
-      plan.markdown = renderMarkdownFromPlan(plan);
-    }
+  } catch (err) {
+    const safe = fallbackPlan(
+      normalizeInput({
+        subject: 'ELA',
+        topic: 'Citing Textual Evidence',
+        gradeLevel: '10',
+        days: 3,
+      }),
+    );
+    return NextResponse.json({
+      ok: true,
+      routeId: ROUTE_ID,
+      generator: GENERATOR_ID,
+      plan: safe,
+      markdown: safe.markdown,
+      teacherView: safe.markdown,
+      studentView: safe.markdown,
+      printView: safe.markdown,
+      warning: 'Generator error handled with fallback.',
+    });
   }
-
-  // Always mirror outputs for maximum compatibility with existing UI
-  const out = ensureNonEmptyOutputs(plan);
-
-  return NextResponse.json({
-    ok: true,
-    routeId: ROUTE_ID,
-    generator: 'lesson-plan-generator-v10',
-    plan: out.plan,
-    teacherView: out.teacherView,
-    studentView: out.studentView,
-    printView: out.printView,
-    markdown: out.markdown,
-    html: out.html,
-  });
 }
