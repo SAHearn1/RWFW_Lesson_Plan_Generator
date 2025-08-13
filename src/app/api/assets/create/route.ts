@@ -1,20 +1,21 @@
-// src/app/api/createAssets/route.ts
+// src/app/api/assets/create/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = ['iad1'];
-export const maxDuration = 60;
+export const maxDuration = 45;
 
-const ROUTE_ID = 'createAssets-v1-anthropic-2025-08-12-unique';
+const ROUTE_ID = 'assets-create-v1-anthropic-2025-08-13';
 
-// Assets specific configuration for unique bundling
-const ASSETS_CONFIG = {
+// Assets creation specific configuration
+const ASSETS_CREATE_CONFIG = {
   maxAssets: 10,
   supportedTypes: ['image', 'pdf', 'docx', 'sheet', 'link'] as const,
   namingConvention: 'snake_case',
-  generator: 'create-assets-generator-v1'
+  generator: 'assets-create-v1',
+  basePath: '/api/assets/create'
 };
 
 type AssetsInput = {
@@ -38,8 +39,8 @@ type AssetsPayload = { assets: Asset[] };
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// Assets specific validation function
-function validateAssetStructure(assets: any[]): boolean {
+// Assets creation specific validation function
+function validateAssetCreationStructure(assets: any[]): boolean {
   return assets?.every(asset => asset?.fileName && asset?.type && asset?.description);
 }
 
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     const subject = body.subject ?? 'STEAM';
     const gradeLevel = body.gradeLevel ?? '6–8';
     const brandName = body.brandName ?? 'Root Work Framework';
-    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_CONFIG.maxAssets);
+    const days = Math.min(Math.max(body.days ?? 3, 1), ASSETS_CREATE_CONFIG.maxAssets);
 
     const prompt = `Create a list of 6-8 educational assets for a ${days}-day ${subject} unit titled "${topic}" for grade ${gradeLevel}.
 
@@ -156,15 +157,16 @@ Respond with ONLY the JSON object, no additional text.`;
       };
     }
 
-    // Validate asset structure
-    if (!validateAssetStructure(parsed.assets)) {
+    // Validate asset creation structure
+    if (!validateAssetCreationStructure(parsed.assets)) {
       parsed = { assets: [] };
     }
 
     return NextResponse.json({ 
       ok: true, 
       routeId: ROUTE_ID, 
-      generator: ASSETS_CONFIG.generator,
+      generator: ASSETS_CREATE_CONFIG.generator,
+      basePath: ASSETS_CREATE_CONFIG.basePath,
       ...parsed 
     });
   } catch (err) {
@@ -172,7 +174,7 @@ Respond with ONLY the JSON object, no additional text.`;
       {
         ok: true,
         routeId: ROUTE_ID,
-        generator: ASSETS_CONFIG.generator,
+        generator: ASSETS_CREATE_CONFIG.generator,
         assets: [
           {
             fileName: 'fallback_cover.png',
