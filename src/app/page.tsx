@@ -5,12 +5,10 @@ import ReactMarkdown from 'react-markdown';
 // import remarkGfm from 'remark-gfm';
 
 type Tab = 'generator' | 'results';
-type Viewer = 'teacher' | 'student' | 'print';
 
 export default function HomePage() {
   // UI state
   const [tab, setTab] = useState<Tab>('generator');
-  const [viewer, setViewer] = useState<Viewer>('teacher');
 
   // Form state
   const [gradeLevel, setGradeLevel] = useState('');
@@ -104,7 +102,6 @@ export default function HomePage() {
 
       setLessonPlan(teacherMarkdown);
       setTab('results');
-      setViewer('teacher');
       console.log('✅ Success! Switching to results tab');
       
     } catch (err: any) {
@@ -374,66 +371,18 @@ export default function HomePage() {
 
               {/* Top actions */}
               <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between mb-6">
-                <div className="inline-flex rounded-xl overflow-hidden ring-1 ring-slate-200">
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      viewer === 'teacher' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'
-                    }`}
-                    onClick={() => setViewer('teacher')}
-                  >
-                    Teacher View
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      viewer === 'student' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'
-                    }`}
-                    onClick={() => setViewer('student')}
-                  >
-                    Student View
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      viewer === 'print' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'
-                    }`}
-                    onClick={() => setViewer('print')}
-                  >
-                    Print View
-                  </button>
-                </div>
-
                 <div className="flex flex-wrap gap-2">
                   <button
                     className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
                     onClick={() => setTab('generator')}
                   >
-                    New Plan
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={handleDownloadMarkdown}
-                  >
-                    Download .md
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={handleQualityPass}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Working…' : 'Quality Pass'}
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={handleGenerateVisuals}
-                    disabled={isLoading}
-                  >
-                    Generate Visual Assets
+                    Generate New Plan
                   </button>
                   <button
                     className="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500"
-                    onClick={handleExportPack}
-                    disabled={isLoading}
+                    onClick={handleDownloadMarkdown}
                   >
-                    Ready-to-Teach Pack (PDF & DOCX)
+                    Download Lesson Plan (.md)
                   </button>
                 </div>
               </div>
@@ -442,18 +391,6 @@ export default function HomePage() {
               <div className="prose max-w-none prose-headings:scroll-mt-24">
                 <ReactMarkdown /* remarkPlugins={[remarkGfm]} */>{lessonPlan}</ReactMarkdown>
               </div>
-
-              {/* Print helper */}
-              {viewer === 'print' && (
-                <div className="mt-6">
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={() => window.print()}
-                  >
-                    Print This Page
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
