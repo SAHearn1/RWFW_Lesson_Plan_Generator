@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 // If you installed remark-gfm, uncomment the next line and add: import remarkGfm from 'remark-gfm';
