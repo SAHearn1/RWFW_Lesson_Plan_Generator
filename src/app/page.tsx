@@ -44,42 +44,58 @@ export default function HomePage() {
   };
 
   const handleGeneratePlan: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
-
-    setError(null);
-
-    // basic validations
-    if (!gradeLevel) return setError('Please select a grade level.');
-    if (subjects.length === 0) return setError('Please select at least one subject.');
-
-    // Build the correct payload format that matches your API expectations
-    const payload = {
-      gradeLevel,
-      subjects,
-      duration: parseInt(duration, 10), // Convert to number
-      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
-      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
-      focus: focus || 'None specified'
-    };
-
+    console.log('🚀 handleGeneratePlan called!', e);
+    
     try {
+      e.preventDefault();
+      console.log('✅ preventDefault() called');
+
+      setError(null);
+      console.log('📝 Form data:', { gradeLevel, subjects, duration, unitTitle, standards, focus });
+
+      // basic validations
+      if (!gradeLevel) {
+        console.log('❌ Validation failed: No grade level');
+        return setError('Please select a grade level.');
+      }
+      if (subjects.length === 0) {
+        console.log('❌ Validation failed: No subjects');
+        return setError('Please select at least one subject.');
+      }
+
+      console.log('✅ Validation passed');
+
+      // Build the correct payload format that matches your API expectations
+      const payload = {
+        gradeLevel,
+        subjects,
+        duration: parseInt(duration, 10), // Convert to number
+        unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
+        standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
+        focus: focus || 'None specified'
+      };
+
+      console.log('📦 Payload:', payload);
+
       setIsLoading(true);
+      console.log('🔄 Making API call...');
+      
       const res = await fetch('/api/generatePlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload), // Send the structured data, not a text prompt
+        body: JSON.stringify(payload),
       });
+
+      console.log('📡 API Response:', res.status, res.statusText);
 
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
+        console.log('❌ API Error:', txt);
         throw new Error(txt || `HTTP ${res.status}`);
       }
 
-      const data = (await res.json()) as { 
-        lessonPlan?: any; 
-        markdown?: { teacher: string; student: string }; 
-        error?: string 
-      };
+      const data = await res.json();
+      console.log('📋 API Data:', data);
 
       // Handle the response format from your API
       const teacherMarkdown = data?.markdown?.teacher || '';
@@ -90,10 +106,14 @@ export default function HomePage() {
       setLessonPlan(teacherMarkdown);
       setTab('results');
       setViewer('teacher');
+      console.log('✅ Success! Switching to results tab');
+      
     } catch (err: any) {
+      console.error('❌ Error in handleGeneratePlan:', err);
       setError(err?.message || 'Failed to generate lesson plan.');
     } finally {
       setIsLoading(false);
+      console.log('🏁 handleGeneratePlan finished');
     }
   };
 
