@@ -95,12 +95,9 @@ export default function HomePage() {
 
       const data = await res.json();
       console.log('📋 API Data:', data);
-      console.log('📋 API Data (stringified):', JSON.stringify(data, null, 2));
-      console.log('📋 Plan object specifically:', data?.plan);
-      console.log('📋 Plan keys:', data?.plan ? Object.keys(data.plan) : 'No plan object');
 
       // Handle the response format from your API
-      const teacherMarkdown = data?.markdown?.teacher || '';
+      const teacherMarkdown = data?.plan?.markdown || '';
       if (!teacherMarkdown) {
         throw new Error(data?.error || 'Empty response from generator');
       }
