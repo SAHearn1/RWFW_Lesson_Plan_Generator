@@ -20,10 +20,15 @@ const LESSON_PLAN_CONFIG = {
 // Incoming payload (may be partial/optional)
 type GeneratePlanInput = {
   gradeLevel?: string;
+  subjects?: string[];
+  duration?: number;
+  unitTitle?: string;
+  standards?: string;
+  focus?: string;
+  
   subject?: string;
   durationMinutes?: number;
   topic?: string;
-  standards?: string[];
   days?: number;
 
   brandName?: string;
@@ -37,17 +42,16 @@ type GeneratePlanInput = {
 // Fully normalized, non-optional version (safe to use everywhere)
 type NormalizedInput = {
   gradeLevel: string;
-  subject: string;
-  durationMinutes: number;
-  topic: string;
-  standards: string[];
+  subjects: string[];
+  duration: number;
+  unitTitle: string;
+  standards: string;
+  focus: string;
   days: number;
-
   brandName: string;
   includeAppendix: boolean;
   includeRubrics: boolean;
   includeAssetsDirectory: boolean;
-
   userPrompt: string;
 };
 
@@ -120,19 +124,15 @@ function safeParse<T>(text: string): T | null {
 }
 
 function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
-  const days = Math.min(Math.max(body?.days ?? 3, 1), LESSON_PLAN_CONFIG.maxDays);
-  
-  // Ensure standards is always a valid array
-  const standards = body?.standards && Array.isArray(body.standards) && body.standards.length > 0
-    ? body.standards
-    : ['CCSS.ELA-LITERACY.RI.9-10.1'];
+  const days = Math.min(Math.max(body?.days ?? body?.duration ?? 3, 1), LESSON_PLAN_CONFIG.maxDays);
   
   return {
-    gradeLevel: body?.gradeLevel ?? '10',
-    subject: body?.subject ?? 'ELA',
-    durationMinutes: body?.durationMinutes ?? 90,
-    topic: body?.topic ?? 'Citing Textual Evidence to Support a Claim',
-    standards,
+    gradeLevel: body?.gradeLevel ?? '10th Grade',
+    subjects: body?.subjects ?? [body?.subject ?? 'English Language Arts'],
+    duration: days,
+    unitTitle: body?.unitTitle ?? body?.topic ?? 'Rooted in Me: Exploring Culture, Identity, and Expression',
+    standards: body?.standards ?? 'Please align with relevant standards (CCSS/NGSS/etc.)',
+    focus: body?.focus ?? 'None specified',
     days,
     brandName: body?.brandName ?? 'Root Work Framework',
     includeAppendix: body?.includeAppendix ?? true,
@@ -142,70 +142,200 @@ function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
   };
 }
 
+// Function to generate comprehensive markdown from structured plan
+function generateComprehensiveMarkdown(plan: LessonPlanJSON): string {
+  const { meta, days, appendixA } = plan;
+  
+  let markdown = `# ${meta.title}
+
+*${meta.subtitle || 'Root Work Framework: S.T.E.A.M. Powered, Trauma Informed, Project Based'}*
+
+## Unit Overview
+
+**Grade Level:** ${meta.gradeLevel}  
+**Subject(s):** ${meta.subject}  
+**Duration:** ${meta.days} days (${meta.durationMinutes} minutes per day)  
+**Essential Question:** ${meta.essentialQuestion}  
+**Standards:** ${meta.standards.join(', ')}  
+
+---
+
+## Daily Lesson Plans
+
+`;
+
+  // Generate each day's comprehensive plan
+  days.forEach((day, index) => {
+    markdown += `### Day ${day.day}: ${day.title}
+
+**Learning Target:** ${day.learningTarget}  
+**Essential Question:** ${day.essentialQuestion}  
+**Standards:** ${day.standards.join(', ')}  
+
+${day.flow.opening.teacherNote}
+${day.flow.opening.studentNote}
+
+#### Daily Flow (${meta.durationMinutes} minutes total)
+
+**Opening (${day.flow.opening.minutes} minutes)**
+- **Activity:** ${day.flow.opening.activity}
+- ${day.flow.opening.teacherNote}
+- ${day.flow.opening.studentNote}
+
+**I Do - Direct Instruction (${day.flow.iDo.minutes} minutes)**
+- **Activity:** ${day.flow.iDo.activity}
+- ${day.flow.iDo.teacherNote}
+- ${day.flow.iDo.studentNote}
+
+**We Do - Guided Practice (${day.flow.weDo.minutes} minutes)**
+- **Activity:** ${day.flow.weDo.activity}
+- ${day.flow.weDo.teacherNote}
+- ${day.flow.weDo.studentNote}
+
+**You Do Together - Collaborative Work (${day.flow.youDoTogether.minutes} minutes)**
+- **Activity:** ${day.flow.youDoTogether.activity}
+- ${day.flow.youDoTogether.teacherNote}
+- ${day.flow.youDoTogether.studentNote}
+
+**You Do Alone - Independent Practice (${day.flow.youDoAlone.minutes} minutes)**
+- **Activity:** ${day.flow.youDoAlone.activity}
+- ${day.flow.youDoAlone.teacherNote}
+- ${day.flow.youDoAlone.studentNote}
+
+**Closing (${day.flow.closing.minutes} minutes)**
+- **Activity:** ${day.flow.closing.activity}
+- ${day.flow.closing.teacherNote}
+- ${day.flow.closing.studentNote}
+
+#### MTSS Support Strategies
+
+**Tier 1 (Universal Supports):**
+${day.mtss.tier1.map(item => `- ${item}`).join('\n')}
+
+**Tier 2 (Targeted Supports):**
+${day.mtss.tier2.map(item => `- ${item}`).join('\n')}
+
+**Tier 3 (Intensive Supports):**
+${day.mtss.tier3.map(item => `- ${item}`).join('\n')}
+
+#### SEL Competencies
+${day.selCompetencies.map(comp => `- ${comp}`).join('\n')}
+
+#### Regulation Rituals
+${day.regulationRituals.map(ritual => `- ${ritual}`).join('\n')}
+
+#### Assessment
+
+**Formative Assessment:**
+${day.assessment.formative.map(item => `- ${item}`).join('\n')}
+
+${day.assessment.summative ? `**Summative Assessment:**
+${day.assessment.summative.map(item => `- ${item}`).join('\n')}` : ''}
+
+#### Required Resources
+${day.resources.map(resource => `- ${resource}`).join('\n')}
+
+---
+
+`;
+  });
+
+  // Add appendix if present
+  if (appendixA && appendixA.assets.length > 0) {
+    markdown += `## Appendix A: Resource and Visual Asset Directory
+
+**Naming Convention:** ${appendixA.namingConvention}
+
+`;
+
+    appendixA.assets.forEach((asset, index) => {
+      markdown += `### ${asset.figure || `Asset ${index + 1}`}: ${asset.fileName}
+
+**Type:** ${asset.type}  
+**Description:** ${asset.description}  
+${asset.altText ? `**Alt Text:** ${asset.altText}  ` : ''}
+${asset.howToGenerate ? `**How to Generate:** ${asset.howToGenerate}  ` : ''}
+${asset.linkPlaceholder ? `**Link:** ${asset.linkPlaceholder}  ` : ''}
+
+`;
+    });
+  }
+
+  return markdown;
+}
+
 // Guaranteed non-empty plan if model fails
 function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
   const mkStep = (label: string) => ({
-    minutes: Math.round(input.durationMinutes / 6),
-    activity: `${label}: See teacher script and student-facing directions.`,
-    teacherNote:
-      '[Teacher Note: Keep directions brief; offer options; monitor regulation; normalize help-seeking.]',
-    studentNote:
-      '[Student Note: You have got this. Ask for clarity, choose a strategy, and pace yourself.]',
+    minutes: Math.round(90 / 6),
+    activity: `${label}: Comprehensive ${label.toLowerCase()} activities with trauma-informed approaches and student choice.`,
+    teacherNote: '[Teacher Note: Use choice, maintain calm presence, offer multiple pathways, celebrate progress. Monitor for regulation needs and provide trauma-informed supports.]',
+    studentNote: '[Student Note: You belong here. Take your time, ask questions, and trust your learning process. Your voice and experiences matter in this space.]',
   });
 
   const dayBlock = (day: number) => ({
     day,
-    title: `${input.topic} — Day ${day}`,
-    learningTarget: 'I can cite and explain textual evidence that supports a claim.',
-    essentialQuestion: 'How do we choose evidence that truly supports our claim?',
-    standards: input.standards,
+    title: `${input.unitTitle} — Day ${day}`,
+    learningTarget: `Students will demonstrate understanding through culturally responsive, trauma-informed learning experiences that honor their identities.`,
+    essentialQuestion: input.focus || 'How do we learn in ways that honor our identities and experiences while building community?',
+    standards: [input.standards || 'Relevant state standards'],
     flow: {
-      opening: mkStep('Opening'),
-      iDo: mkStep('I Do'),
-      weDo: mkStep('We Do'),
-      youDoTogether: mkStep('You Do Together'),
-      youDoAlone: mkStep('You Do Alone'),
-      closing: mkStep('Closing'),
+      opening: mkStep('Opening Circle & Grounding'),
+      iDo: mkStep('Culturally Responsive Direct Instruction'),
+      weDo: mkStep('Collaborative Exploration'),
+      youDoTogether: mkStep('Community Learning'),
+      youDoAlone: mkStep('Independent Expression'),
+      closing: mkStep('Reflection & Community Building'),
     },
     mtss: {
-      tier1: ['Clear agenda; sentence starters; timers.'],
-      tier2: ['Small-group check-ins; guided frames; extended time.'],
-      tier3: ['1:1 conferencing; alternative modality; reduced load.'],
+      tier1: ['Clear visual agenda with choice options', 'Multiple representation modes', 'Built-in movement breaks', 'Regulation rituals embedded'],
+      tier2: ['Small group facilitation with trauma-informed approaches', 'Extended processing time', 'Graphic organizers', 'Peer partnerships and mentoring'],
+      tier3: ['Individualized supports and accommodations', 'Alternative assessment formats', 'One-on-one conferencing', 'Assistive technology and modified expectations'],
     },
-    selCompetencies: ['Self-Management', 'Relationship Skills'],
-    regulationRituals: ['Breathing box; brief outdoor reset (if available).'],
-    assessment: { formative: ['Exit ticket: One claim + one cited evidence + why it fits.'] },
-    resources: ['Projector', 'Timer', 'Student handout'],
+    selCompetencies: ['Self-Awareness through cultural identity exploration', 'Self-Management via regulation rituals', 'Social Awareness through community building', 'Relationship Skills in collaborative work', 'Responsible Decision-Making in student choice'],
+    regulationRituals: ['Mindful breathing with garden metaphors', 'Grounding techniques using nature elements', 'Movement breaks with purpose', 'Community agreements and check-ins'],
+    assessment: { 
+      formative: ['Exit tickets with choice in expression', 'Peer feedback circles', 'Self-reflection journals', 'Teacher observation with trauma-informed lens'],
+      summative: ['Portfolio presentation with cultural connections', 'Project showcase with community audience', 'Reflective essay or multimedia expression']
+    },
+    resources: ['Diverse texts and materials representing multiple perspectives', 'Technology tools with accessibility features', 'Art supplies for creative expression', 'Community resources and guest speakers'],
   });
 
   const plan: LessonPlanJSON = {
     meta: {
-      title: `${input.subject} — ${input.topic}`,
-      subtitle: 'S.T.E.A.M. Powered, Trauma Informed, Project-Based',
+      title: `${input.unitTitle}`,
+      subtitle: 'Root Work Framework: S.T.E.A.M. Powered, Trauma Informed, Project Based',
       gradeLevel: input.gradeLevel,
-      subject: input.subject,
+      subject: input.subjects.join(', '),
       days: input.days,
-      durationMinutes: input.durationMinutes,
-      essentialQuestion: 'How can we design learning that heals, includes, and empowers?',
-      standards: input.standards,
+      durationMinutes: 90,
+      essentialQuestion: 'How can we design learning that heals, includes, and empowers every student while honoring their cultural identities?',
+      standards: [input.standards],
     },
     days: Array.from({ length: input.days }, (_, i) => dayBlock(i + 1)),
     appendixA: {
-      namingConvention:
-        '{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}',
+      namingConvention: '{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}',
       assets: [
         {
-          fileName: 'RootedInMe_10ELA_RitualGuidebook.pdf',
+          fileName: 'RootedInMe_CulturalIdentity_ReflectionGuide.pdf',
           type: 'pdf',
-          description: 'Regulation rituals quick reference used in Opening and Closing.',
-          altText: 'Guidebook cover with leaf motif',
-          linkPlaceholder: '[Insert link to RootedInMe_10ELA_RitualGuidebook.pdf]',
+          description: 'Student reflection guide for exploring cultural identity and personal narratives with trauma-informed prompts.',
+          altText: 'Colorful reflection guide with diverse student artwork and nature motifs',
+          howToGenerate: 'Create in Canva using diverse imagery, accessible fonts, and trauma-informed language. Include regulation ritual reminders.',
+          linkPlaceholder: '[Insert link to RootedInMe_CulturalIdentity_ReflectionGuide.pdf]',
           figure: 'Figure 1',
+        },
+        {
+          fileName: 'RootedInMe_RegulationRituals_GuidePoster.png',
+          type: 'image',
+          description: 'Visual poster showing garden-based regulation techniques for classroom display.',
+          altText: 'Poster with illustrations of breathing techniques using plant and garden metaphors',
+          howToGenerate: 'Use DALL-E 3 with prompt: "Educational poster showing mindfulness techniques using garden metaphors, with diverse children practicing breathing exercises, colorful and calming design"',
+          linkPlaceholder: '[Insert link to RootedInMe_RegulationRituals_GuidePoster.png]',
+          figure: 'Figure 2',
         },
       ],
     },
-    markdown:
-      '# Ready-to-Teach Pack (Fallback)\n\nIf you see this, the generator timed out. The scaffolds above are safe defaults so you can still teach today.',
   };
 
   return plan;
@@ -223,110 +353,243 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => null)) as GeneratePlanInput | null;
     const input = normalizeInput(body);
 
-    // Safely join standards with proper null checking
-    const standardsString = Array.isArray(input.standards) && input.standards.length > 0
-      ? input.standards.join(', ')
-      : 'No standards specified';
+    // Your comprehensive master prompt
+    const masterPrompt = `REFINED MASTER LLM PROMPT for Trauma-Informed STEAM Lesson Plan Generator with Mandatory Teacher & Student Notes
 
-    const prompt = `Create a ${input.days}-day lesson plan with the following requirements:
+🧑‍🏫 Persona to Assume: You are an expert curriculum designer with 20+ years of experience in:
+K–12 education (general and special education)
+Project-Based Learning (PBL)
+Trauma-Informed Care (TIC) in schools
+Living Learning Labs (LLLs) and STEAM integration
+CASEL-aligned Social Emotional Learning (SEL)
+MTSS design and classroom regulation
+Student agency and equity-centered pedagogy
 
-**Context:**
+You are also familiar with the book From Garden to Growth and its frameworks, including:
+Table 1.1: "Foundations of Trauma-Informed Pedagogy"
+Figure 1.3: "Regulation Rituals in Garden-Based Learning"
+Table 2.1: "Cultural Anchoring in Learning Design"
+Figure 2.3: "The Garden-Based Regulation Protocol"
+The Trauma-Informed STEAM Lesson Design Rubric
+The STEAM-PBL Unit Planner for LLLs
+The Trauma-Responsive PBL Unit Template
+The Trauma-Informed PBL Implementation Rubric
+
+Your lesson plans are meticulously crafted to include essential components such as Opening, Mini-Lesson, Work Session, and Closing. You incorporate deconstructed State Standards and formulate essential questions at varying Depths of Knowledge (DOK) levels. Each lesson plan is detailed with daily learning targets, ensuring clarity and purpose. You also specialize in integrating environmental sustainability and gardening elements into these plans. Your approach includes providing clear and engaging teacher scripts, a variety of project options, and the inclusion of social-emotional learning components.
+
+🎯 MANDATORY TEACHER & STUDENT NOTES PROTOCOL: Every lesson component MUST include both note types in this exact format:
+
+Teacher Notes Format:
+Appear as [Teacher Note: ] immediately after each activity description
+Include: pedagogical rationale, trauma-informed considerations, differentiation strategies, assessment insights, Rootwork Framework connections
+Tone: Professional, supportive mentor to colleague
+Length: 1-3 sentences maximum
+Must address therapeutic context and trauma-informed facilitation
+
+Student Notes Format:
+Appear as [Student Note: ] immediately after teacher notes
+Include: coaching language, success strategies, self-advocacy prompts, growth mindset reinforcement, connection to personal growth
+Tone: Warm, empowering, second-person voice aligned with Rootwork Framework
+Length: 1-2 sentences maximum
+Must support student agency and emotional regulation
+
+Placement Rules:
+Notes appear immediately after activity descriptions, before MTSS supports
+Both note types required for every major lesson component (Opening, I Do, We Do, You Do Together, You Do Alone, Closing)
+No lesson component may be generated without both note types
+Notes must maintain therapeutic Rootwork Framework context throughout
+
+🎯 Objective: Generate a ${input.days}-day, student-facing lesson plan that integrates:
+Trauma-informed care (SAMHSA 6 Principles)
+STEAM and Project-Based Learning
+Living Learning Lab methodology
+CASEL SEL competencies
+MTSS scaffolding
+Student agency and differentiated learning modalities
+Gradual Release of Responsibility (GRR)
+
+**LESSON PARAMETERS:**
 - Grade Level: ${input.gradeLevel}
-- Subject: ${input.subject}
-- Topic: ${input.topic}
-- Standards: ${standardsString}
-- Brand: ${input.brandName}
-- Block Duration: ${input.durationMinutes} minutes per day
+- Subject(s): ${input.subjects.join(', ')}
+- Unit Title: ${input.unitTitle}
+- Standards: ${input.standards}
+- Additional Focus: ${input.focus}
+- Duration: ${input.days} days (90 minutes per day)
 
-**Framework Requirements:**
-- STEAM integration and Project-Based Learning
-- Trauma-informed care principles
-- MTSS (Multi-Tiered System of Supports) with Tier 1-3 strategies
-- SEL (Social-Emotional Learning) competencies
-- Gradual Release of Responsibility: Opening, I Do, We Do, You Do Together, You Do Alone, Closing
+🧾 MANDATORY Output Format - Each Component Required:
 
-**Output Requirements:**
-Return ONLY a valid JSON object with this exact structure:
+For each lesson day, provide in this exact order:
+
+HEADER SECTION:
+Day #, Lesson Title, Essential Question, Learning Target, Standards
+[Teacher Note: Pedagogical context for this lesson's objectives and trauma-informed considerations]
+[Student Note: What you're building toward and why it matters for your growth]
+
+STRUCTURED LESSON FLOW:
+Opening (X minutes)
+Activity description with specific instructions
+[Teacher Note: Facilitation tips, trauma-informed considerations, and Rootwork Framework connections]
+[Student Note: Coaching language for engagement and self-regulation strategies]
+
+I Do: Direct Instruction (X minutes)
+Content and modeling description
+[Teacher Note: Key teaching points, differentiation strategies, and therapeutic facilitation approaches]
+[Student Note: What to focus on during instruction and how this builds your skills]
+
+Work Session (X minutes)
+We Do: Collaborative exploration or modeling
+Activity description
+[Teacher Note: Scaffolding tips and trauma-informed group facilitation]
+[Student Note: Success strategies and collaboration expectations]
+
+You Do Together: Partner or small group task
+Activity description
+[Teacher Note: Monitoring guidance and support indicators]
+[Student Note: Partnership strategies and self-advocacy reminders]
+
+You Do Alone: Independent work or reflection
+Activity description
+[Teacher Note: Individual support strategies and regulation monitoring]
+[Student Note: Self-management strategies and growth mindset reinforcement]
+
+Closing (X minutes)
+Activity description with reflection components
+[Teacher Note: Assessment insights, next steps, and trauma-informed closure]
+[Student Note: Reflection prompts and growth recognition strategies]
+
+Additional Required Sections Per Day:
+Student-facing instructions and scaffolds
+Facilitator modeling guidance
+MTSS tiered supports (Tier 1–3)
+SEL competencies addressed
+Regulation rituals (referencing Figure 2.3 where applicable)
+Choices for student expression
+Multimedia integration: embed or link video, Flipgrid, Canva, etc.
+Clear formative or summative assessment tasks
+Reflection or peer feedback mechanisms
+Optional extension or enrichment opportunities
+
+🔍 MANDATORY NOTES QUALITY CHECK: Before finalizing any lesson component, verify it contains:
+[Teacher Note: ] with specific pedagogical guidance addressing trauma-informed practice
+[Student Note: ] with encouraging coaching language supporting student agency
+Both notes align with Rootwork Framework therapeutic principles
+Notes address the healing-centered educational context appropriately
+If ANY component lacks both note types, regenerate entire lesson component
+
+**CRITICAL OUTPUT REQUIREMENT:**
+Respond with ONLY a valid JSON object using this exact structure:
 
 {
   "meta": {
-    "title": "string",
-    "subtitle": "string", 
-    "gradeLevel": "string",
-    "subject": "string",
-    "days": number,
-    "durationMinutes": number,
-    "essentialQuestion": "string",
-    "standards": ["string"]
+    "title": "${input.unitTitle}",
+    "subtitle": "Root Work Framework: S.T.E.A.M. Powered, Trauma Informed, Project Based",
+    "gradeLevel": "${input.gradeLevel}",
+    "subject": "${input.subjects.join(', ')}",
+    "days": ${input.days},
+    "durationMinutes": 90,
+    "essentialQuestion": "string - thought-provoking question connecting to identity/community and trauma-informed healing",
+    "standards": ["${input.standards}"]
   },
   "days": [
     {
-      "day": number,
-      "title": "string",
-      "learningTarget": "string", 
-      "essentialQuestion": "string",
+      "day": 1,
+      "title": "string - engaging, culturally responsive title",
+      "learningTarget": "string - clear, asset-based learning target with trauma-informed language",
+      "essentialQuestion": "string - connects to larger essential question and healing-centered approach",
       "standards": ["string"],
       "flow": {
-        "opening": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "iDo": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "weDo": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "youDoTogether": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "youDoAlone": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "closing": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"}
+        "opening": {
+          "minutes": 15,
+          "activity": "string - detailed community building/grounding activity with regulation rituals",
+          "teacherNote": "[Teacher Note: Specific trauma-informed facilitation guidance and Rootwork Framework connections]",
+          "studentNote": "[Student Note: Empowering, asset-based coaching language for engagement and self-regulation]"
+        },
+        "iDo": {
+          "minutes": 20,
+          "activity": "string - detailed culturally responsive direct instruction with STEAM integration",
+          "teacherNote": "[Teacher Note: Key teaching points, differentiation strategies, and therapeutic facilitation approaches]",
+          "studentNote": "[Student Note: What to focus on during instruction and how this builds your skills and identity]"
+        },
+        "weDo": {
+          "minutes": 25,
+          "activity": "string - detailed collaborative guided practice with trauma-informed group work",
+          "teacherNote": "[Teacher Note: Scaffolding tips, trauma-informed group facilitation, and cultural responsiveness]",
+          "studentNote": "[Student Note: Success strategies, collaboration expectations, and community building]"
+        },
+        "youDoTogether": {
+          "minutes": 20,
+          "activity": "string - detailed peer collaboration with cultural connections and choice",
+          "teacherNote": "[Teacher Note: Monitoring guidance, support indicators, and trauma-informed partnerships]",
+          "studentNote": "[Student Note: Partnership strategies, self-advocacy reminders, and peer support]"
+        },
+        "youDoAlone": {
+          "minutes": 15,
+          "activity": "string - detailed independent practice with choice and cultural connections",
+          "teacherNote": "[Teacher Note: Individual support strategies, regulation monitoring, and asset-based feedback]",
+          "studentNote": "[Student Note: Self-management strategies, growth mindset reinforcement, and identity affirmation]"
+        },
+        "closing": {
+          "minutes": 10,
+          "activity": "string - detailed reflection and community building with healing-centered closure",
+          "teacherNote": "[Teacher Note: Assessment insights, next steps, trauma-informed closure, and celebration]",
+          "studentNote": "[Student Note: Reflection prompts, growth recognition, and community connection]"
+        }
       },
       "mtss": {
-        "tier1": ["string"],
-        "tier2": ["string"], 
-        "tier3": ["string"]
+        "tier1": ["string - specific universal supports with trauma-informed approaches"],
+        "tier2": ["string - specific targeted interventions with cultural responsiveness"],
+        "tier3": ["string - specific intensive supports with individualized trauma-informed care"]
       },
-      "selCompetencies": ["string"],
-      "regulationRituals": ["string"],
+      "selCompetencies": ["string - specific CASEL skills with trauma-informed integration"],
+      "regulationRituals": ["string - specific garden-based regulation techniques from Figure 2.3"],
       "assessment": {
-        "formative": ["string"],
-        "summative": ["string"]
+        "formative": ["string - specific trauma-informed formative assessment strategies"],
+        "summative": ["string - specific culturally responsive summative assessment with choice"]
       },
-      "resources": ["string"]
+      "resources": ["string - specific diverse, inclusive materials with trauma-informed considerations"]
     }
   ],
   "appendixA": {
-    "namingConvention": "string",
+    "namingConvention": "{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}",
     "assets": [
       {
-        "fileName": "string",
-        "type": "image|pdf|docx|sheet|link",
-        "description": "string",
-        "altText": "string",
-        "howToGenerate": "string",
-        "linkPlaceholder": "string",
-        "figure": "string"
+        "fileName": "string - specific file name following naming convention",
+        "type": "pdf|image|docx|sheet|link",
+        "description": "string - detailed description of asset and its trauma-informed purpose",
+        "altText": "string - accessibility description with inclusive language",
+        "howToGenerate": "string - specific instructions for creating asset with trauma-informed design",
+        "linkPlaceholder": "string - placeholder for actual link",
+        "figure": "string - figure number/reference for lesson integration"
       }
     ]
-  },
-  "markdown": "string"
+  }
 }
 
-**Important Notes:**
-- Each activity must include [Teacher Note:] and [Student Note:] 
-- Balance timing to fit ${input.durationMinutes}-minute blocks
-- Use empowering, trauma-informed language in student notes
-- Include diverse, inclusive examples
+🛑 FINAL GENERATION PROTOCOL:
+Generate lesson plan with mandatory teacher/student notes in every component
+Verify notes appear in prescribed [Teacher Note: ] and [Student Note: ] format throughout
+Confirm therapeutic Rootwork Framework context maintained in all notes
+Run final check ensuring no component lacks both note types
+Validate that all notes address trauma-informed practice and student agency
+Only output complete lesson if ALL validation criteria met, including note requirements
+
 ${input.userPrompt ? `\nAdditional Requirements: ${input.userPrompt}` : ''}
 
-Respond with ONLY the JSON object, no additional text or formatting.`;
+Generate the comprehensive trauma-informed lesson plan now, ensuring every component includes the mandatory teacher and student notes in the exact format specified.`;
 
     let plan: LessonPlanJSON | null = null;
     let raw = '';
 
-    // Primary call using Claude Haiku (cost-effective and reliable)
+    // Primary call using Claude Sonnet for better comprehension of complex requirements
     try {
       const response = await client.messages.create({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
-        temperature: 0.3,
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 8000,
+        temperature: 0.2,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: masterPrompt
           }
         ]
       });
@@ -334,7 +597,7 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
       raw = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
       plan = safeParse<LessonPlanJSON>(raw);
     } catch (error) {
-      // Claude API call failed, handled by fallback below
+      console.error('Claude API error:', error);
     }
 
     // One repair attempt if model wrapped JSON in prose
@@ -349,9 +612,6 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
     // Last resort fallback
     if (!plan) {
       plan = fallbackPlan(input);
-      plan.markdown =
-        (plan.markdown || '') +
-        `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
     }
 
     // Validate lesson plan structure
@@ -359,20 +619,8 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
       plan = fallbackPlan(input);
     }
 
-    // Ensure minimal fields exist with proper null checking
-    if (!plan.meta?.title) {
-      plan.meta = plan.meta || ({} as any);
-      plan.meta.title = `${input.subject} — ${input.topic}`;
-    }
-    if (!plan.markdown) {
-      plan.markdown = `# ${plan.meta.title}\n\n${plan.meta.subtitle || ''}\n\n**Grade:** ${
-        plan.meta.gradeLevel
-      } • **Subject:** ${plan.meta.subject} • **Block:** ${
-        plan.meta.durationMinutes
-      } min • **Days:** ${plan.meta.days}\n\n---\n\n${
-        plan.days?.[0]?.flow?.opening?.activity || 'See daily flow in JSON.'
-      }\n`;
-    }
+    // Generate comprehensive markdown from the structured plan
+    plan.markdown = generateComprehensiveMarkdown(plan);
 
     return NextResponse.json({ 
       ok: true, 
@@ -384,12 +632,14 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
     const msg = err instanceof Error ? err.message : 'Unknown error';
     const safe = fallbackPlan(
       normalizeInput({
-        subject: 'ELA',
-        topic: 'Citing Textual Evidence',
-        gradeLevel: '10',
-        days: 3,
+        gradeLevel: '10th Grade',
+        subjects: ['English Language Arts'],
+        unitTitle: 'Rooted in Me: Exploring Culture, Identity, and Expression',
+        duration: 3,
       }),
     );
+    safe.markdown = generateComprehensiveMarkdown(safe);
+    
     return NextResponse.json(
       { ok: true, routeId: ROUTE_ID, plan: safe, warning: `Generator error: ${msg}` },
       { status: 200 },
