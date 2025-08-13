@@ -9,7 +9,6 @@ export const maxDuration = 60;
 
 const ROUTE_ID = 'generatePlan-v8-anthropic-2025-08-12-unique';
 
-// Lesson plan specific configuration for unique bundling
 const LESSON_PLAN_CONFIG = {
   maxDays: 5,
   gradeRanges: ['K-2', '3-5', '6-8', '9-12'],
@@ -17,13 +16,17 @@ const LESSON_PLAN_CONFIG = {
   generator: 'lesson-plan-generator-v8'
 };
 
-// Incoming payload (may be partial/optional)
 type GeneratePlanInput = {
   gradeLevel?: string;
+  subjects?: string[];
+  duration?: number;
+  unitTitle?: string;
+  standards?: string;
+  focus?: string;
+  
   subject?: string;
   durationMinutes?: number;
   topic?: string;
-  standards?: string[];
   days?: number;
 
   brandName?: string;
@@ -34,20 +37,18 @@ type GeneratePlanInput = {
   userPrompt?: string;
 };
 
-// Fully normalized, non-optional version (safe to use everywhere)
 type NormalizedInput = {
   gradeLevel: string;
-  subject: string;
-  durationMinutes: number;
-  topic: string;
-  standards: string[];
+  subjects: string[];
+  duration: number;
+  unitTitle: string;
+  standards: string;
+  focus: string;
   days: number;
-
   brandName: string;
   includeAppendix: boolean;
   includeRubrics: boolean;
   includeAssetsDirectory: boolean;
-
   userPrompt: string;
 };
 
@@ -106,7 +107,6 @@ type LessonPlanJSON = {
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// Lesson plan specific validation function
 function validateLessonPlanStructure(plan: any): boolean {
   return !!(plan?.meta?.title && plan?.days?.length && plan?.days[0]?.flow);
 }
@@ -120,19 +120,15 @@ function safeParse<T>(text: string): T | null {
 }
 
 function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
-  const days = Math.min(Math.max(body?.days ?? 3, 1), LESSON_PLAN_CONFIG.maxDays);
-  
-  // Ensure standards is always a valid array
-  const standards = body?.standards && Array.isArray(body.standards) && body.standards.length > 0
-    ? body.standards
-    : ['CCSS.ELA-LITERACY.RI.9-10.1'];
+  const days = Math.min(Math.max(body?.days ?? body?.duration ?? 3, 1), LESSON_PLAN_CONFIG.maxDays);
   
   return {
-    gradeLevel: body?.gradeLevel ?? '10',
-    subject: body?.subject ?? 'ELA',
-    durationMinutes: body?.durationMinutes ?? 90,
-    topic: body?.topic ?? 'Citing Textual Evidence to Support a Claim',
-    standards,
+    gradeLevel: body?.gradeLevel ?? '10th Grade',
+    subjects: body?.subjects ?? [body?.subject ?? 'English Language Arts'],
+    duration: days,
+    unitTitle: body?.unitTitle ?? body?.topic ?? 'Rooted in Me: Exploring Culture, Identity, and Expression',
+    standards: body?.standards ?? 'Please align with relevant standards (CCSS/NGSS/etc.)',
+    focus: body?.focus ?? 'None specified',
     days,
     brandName: body?.brandName ?? 'Root Work Framework',
     includeAppendix: body?.includeAppendix ?? true,
@@ -142,70 +138,305 @@ function normalizeInput(body: GeneratePlanInput | null): NormalizedInput {
   };
 }
 
-// Guaranteed non-empty plan if model fails
+function generateComprehensiveMarkdown(plan: LessonPlanJSON): string {
+  const { meta, days, appendixA } = plan;
+  
+  let markdown = `# ${meta.title}
+
+*${meta.subtitle || 'Root Work Framework: S.T.E.A.M. Powered, Trauma Informed, Project Based'}*
+
+## Unit Overview
+
+**Grade Level:** ${meta.gradeLevel}  
+**Subject(s):** ${meta.subject}  
+**Duration:** ${meta.days} days (${meta.durationMinutes} minutes per day)  
+**Essential Question:** ${meta.essentialQuestion}  
+**Standards:** ${meta.standards.join(', ')}  
+
+---
+
+## Daily Lesson Plans
+
+`;
+
+  days.forEach((day, index) => {
+    markdown += `### Day ${day.day}: ${day.title}
+
+**Learning Target:** ${day.learningTarget}  
+**Essential Question:** ${day.essentialQuestion}  
+**Standards:** ${day.standards.join(', ')}  
+
+#### Daily Flow (${meta.durationMinutes} minutes total)
+
+**Opening (${day.flow.opening.minutes} minutes)**
+- **Activity:** ${day.flow.opening.activity}
+- ${day.flow.opening.teacherNote}
+- ${day.flow.opening.studentNote}
+
+**I Do - Direct Instruction (${day.flow.iDo.minutes} minutes)**
+- **Activity:** ${day.flow.iDo.activity}
+- ${day.flow.iDo.teacherNote}
+- ${day.flow.iDo.studentNote}
+
+**We Do - Guided Practice (${day.flow.weDo.minutes} minutes)**
+- **Activity:** ${day.flow.weDo.activity}
+- ${day.flow.weDo.teacherNote}
+- ${day.flow.weDo.studentNote}
+
+**You Do Together - Collaborative Work (${day.flow.youDoTogether.minutes} minutes)**
+- **Activity:** ${day.flow.youDoTogether.activity}
+- ${day.flow.youDoTogether.teacherNote}
+- ${day.flow.youDoTogether.studentNote}
+
+**You Do Alone - Independent Practice (${day.flow.youDoAlone.minutes} minutes)**
+- **Activity:** ${day.flow.youDoAlone.activity}
+- ${day.flow.youDoAlone.teacherNote}
+- ${day.flow.youDoAlone.studentNote}
+
+**Closing (${day.flow.closing.minutes} minutes)**
+- **Activity:** ${day.flow.closing.activity}
+- ${day.flow.closing.teacherNote}
+- ${day.flow.closing.studentNote}
+
+#### MTSS Support Strategies
+
+**Tier 1 (Universal Supports):**
+${day.mtss.tier1.map(item => `- ${item}`).join('\n')}
+
+**Tier 2 (Targeted Supports):**
+${day.mtss.tier2.map(item => `- ${item}`).join('\n')}
+
+**Tier 3 (Intensive Supports):**
+${day.mtss.tier3.map(item => `- ${item}`).join('\n')}
+
+#### SEL Competencies
+${day.selCompetencies.map(comp => `- ${comp}`).join('\n')}
+
+#### Regulation Rituals
+${day.regulationRituals.map(ritual => `- ${ritual}`).join('\n')}
+
+#### Assessment
+
+**Formative Assessment:**
+${day.assessment.formative.map(item => `- ${item}`).join('\n')}
+
+${day.assessment.summative ? `**Summative Assessment:**
+${day.assessment.summative.map(item => `- ${item}`).join('\n')}` : ''}
+
+#### Required Resources
+${day.resources.map(resource => `- ${resource}`).join('\n')}
+
+---
+
+`;
+  });
+
+  if (appendixA && appendixA.assets.length > 0) {
+    markdown += `## Appendix A: Resource and Visual Asset Directory
+
+**Naming Convention:** ${appendixA.namingConvention}
+
+`;
+
+    appendixA.assets.forEach((asset, index) => {
+      markdown += `### ${asset.figure || `Asset ${index + 1}`}: ${asset.fileName}
+
+**Type:** ${asset.type}  
+**Description:** ${asset.description}  
+${asset.altText ? `**Alt Text:** ${asset.altText}  ` : ''}
+${asset.howToGenerate ? `**How to Generate:** ${asset.howToGenerate}  ` : ''}
+${asset.linkPlaceholder ? `**Link:** ${asset.linkPlaceholder}  ` : ''}
+
+`;
+    });
+  }
+
+  return markdown;
+}
+
 function fallbackPlan(input: NormalizedInput): LessonPlanJSON {
+  const getIntelligentStandards = (gradeLevel: string, subjects: string[], standardsGuidance: string): string[] => {
+    const grade = gradeLevel.toLowerCase();
+    const standards: string[] = [];
+    
+    const isGeorgia = standardsGuidance.toLowerCase().includes('georgia');
+    
+    subjects.forEach(subject => {
+      const subjectLower = subject.toLowerCase();
+      
+      if (subjectLower.includes('english') || subjectLower.includes('ela')) {
+        if (isGeorgia) {
+          if (grade.includes('9') || grade.includes('10')) {
+            standards.push('ELAGSE9-10.RI.1', 'ELAGSE9-10.W.1');
+          } else if (grade.includes('11') || grade.includes('12')) {
+            standards.push('ELAGSE11-12.RI.1', 'ELAGSE11-12.W.1');
+          } else {
+            standards.push('ELAGSE-appropriate for ' + gradeLevel + ' ELA');
+          }
+        } else {
+          if (grade.includes('9') || grade.includes('10')) {
+            standards.push('CCSS.ELA-LITERACY.RI.9-10.1', 'CCSS.ELA-LITERACY.W.9-10.1');
+          } else if (grade.includes('11') || grade.includes('12')) {
+            standards.push('CCSS.ELA-LITERACY.RI.11-12.1', 'CCSS.ELA-LITERACY.W.11-12.1');
+          } else {
+            standards.push('CCSS ELA standards appropriate for ' + gradeLevel);
+          }
+        }
+      }
+      
+      if (subjectLower.includes('math')) {
+        if (isGeorgia) {
+          standards.push('MGSE-appropriate mathematics standards for ' + gradeLevel);
+        } else {
+          standards.push('CCSS.MATH.CONTENT.HSA.REI.A.1');
+        }
+      }
+      
+      if (subjectLower.includes('science')) {
+        if (isGeorgia) {
+          standards.push('GSE Science standards for ' + gradeLevel);
+        } else {
+          standards.push('NGSS.HS-PS1-1', 'NGSS.HS-ETS1-1');
+        }
+      }
+      
+      if (subjectLower.includes('social')) {
+        if (isGeorgia) {
+          standards.push('GSE Social Studies standards for ' + gradeLevel);
+        } else {
+          standards.push('NCSS thematic standards appropriate for ' + gradeLevel);
+        }
+      }
+      
+      if (subjectLower.includes('art')) {
+        standards.push('National Core Arts Standards for ' + gradeLevel + ' Visual Arts');
+      }
+    });
+    
+    if (standards.length === 0) {
+      return ['State-appropriate standards for ' + gradeLevel + ' ' + subjects.join(', ')];
+    }
+    
+    return standards.slice(0, 5);
+  };
+
+  const getFocusEnhancement = (focus: string, subjects: string[]): string => {
+    const focusLower = focus.toLowerCase();
+    const isInterdisciplinary = subjects.length > 1;
+    
+    if (focusLower.includes('steam')) {
+      return isInterdisciplinary 
+        ? `with integrated STEAM elements woven throughout ${subjects.join(', ')}`
+        : 'with integrated STEAM elements (Science, Technology, Engineering, Arts, Mathematics)';
+    } else if (focusLower.includes('pbl') || focusLower.includes('project')) {
+      return isInterdisciplinary
+        ? `structured as project-based learning requiring knowledge from ${subjects.join(', ')}`
+        : 'structured as project-based learning with authentic problem-solving';
+    }
+    
+    return isInterdisciplinary
+      ? `with trauma-informed approaches that naturally integrate ${subjects.join(', ')}`
+      : 'with trauma-informed and culturally responsive approaches';
+  };
+
+  const intelligentStandards = getIntelligentStandards(input.gradeLevel, input.subjects, input.standards);
+  const focusEnhancement = getFocusEnhancement(input.focus, input.subjects);
+
   const mkStep = (label: string) => ({
-    minutes: Math.round(input.durationMinutes / 6),
-    activity: `${label}: See teacher script and student-facing directions.`,
-    teacherNote:
-      '[Teacher Note: Keep directions brief; offer options; monitor regulation; normalize help-seeking.]',
-    studentNote:
-      '[Student Note: You have got this. Ask for clarity, choose a strategy, and pace yourself.]',
+    minutes: Math.round(90 / 6),
+    activity: `${label}: Comprehensive activities ${focusEnhancement}. Include multiple pathways for engagement that honor student identities${input.subjects.length > 1 ? ` while integrating ${input.subjects.join(', ')} naturally` : ''}.`,
+    teacherNote: `[Teacher Note: Use trauma-informed approaches while emphasizing ${input.focus}${input.subjects.length > 1 ? ` across ${input.subjects.join(', ')}` : ''}. Monitor for regulation needs and provide multiple entry points.]`,
+    studentNote: `[Student Note: You belong here and your voice matters. Notice how ${input.focus}${input.subjects.length > 1 ? ` and ${input.subjects.join(' and ')} connect` : ' connects'} to your life.]`,
   });
 
   const dayBlock = (day: number) => ({
     day,
-    title: `${input.topic} — Day ${day}`,
-    learningTarget: 'I can cite and explain textual evidence that supports a claim.',
-    essentialQuestion: 'How do we choose evidence that truly supports our claim?',
-    standards: input.standards,
+    title: `${input.unitTitle} — Day ${day}${input.subjects.length > 1 ? ': Interdisciplinary Learning' : ''}`,
+    learningTarget: `Students will demonstrate understanding through culturally responsive, trauma-informed learning experiences${input.subjects.length > 1 ? ` across ${input.subjects.join(', ')}` : ''}.`,
+    essentialQuestion: `How do we learn in ways that honor our identities through ${input.focus}${input.subjects.length > 1 ? ` and ${input.subjects.join(' and ')}` : ''}?`,
+    standards: intelligentStandards,
     flow: {
-      opening: mkStep('Opening'),
-      iDo: mkStep('I Do'),
-      weDo: mkStep('We Do'),
-      youDoTogether: mkStep('You Do Together'),
-      youDoAlone: mkStep('You Do Alone'),
-      closing: mkStep('Closing'),
+      opening: mkStep('Opening Circle & Grounding'),
+      iDo: mkStep('Direct Instruction'),
+      weDo: mkStep('Collaborative Exploration'),
+      youDoTogether: mkStep('Partner Work'),
+      youDoAlone: mkStep('Independent Practice'),
+      closing: mkStep('Reflection & Closure'),
     },
     mtss: {
-      tier1: ['Clear agenda; sentence starters; timers.'],
-      tier2: ['Small-group check-ins; guided frames; extended time.'],
-      tier3: ['1:1 conferencing; alternative modality; reduced load.'],
+      tier1: [
+        `Clear visual agenda with ${input.focus} supports${input.subjects.length > 1 ? ` spanning ${input.subjects.join(', ')}` : ''}`,
+        'Multiple representation modes with trauma-informed design',
+        'Built-in regulation breaks and student choice'
+      ],
+      tier2: [
+        `Small group supports with ${input.focus} scaffolding`,
+        'Extended processing time and alternative formats',
+        'Peer partnerships with community building'
+      ],
+      tier3: [
+        `Individualized accommodations for ${input.focus} participation`,
+        'Alternative assessment formats',
+        'Intensive regulation support'
+      ]
     },
-    selCompetencies: ['Self-Management', 'Relationship Skills'],
-    regulationRituals: ['Breathing box; brief outdoor reset (if available).'],
-    assessment: { formative: ['Exit ticket: One claim + one cited evidence + why it fits.'] },
-    resources: ['Projector', 'Timer', 'Student handout'],
+    selCompetencies: [
+      `Self-Awareness through ${input.focus} exploration`,
+      'Self-Management via regulation rituals',
+      'Social Awareness through community building',
+      'Relationship Skills in collaboration',
+      'Responsible Decision-Making with choice'
+    ],
+    regulationRituals: [
+      `Garden-based breathing with ${input.focus} visualization`,
+      'Grounding with cultural symbols',
+      'Movement with community building'
+    ],
+    assessment: { 
+      formative: [
+        `Exit tickets with ${input.focus} reflection`,
+        'Peer feedback circles',
+        'Self-reflection journals'
+      ],
+      summative: [
+        `Portfolio with ${input.focus} showcase${input.subjects.length > 1 ? ` across ${input.subjects.join(', ')}` : ''}`,
+        'Community presentation',
+        'Multimedia expression'
+      ]
+    },
+    resources: [
+      `Diverse materials with ${input.focus} connections`,
+      'Technology with accessibility features',
+      'Art supplies for creative expression'
+    ],
   });
 
   const plan: LessonPlanJSON = {
     meta: {
-      title: `${input.subject} — ${input.topic}`,
-      subtitle: 'S.T.E.A.M. Powered, Trauma Informed, Project-Based',
+      title: `${input.unitTitle}`,
+      subtitle: `Root Work Framework: S.T.E.A.M. Powered, Trauma Informed, Project Based${input.subjects.length > 1 ? ' - Interdisciplinary' : ''}`,
       gradeLevel: input.gradeLevel,
-      subject: input.subject,
+      subject: input.subjects.join(', '),
       days: input.days,
-      durationMinutes: input.durationMinutes,
-      essentialQuestion: 'How can we design learning that heals, includes, and empowers?',
-      standards: input.standards,
+      durationMinutes: 90,
+      essentialQuestion: `How can we design learning that heals and empowers students through ${input.focus}${input.subjects.length > 1 ? ` and ${input.subjects.join(' and ')}` : ''}?`,
+      standards: intelligentStandards,
     },
     days: Array.from({ length: input.days }, (_, i) => dayBlock(i + 1)),
     appendixA: {
-      namingConvention:
-        '{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}',
+      namingConvention: '{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}',
       assets: [
         {
-          fileName: 'RootedInMe_10ELA_RitualGuidebook.pdf',
+          fileName: `RootedInMe_${input.gradeLevel.replace(/\s+/g, '')}_ReflectionGuide.pdf`,
           type: 'pdf',
-          description: 'Regulation rituals quick reference used in Opening and Closing.',
-          altText: 'Guidebook cover with leaf motif',
-          linkPlaceholder: '[Insert link to RootedInMe_10ELA_RitualGuidebook.pdf]',
+          description: `Trauma-informed reflection guide with ${input.focus} integration`,
+          altText: 'Diverse student artwork with healing imagery',
+          howToGenerate: 'Create in Canva with trauma-informed design principles',
+          linkPlaceholder: '[Insert link to reflection guide]',
           figure: 'Figure 1',
         },
       ],
     },
-    markdown:
-      '# Ready-to-Teach Pack (Fallback)\n\nIf you see this, the generator timed out. The scaffolds above are safe defaults so you can still teach today.',
   };
 
   return plan;
@@ -223,156 +454,170 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => null)) as GeneratePlanInput | null;
     const input = normalizeInput(body);
 
-    // Safely join standards with proper null checking
-    const standardsString = Array.isArray(input.standards) && input.standards.length > 0
-      ? input.standards.join(', ')
-      : 'No standards specified';
+    console.log('API Input:', input);
 
-    const prompt = `Create a ${input.days}-day lesson plan with the following requirements:
+    const masterPrompt = `You are an expert trauma-informed educator creating a comprehensive ${input.days}-day lesson plan using the Root Work Framework with interdisciplinary integration.
 
-**Context:**
+**LESSON REQUIREMENTS:**
 - Grade Level: ${input.gradeLevel}
-- Subject: ${input.subject}
-- Topic: ${input.topic}
-- Standards: ${standardsString}
-- Brand: ${input.brandName}
-- Block Duration: ${input.durationMinutes} minutes per day
+- Subject(s): ${input.subjects.join(', ')} ${input.subjects.length > 1 ? '(INTERDISCIPLINARY)' : ''}
+- Unit Title: ${input.unitTitle}
+- Standards: "${input.standards}" (Select specific standards for all subjects)
+- Focus: "${input.focus}" (Integrate throughout all activities)
+- Days: ${input.days} (90 minutes each)
 
-**Framework Requirements:**
-- STEAM integration and Project-Based Learning
-- Trauma-informed care principles
-- MTSS (Multi-Tiered System of Supports) with Tier 1-3 strategies
-- SEL (Social-Emotional Learning) competencies
-- Gradual Release of Responsibility: Opening, I Do, We Do, You Do Together, You Do Alone, Closing
+${input.subjects.length > 1 ? `**INTERDISCIPLINARY INTEGRATION:**
+- EVERY activity must integrate ALL subjects: ${input.subjects.join(', ')}
+- Create authentic, real-world connections between subjects
+- Use project-based approaches requiring multiple disciplines
+- Ensure assessments evaluate understanding across all subject areas` : ''}
 
-**Output Requirements:**
-Return ONLY a valid JSON object with this exact structure:
+**CRITICAL:** Generate ONLY valid JSON with complete ${input.days} days. NO markdown, NO explanations, ONLY JSON:
 
 {
   "meta": {
-    "title": "string",
-    "subtitle": "string", 
-    "gradeLevel": "string",
-    "subject": "string",
-    "days": number,
-    "durationMinutes": number,
-    "essentialQuestion": "string",
-    "standards": ["string"]
+    "title": "${input.unitTitle}",
+    "subtitle": "Root Work Framework: S.T.E.A.M. Powered, Trauma Informed, Project Based${input.subjects.length > 1 ? ' - Interdisciplinary' : ''}",
+    "gradeLevel": "${input.gradeLevel}",
+    "subject": "${input.subjects.join(', ')}",
+    "days": ${input.days},
+    "durationMinutes": 90,
+    "essentialQuestion": "How can we amplify our voices and heal communities through learning?",
+    "standards": ["List 3-5 specific standards from all subject areas"]
   },
   "days": [
+    // Generate ALL ${input.days} days with complete details
     {
-      "day": number,
-      "title": "string",
-      "learningTarget": "string", 
-      "essentialQuestion": "string",
-      "standards": ["string"],
+      "day": 1,
+      "title": "Day 1 title integrating ${input.subjects.length > 1 ? 'all subjects' : 'subject'} and ${input.focus}",
+      "learningTarget": "Asset-based target incorporating ${input.focus}${input.subjects.length > 1 ? ' across ' + input.subjects.join(', ') : ''}",
+      "essentialQuestion": "Question connecting to healing and ${input.subjects.length > 1 ? 'interdisciplinary' : ''} learning",
+      "standards": ["Specific standards from all subject areas"],
       "flow": {
-        "opening": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "iDo": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "weDo": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "youDoTogether": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "youDoAlone": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"},
-        "closing": {"minutes": number, "activity": "string", "teacherNote": "string", "studentNote": "string"}
+        "opening": {
+          "minutes": 15,
+          "activity": "Community building with ${input.focus}${input.subjects.length > 1 ? ' introducing connections between ' + input.subjects.join(', ') : ''}",
+          "teacherNote": "[Teacher Note: Trauma-informed facilitation guidance for ${input.focus}${input.subjects.length > 1 ? ' and interdisciplinary connections' : ''}]",
+          "studentNote": "[Student Note: Empowering message about belonging and ${input.focus} learning]"
+        },
+        "iDo": {
+          "minutes": 20,
+          "activity": "Direct instruction integrating ${input.focus}${input.subjects.length > 1 ? ' across ' + input.subjects.join(', ') : ''}",
+          "teacherNote": "[Teacher Note: Asset-based teaching with ${input.focus} connections${input.subjects.length > 1 ? ' and interdisciplinary examples' : ''}]",
+          "studentNote": "[Student Note: Focus on connections to your experiences and ${input.focus}]"
+        },
+        "weDo": {
+          "minutes": 25,
+          "activity": "Collaborative exploration with ${input.focus}${input.subjects.length > 1 ? ' requiring knowledge from ' + input.subjects.join(', ') : ''}",
+          "teacherNote": "[Teacher Note: Trauma-informed group facilitation with ${input.focus}${input.subjects.length > 1 ? ' and interdisciplinary support' : ''}]",
+          "studentNote": "[Student Note: Share ideas while exploring ${input.focus}${input.subjects.length > 1 ? ' connections' : ''}]"
+        },
+        "youDoTogether": {
+          "minutes": 20,
+          "activity": "Partner work with ${input.focus}${input.subjects.length > 1 ? ' integrating ' + input.subjects.join(', ') : ''}",
+          "teacherNote": "[Teacher Note: Support partnerships for ${input.focus} work${input.subjects.length > 1 ? ' across subjects' : ''}]",
+          "studentNote": "[Student Note: Practice listening and sharing about ${input.focus}]"
+        },
+        "youDoAlone": {
+          "minutes": 15,
+          "activity": "Independent practice with ${input.focus}${input.subjects.length > 1 ? ' demonstrating understanding across ' + input.subjects.join(', ') : ''}",
+          "teacherNote": "[Teacher Note: Provide choice while ensuring ${input.focus} integration${input.subjects.length > 1 ? ' across subjects' : ''}]",
+          "studentNote": "[Student Note: Choose how to show understanding of ${input.focus}]"
+        },
+        "closing": {
+          "minutes": 10,
+          "activity": "Reflection and community building with ${input.focus}${input.subjects.length > 1 ? ' celebrating interdisciplinary learning' : ''}",
+          "teacherNote": "[Teacher Note: Trauma-informed closure highlighting ${input.focus}${input.subjects.length > 1 ? ' and subject connections' : ''}]",
+          "studentNote": "[Student Note: Reflect on growth in ${input.focus}${input.subjects.length > 1 ? ' and subject connections' : ''}]"
+        }
       },
       "mtss": {
-        "tier1": ["string"],
-        "tier2": ["string"], 
-        "tier3": ["string"]
+        "tier1": ["Universal supports with ${input.focus}${input.subjects.length > 1 ? ' and interdisciplinary scaffolds' : ''}"],
+        "tier2": ["Targeted interventions for ${input.focus}${input.subjects.length > 1 ? ' across subjects' : ''}"],
+        "tier3": ["Intensive supports with ${input.focus}${input.subjects.length > 1 ? ' accommodations' : ''}"]
       },
-      "selCompetencies": ["string"],
-      "regulationRituals": ["string"],
+      "selCompetencies": ["Self-Awareness through ${input.focus}", "Self-Management", "Social Awareness", "Relationship Skills", "Responsible Decision-Making"],
+      "regulationRituals": ["Garden-based breathing with ${input.focus}", "Grounding techniques", "Movement with purpose"],
       "assessment": {
-        "formative": ["string"],
-        "summative": ["string"]
+        "formative": ["Exit tickets with ${input.focus}${input.subjects.length > 1 ? ' connections' : ''}"],
+        "summative": ["Portfolio showcasing ${input.focus}${input.subjects.length > 1 ? ' across subjects' : ''}"]
       },
-      "resources": ["string"]
+      "resources": ["Diverse materials with ${input.focus}${input.subjects.length > 1 ? ' spanning subjects' : ''}"]
     }
   ],
   "appendixA": {
-    "namingConvention": "string",
+    "namingConvention": "{LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}",
     "assets": [
       {
-        "fileName": "string",
-        "type": "image|pdf|docx|sheet|link",
-        "description": "string",
-        "altText": "string",
-        "howToGenerate": "string",
-        "linkPlaceholder": "string",
-        "figure": "string"
+        "fileName": "RootedInMe_${input.gradeLevel.replace(/\s+/g, '')}_Guide.pdf",
+        "type": "pdf",
+        "description": "Trauma-informed guide for ${input.focus}${input.subjects.length > 1 ? ' interdisciplinary' : ''} learning",
+        "altText": "Diverse artwork with ${input.focus} elements",
+        "howToGenerate": "Create with trauma-informed design and ${input.focus} integration",
+        "linkPlaceholder": "[Insert link to guide]",
+        "figure": "Figure 1"
       }
     ]
-  },
-  "markdown": "string"
+  }
 }
 
-**Important Notes:**
-- Each activity must include [Teacher Note:] and [Student Note:] 
-- Balance timing to fit ${input.durationMinutes}-minute blocks
-- Use empowering, trauma-informed language in student notes
-- Include diverse, inclusive examples
-${input.userPrompt ? `\nAdditional Requirements: ${input.userPrompt}` : ''}
-
-Respond with ONLY the JSON object, no additional text or formatting.`;
+Generate complete JSON for ALL ${input.days} days. Ensure every day has detailed flow sections.`;
 
     let plan: LessonPlanJSON | null = null;
     let raw = '';
 
-    // Primary call using Claude Haiku (cost-effective and reliable)
     try {
       const response = await client.messages.create({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
-        temperature: 0.3,
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 8192,
+        temperature: 0.1,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: masterPrompt
           }
         ]
       });
       
       raw = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
+      console.log('Raw response length:', raw.length);
+      
       plan = safeParse<LessonPlanJSON>(raw);
     } catch (error) {
-      // Claude API call failed, handled by fallback below
+      console.error('Claude API error:', error);
     }
 
-    // One repair attempt if model wrapped JSON in prose
     if (!plan && raw) {
-      const s = raw.indexOf('{');
-      const e = raw.lastIndexOf('}');
-      if (s !== -1 && e !== -1 && e > s) {
-        plan = safeParse<LessonPlanJSON>(raw.slice(s, e + 1));
+      const jsonMatch = raw.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      if (jsonMatch) {
+        plan = safeParse<LessonPlanJSON>(jsonMatch[1]);
+      } else {
+        const s = raw.indexOf('{');
+        const e = raw.lastIndexOf('}');
+        if (s !== -1 && e !== -1 && e > s) {
+          plan = safeParse<LessonPlanJSON>(raw.slice(s, e + 1));
+        }
       }
     }
 
-    // Last resort fallback
-    if (!plan) {
+    if (!plan || !plan.days || plan.days.length !== input.days) {
+      console.log('Using fallback plan');
       plan = fallbackPlan(input);
-      plan.markdown =
-        (plan.markdown || '') +
-        `\n\n---\n**Debug**: Generator returned empty/invalid JSON; provided fallback. Route: ${ROUTE_ID}`;
     }
 
-    // Validate lesson plan structure
     if (!validateLessonPlanStructure(plan)) {
+      console.log('Using fallback plan - validation failed');
       plan = fallbackPlan(input);
     }
 
-    // Ensure minimal fields exist with proper null checking
-    if (!plan.meta?.title) {
-      plan.meta = plan.meta || ({} as any);
-      plan.meta.title = `${input.subject} — ${input.topic}`;
+    if (plan.days.length !== input.days) {
+      console.log(`Adjusting days: got ${plan.days.length}, expected ${input.days}`);
+      plan = fallbackPlan(input);
     }
-    if (!plan.markdown) {
-      plan.markdown = `# ${plan.meta.title}\n\n${plan.meta.subtitle || ''}\n\n**Grade:** ${
-        plan.meta.gradeLevel
-      } • **Subject:** ${plan.meta.subject} • **Block:** ${
-        plan.meta.durationMinutes
-      } min • **Days:** ${plan.meta.days}\n\n---\n\n${
-        plan.days?.[0]?.flow?.opening?.activity || 'See daily flow in JSON.'
-      }\n`;
-    }
+
+    plan.markdown = generateComprehensiveMarkdown(plan);
+
+    console.log('Final plan days:', plan.days.length);
 
     return NextResponse.json({ 
       ok: true, 
@@ -382,14 +627,18 @@ Respond with ONLY the JSON object, no additional text or formatting.`;
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('API Error:', msg);
+    
     const safe = fallbackPlan(
       normalizeInput({
-        subject: 'ELA',
-        topic: 'Citing Textual Evidence',
-        gradeLevel: '10',
-        days: 3,
+        gradeLevel: '10th Grade',
+        subjects: ['English Language Arts'],
+        unitTitle: 'Rooted in Me: Exploring Culture, Identity, and Expression',
+        duration: 3,
       }),
     );
+    safe.markdown = generateComprehensiveMarkdown(safe);
+    
     return NextResponse.json(
       { ok: true, routeId: ROUTE_ID, plan: safe, warning: `Generator error: ${msg}` },
       { status: 200 },
