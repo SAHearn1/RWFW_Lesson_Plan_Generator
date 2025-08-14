@@ -453,25 +453,60 @@ export default function HomePage() {
                             </div>
                           );
                         }
+
+                        // Handle Day Headers (look for "DAY 1:", "DAY 2:", etc.)
+                        if (text.match(/^DAY\s+\d+:/i)) {
+                          return (
+                            <div className="day-header bg-gradient-to-r from-emerald-100 to-blue-100 border-2 border-emerald-300 rounded-lg p-6 my-8 shadow-md">
+                              <h1 className="text-3xl font-bold text-emerald-800 mb-2 border-b-2 border-emerald-400 pb-2">
+                                🌱 {text}
+                              </h1>
+                            </div>
+                          );
+                        }
                         
                         return <p className="mb-4 leading-relaxed">{children}</p>;
                       },
                       
-                      h1: ({ children }) => (
-                        <h1 className="text-3xl font-bold text-emerald-800 border-b-2 border-emerald-200 pb-3 mb-6 mt-8 first:mt-0">
-                          {children}
-                        </h1>
-                      ),
+                      h1: ({ children }) => {
+                        const text = children?.toString() || '';
+                        // If it's a day header, use special styling
+                        if (text.match(/^DAY\s+\d+:/i)) {
+                          return (
+                            <div className="day-header bg-gradient-to-r from-emerald-100 to-blue-100 border-2 border-emerald-300 rounded-lg p-6 my-8 shadow-md">
+                              <h1 className="text-3xl font-bold text-emerald-800 mb-2">
+                                🌱 {children}
+                              </h1>
+                            </div>
+                          );
+                        }
+                        return (
+                          <h1 className="text-3xl font-bold text-emerald-800 border-b-2 border-emerald-200 pb-3 mb-6 mt-8 first:mt-0">
+                            {children}
+                          </h1>
+                        );
+                      },
                       
-                      h2: ({ children }) => (
-                        <h2 className="text-2xl font-semibold text-emerald-700 mt-8 mb-4 first:mt-0">
-                          {children}
-                        </h2>
-                      ),
+                      h2: ({ children }) => {
+                        const text = children?.toString() || '';
+                        // Special styling for main lesson components
+                        if (text.includes('Opening') || text.includes('Work Session') || text.includes('Closing') || text.includes('I Do')) {
+                          return (
+                            <h2 className="text-2xl font-semibold text-emerald-700 mt-8 mb-4 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                              📚 {children}
+                            </h2>
+                          );
+                        }
+                        return (
+                          <h2 className="text-2xl font-semibold text-emerald-700 mt-8 mb-4 first:mt-0">
+                            {children}
+                          </h2>
+                        );
+                      },
                       
                       h3: ({ children }) => (
-                        <h3 className="text-xl font-medium text-emerald-600 mt-6 mb-3">
-                          {children}
+                        <h3 className="text-xl font-medium text-emerald-600 mt-6 mb-3 pl-4 border-l-2 border-emerald-300">
+                          🔹 {children}
                         </h3>
                       ),
                       
@@ -484,8 +519,21 @@ export default function HomePage() {
                       ),
                       
                       li: ({ children }) => (
-                        <li className="leading-relaxed">{children}</li>
+                        <li className="leading-relaxed pl-2">{children}</li>
                       ),
+
+                      // Handle strong text with special formatting for key terms
+                      strong: ({ children }) => {
+                        const text = children?.toString() || '';
+                        if (text.includes('Materials:') || text.includes('MTSS:') || text.includes('Assessment:')) {
+                          return (
+                            <div className="implementation-detail bg-gray-50 border border-gray-200 rounded p-3 my-3">
+                              <strong className="text-gray-800 font-semibold block mb-1">{children}</strong>
+                            </div>
+                          );
+                        }
+                        return <strong className="font-semibold text-gray-900">{children}</strong>;
+                      },
                     }}
                   >
                     {lessonPlan}
