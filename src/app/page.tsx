@@ -322,9 +322,11 @@ export default function HomePage() {
                 <label className="block mb-2 font-semibold text-slate-700">Subject Area(s) *</label>
                 <select
                   multiple
+                  size={8}
                   value={subjects}
                   onChange={handleSubjectChange}
-                  className="w-full p-3 h-40 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
+                  className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 bg-white"
+                  style={{ minHeight: '180px' }}
                 >
                   {[
                     'English Language Arts',
@@ -339,12 +341,16 @@ export default function HomePage() {
                     'Agriculture',
                     'Career and Technical Education',
                   ].map((s) => (
-                    <option key={s} value={s}>
+                    <option key={s} value={s} className="p-2 hover:bg-emerald-50">
                       {s}
                     </option>
                   ))}
                 </select>
-                <div className="text-sm text-slate-500 mt-1">Use Cmd/Ctrl to multi-select.</div>
+                <div className="text-sm text-slate-500 mt-2">
+                  <strong>Hold Ctrl (PC) or Cmd (Mac)</strong> while clicking to select multiple subjects.
+                  <br />
+                  <strong>Selected:</strong> {subjects.length > 0 ? subjects.join(', ') : 'None'}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
