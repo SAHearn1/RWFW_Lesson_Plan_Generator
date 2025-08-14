@@ -28,78 +28,75 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
 
   return `You are an expert trauma-informed STEAM educator. Generate a COMPLETE ${days}-day lesson plan with ALL required elements. DO NOT STOP after Day 1.
 
-**${days}-DAY ROOTWORK FRAMEWORK: "${unitTitle}"**
+${days}-DAY ROOTWORK FRAMEWORK: "${unitTitle}"
 Grade: ${gradeLevel} | Subjects: ${subjects.join(' + ')} | Standards: ${standards}
 Focus: ${focus} | Trauma-Informed + Project-Based + STEAM Integration
 
-**CRITICAL: Include ALL components for EACH day - Opening, I Do, We Do, You Do Together, You Do Alone, Closing + Teacher/Student Notes + STEAM connections + Assessment**
+CRITICAL: Include ALL components for EACH day - Opening, I Do, We Do, You Do Together, You Do Alone, Closing + Teacher/Student Notes + STEAM connections + Assessment
 
-**FORMAT FOR EACH DAY:**
+FORMAT FOR EACH DAY:
 
 # DAY X: [Compelling Title with STEAM Connection]
 
-**Essential Question:** [Cross-curricular question connecting all subjects]
-**Learning Target:** [Specific, measurable, trauma-informed]
-**STEAM Integration:** [How science, tech, engineering, arts, math connect]
-**Project Component:** [What students build/create/design]
+Essential Question: [Cross-curricular question connecting all subjects]
+Learning Target: [Specific, measurable, trauma-informed]
+STEAM Integration: [How science, tech, engineering, arts, math connect]
+Project Component: [What students build/create/design]
 
 [Teacher Note: Trauma-informed facilitation approach, differentiation strategies, and cross-curricular connections]
 [Student Note: Personal growth focus, agency building, and success strategies]
 
 ## Opening (15min): [Regulation Ritual + Hook Activity]
-**Activity:** [Garden/nature-based grounding + engaging opener connecting to student lives]
-**Materials:** [Specific items needed]
+Activity: [Garden/nature-based grounding + engaging opener connecting to student lives]
+Materials: [Specific items needed]
 [Teacher Note: Trauma-informed facilitation, watch for dysregulation, cultural responsiveness]
 [Student Note: Self-regulation strategies, connection to personal experiences, growth mindset]
 
 ## I Do: Direct Instruction (20min): [Content + Modeling]
-**Content:** [Core concepts with real-world STEAM connections, accessible language, visual supports]
-**Modeling:** [Think-aloud, demonstration, worked examples across disciplines]
+Content: [Core concepts with real-world STEAM connections, accessible language, visual supports]
+Modeling: [Think-aloud, demonstration, worked examples across disciplines]
 [Teacher Note: Scaffolding strategies, differentiation for diverse learners, assessment checkpoints]
 [Student Note: Active listening strategies, note-taking methods, connection to prior knowledge]
 
-## Work Session (45min): **Gradual Release Framework**
+## Work Session (45min): Gradual Release Framework
 
 ### We Do (15min): [Collaborative Exploration]
-**Activity:** [Guided practice with cross-curricular problem-solving, partner/small group work]
-**STEAM Connection:** [Specific integration of subjects, real-world application]
+Activity: [Guided practice with cross-curricular problem-solving, partner/small group work]
+STEAM Connection: [Specific integration of subjects, real-world application]
 [Teacher Note: Group formation strategies, peer support facilitation, progress monitoring]
 [Student Note: Collaboration skills, peer learning strategies, voice and choice opportunities]
 
 ### You Do Together (15min): [Partner Investigation]
-**Task:** [Structured partner work building project components, inquiry-based exploration]
-**Choices:** [Multiple pathways/options respecting learning differences]
+Task: [Structured partner work building project components, inquiry-based exploration]
+Choices: [Multiple pathways/options respecting learning differences]
 [Teacher Note: Scaffolding supports, peer mediation, formative assessment opportunities]
 [Student Note: Partnership strategies, self-advocacy skills, celebrating diverse strengths]
 
 ### You Do Alone (15min): [Independent Application]
-**Work:** [Individual reflection/creation connected to larger project, multiple modalities]
-**Regulation Support:** [Built-in breaks, movement, choice in workspace]
+Work: [Individual reflection/creation connected to larger project, multiple modalities]
+Regulation Support: [Built-in breaks, movement, choice in workspace]
 [Teacher Note: Individual conferencing, differentiated supports, trauma-informed check-ins]
 [Student Note: Self-management techniques, growth reflection, personal goal setting]
 
 ## Closing (10min): [Reflection + Connection]
-**Activity:** [Reflective practice connecting learning to student identity and future goals]
-**Assessment:** [Formative check, exit ticket, peer sharing]
+Activity: [Reflective practice connecting learning to student identity and future goals]
+Assessment: [Formative check, exit ticket, peer sharing]
 [Teacher Note: Closure techniques, emotional regulation support, preview connections]
 [Student Note: Learning celebration, goal reflection, preparation for next steps]
 
-**Materials:** [Comprehensive list of supplies, technology, handouts]
-**MTSS Supports:** 
+Materials: [Comprehensive list of supplies, technology, handouts]
+MTSS Supports: 
 - Tier 1: [Universal supports for all students]
 - Tier 2: [Targeted interventions for some students] 
 - Tier 3: [Intensive supports for individual students]
-**SEL Integration:** [Specific CASEL competencies addressed]
-**Assessment:** [Formative and summative measures, multiple modalities]
-**Extensions:** [Enrichment and acceleration opportunities]
-**Project Connection:** [How this day builds toward culminating project]
+SEL Integration: [Specific CASEL competencies addressed]
+Assessment: [Formative and summative measures, multiple modalities]
+Extensions: [Enrichment and acceleration opportunities]
+Project Connection: [How this day builds toward culminating project]
 
----
+CRITICAL INSTRUCTION: Generate ALL ${days} days with complete detail. Each day must include all sections above with rich, trauma-informed, cross-curricular content. DO NOT summarize or truncate. Provide full lesson details for every component.
 
-**CRITICAL INSTRUCTION: Generate ALL ${days} days with complete detail. Each day must include all sections above with rich, trauma-informed, cross-curricular content. DO NOT summarize or truncate. Provide full lesson details for every component.**
-
-**START DAY 1 AND CONTINUE THROUGH DAY ${days} WITHOUT STOPPING:**`;
-}
+START DAY 1 AND CONTINUE THROUGH DAY ${days} WITHOUT STOPPING:`;
 }
 
 export async function POST(req: NextRequest) {
