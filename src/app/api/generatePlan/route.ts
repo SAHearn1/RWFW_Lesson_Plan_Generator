@@ -120,12 +120,38 @@ export async function POST(req: NextRequest) {
     const format = req.nextUrl.searchParams.get('format');
     
     const body = await req.json();
-    console.log('Received request body:', body);
+    console.log('Received request body:', JSON.stringify(body, null, 2));
+
+    // More flexible validation - check what we actually received
+    const gradeLevel = body.gradeLevel || body.grade || '';
+    const subjects = body.subjects || body.subject ? [body.subject] : [];
+    const unitTitle = body.unitTitle || body.topic || 'Cultural Identity and Expression';
+    const standards = body.standards || 'CCSS Standards';
+    const focus = body.focus || 'Trauma-informed learning';
+    const days = body.days || body.duration || 3;
+
+    console.log('Processed data:', {
+      gradeLevel,
+      subjects,
+      unitTitle,
+      standards,
+      focus,
+      days
+    });
 
     // Validate we have the required data
-    if (!body.gradeLevel || !body.subjects || body.subjects.length === 0) {
+    if (!gradeLevel || gradeLevel === 'Select Grade' || gradeLevel === '') {
+      console.log('Grade level validation failed:', gradeLevel);
       return NextResponse.json(
-        { error: 'Grade level and at least one subject are required.' },
+        { error: 'Please select a grade level.' },
+        { status: 400 }
+      );
+    }
+
+    if (!subjects || subjects.length === 0 || (subjects.length === 1 && subjects[0] === '')) {
+      console.log('Subjects validation failed:', subjects);
+      return NextResponse.json(
+        { error: 'Please select at least one subject area.' },
         { status: 400 }
       );
     }
@@ -139,8 +165,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Build the input object for the prompt
+    const input = {
+      gradeLevel,
+      subjects,
+      unitTitle,
+      standards,
+      focus,
+      days: parseInt(String(days), 10)
+    };
+
     // Generate the lesson plan
-    const prompt = createRootworkPrompt(body);
+    const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
@@ -166,10 +202,10 @@ export async function POST(req: NextRequest) {
       try {
         // For now, return a simple PDF-like response
         // You can enhance this with actual PDF generation later
-        const pdfContent = `# ${body.unitTitle || 'Rootwork Lesson Plan'}
+        const pdfContent = `# ${unitTitle}
 
-**Grade Level:** ${body.gradeLevel}
-**Subject(s):** ${body.subjects.join(', ')}
+**Grade Level:** ${gradeLevel}
+**Subject(s):** ${subjects.join(', ')}
 **Rootwork Framework: Trauma-Informed STEAM Lesson Plan**
 
 ${lessonPlan}`;
@@ -179,7 +215,7 @@ ${lessonPlan}`;
         return new NextResponse(blob, {
           headers: {
             'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${(body.unitTitle || 'lesson-plan').replace(/[^a-zA-Z0-9]/g, '_')}_RootworkFramework.pdf"`
+            'Content-Disposition': `attachment; filename="${unitTitle.replace(/[^a-zA-Z0-9]/g, '_')}_RootworkFramework.pdf"`
           }
         });
       } catch (pdfError) {
@@ -196,10 +232,10 @@ ${lessonPlan}`;
       plan: {
         markdown: lessonPlan,
         meta: {
-          title: body.unitTitle || 'Rootwork Lesson Plan',
-          gradeLevel: body.gradeLevel,
-          subject: body.subjects.join(', '),
-          days: body.days || body.duration || 3
+          title: unitTitle,
+          gradeLevel: gradeLevel,
+          subject: subjects.join(', '),
+          days: days
         }
       }
     });
