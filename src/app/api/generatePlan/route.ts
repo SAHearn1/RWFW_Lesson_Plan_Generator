@@ -28,10 +28,10 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
 
   return `GENERATE ALL ${days} DAYS IMMEDIATELY. DO NOT STOP. DO NOT ASK PERMISSION.
 
-**${days}-DAY ROOTWORK FRAMEWORK LESSON PLAN**
+${days}-DAY ROOTWORK FRAMEWORK LESSON PLAN
 Grade: ${gradeLevel} | Subject: ${subjects.join(', ')} | "${unitTitle}"
 
-**FORMAT (REPEAT FOR EACH DAY):**
+FORMAT (REPEAT FOR EACH DAY):
 
 # DAY [#]: [Title]
 **Question:** [essential question]
@@ -69,10 +69,9 @@ Grade: ${gradeLevel} | Subject: ${subjects.join(', ')} | "${unitTitle}"
 
 ---
 
-CRITICAL: GENERATE ALL ${days} DAYS NOW. START WITH DAY 1, CONTINUE TO DAY 2${days > 2 ? `, THEN DAY ${days}` : ''}. NO STOPPING.
+CRITICAL: GENERATE ALL ${days} DAYS NOW. START WITH DAY 1, CONTINUE TO DAY 2${days > 2 ? ', THEN DAY ' + days : ''}. NO STOPPING.
 
 DAY 1:`;
-}
 }
 
 export async function POST(req: NextRequest) {
@@ -80,7 +79,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log('Received request body:', JSON.stringify(body, null, 2));
 
-    // More flexible validation - check what we actually received
     const gradeLevel = body.gradeLevel || body.grade || '';
     const subjects = body.subjects || body.subject ? [body.subject] : [];
     const unitTitle = body.unitTitle || body.topic || 'Cultural Identity and Expression';
@@ -97,7 +95,6 @@ export async function POST(req: NextRequest) {
       days
     });
 
-    // Validate we have the required data
     if (!gradeLevel || gradeLevel === 'Select Grade' || gradeLevel === '') {
       console.log('Grade level validation failed:', gradeLevel);
       return NextResponse.json(
@@ -114,7 +111,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check for API key
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error('ANTHROPIC_API_KEY not found in environment');
       return NextResponse.json(
@@ -123,7 +119,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build the input object for the prompt
     const input = {
       gradeLevel,
       subjects,
@@ -133,14 +128,13 @@ export async function POST(req: NextRequest) {
       days: parseInt(String(days), 10)
     };
 
-    // Generate the lesson plan with the original Claude 3.5 Sonnet
     const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20240620', // Original Claude 3.5 Sonnet
-      max_tokens: 8192, // CORRECTED: All Claude 3.5 Sonnet versions have 8192 max
-      temperature: 0.05, // Lower temperature for more consistent output
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 8192,
+      temperature: 0.05,
       messages: [
         { 
           role: 'user', 
@@ -161,7 +155,6 @@ export async function POST(req: NextRequest) {
     console.log('✅ Generated lesson plan successfully');
     console.log('Lesson plan length:', lessonPlan.length);
 
-    // Return the lesson plan in the format your frontend expects
     return NextResponse.json({
       ok: true,
       lessonPlan,
@@ -180,7 +173,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error in generatePlan:', error);
     
-    // Check if it's an Anthropic API error
     if (error.status) {
       return NextResponse.json({
         error: `The AI model returned an error (Status: ${error.status}).`,
@@ -188,7 +180,6 @@ export async function POST(req: NextRequest) {
       }, { status: 502 });
     }
 
-    // Generic error
     return NextResponse.json({
       error: 'An internal server error occurred.',
       details: error.message
