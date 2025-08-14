@@ -231,9 +231,9 @@ export async function POST(req: NextRequest) {
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
-      model: 'claude-3-opus-20240229', // UPGRADED: Most capable model for complex educational content
-      max_tokens: 8000, // INCREASED: Your detailed requirements need more space
-      temperature: 0.1, // LOWERED: More consistent adherence to your strict formatting requirements
+      model: 'claude-3-5-sonnet-20241022', // Latest and most capable available model
+      max_tokens: 8000, // Increased for detailed content
+      temperature: 0.1, // Low for consistent formatting
       messages: [{ role: 'user', content: prompt }]
     });
 
