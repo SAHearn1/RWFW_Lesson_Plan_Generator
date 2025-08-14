@@ -1,3 +1,5 @@
+"use client";
+
 // Enhanced Frontend Component with PDF/DOCX Download Functionality
 import React, { useState } from 'react';
 import { Download, FileText, FileDown, Copy } from 'lucide-react';
