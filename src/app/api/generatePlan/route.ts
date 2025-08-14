@@ -81,14 +81,7 @@ Generate a complete ${days}-day Rootwork Framework trauma-informed STEAM lesson 
 
 GENERATE ALL ${days} DAYS NOW. START WITH DAY 1 AND CONTINUE IMMEDIATELY TO DAY 2${days > 2 ? `, THEN DAY ${days}` : ''}. DO NOT STOP. DO NOT ASK QUESTIONS.
 
-DAY 1:`; NOT TRUNCATE - Include complete Days 1, 2, and ${days === 3 ? '3' : days}
-4. Include [Teacher Note: ] and [Student Note: ] for every section
-5. Use trauma-informed, garden/nature-based metaphors
-6. Be concise but complete all days immediately
-
-**YOU MUST GENERATE THE COMPLETE ${days}-DAY PLAN WITHOUT STOPPING:**
-
-START WITH DAY 1 AND CONTINUE THROUGH DAY ${days} NOW:`;
+Begin with DAY 1:`;
 }
 
 export async function POST(req: NextRequest) {
@@ -149,7 +142,7 @@ export async function POST(req: NextRequest) {
       days: parseInt(String(days), 10)
     };
 
-    // Generate the lesson plan with corrected token limit
+    // Generate the lesson plan with the original Claude 3.5 Sonnet
     const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
