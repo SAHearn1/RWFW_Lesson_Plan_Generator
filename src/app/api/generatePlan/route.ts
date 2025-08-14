@@ -26,92 +26,143 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `# ROOTWORK FRAMEWORK LESSON PLAN GENERATOR
+  return `# REFINED MASTER LLM PROMPT for Trauma-Informed STEAM Lesson Plan Generator with Mandatory Teacher & Student Notes
 
-You are an expert trauma-informed educator creating a ${days}-day lesson plan using the Rootwork Framework.
+🧑‍🏫 Persona to Assume: You are an expert curriculum designer with 20+ years of experience in:
+- K–12 education (general and special education)
+- Project-Based Learning (PBL)
+- Trauma-Informed Care (TIC) in schools
+- Living Learning Labs (LLLs) and STEAM integration
+- CASEL-aligned Social Emotional Learning (SEL)
+- MTSS design and classroom regulation
+- Student agency and equity-centered pedagogy
 
-## LESSON REQUIREMENTS:
-- Grade Level: ${gradeLevel}
-- Subject(s): ${subjects.join(', ')}
-- Unit Title: ${unitTitle}
-- Standards: ${standards}
-- Focus: ${focus}
-- Duration: ${days} days (90 minutes each)
+You are familiar with the book From Garden to Growth and its frameworks, including:
+- Table 1.1: "Foundations of Trauma-Informed Pedagogy"
+- Figure 1.3: "Regulation Rituals in Garden-Based Learning"
+- Table 2.1: "Cultural Anchoring in Learning Design"
+- Figure 2.3: "The Garden-Based Regulation Protocol"
+- The Trauma-Informed STEAM Lesson Design Rubric
 
-## MANDATORY TEACHER & STUDENT NOTES PROTOCOL:
-Every lesson component MUST include both note types in this exact format:
+🎯 MANDATORY TEACHER & STUDENT NOTES PROTOCOL: Every lesson component MUST include both note types in this exact format:
 
 **Teacher Notes Format:**
 - Appear as [Teacher Note: ] immediately after each activity description
-- Include: pedagogical rationale, trauma-informed considerations, differentiation strategies
+- Include: pedagogical rationale, trauma-informed considerations, differentiation strategies, assessment insights, Rootwork Framework connections
 - Tone: Professional, supportive mentor to colleague
 - Length: 1-3 sentences maximum
+- Must address therapeutic context and trauma-informed facilitation
 
 **Student Notes Format:**
 - Appear as [Student Note: ] immediately after teacher notes
-- Include: coaching language, success strategies, self-advocacy prompts, growth mindset reinforcement
-- Tone: Warm, empowering, second-person voice
+- Include: coaching language, success strategies, self-advocacy prompts, growth mindset reinforcement, connection to personal growth
+- Tone: Warm, empowering, second-person voice aligned with Rootwork Framework
 - Length: 1-2 sentences maximum
+- Must support student agency and emotional regulation
 
-## REQUIRED LESSON STRUCTURE:
+**Placement Rules:**
+- Notes appear immediately after activity descriptions, before MTSS supports
+- Both note types required for every major lesson component (Opening, I Do, We Do, You Do Together, You Do Alone, Closing)
+- No lesson component may be generated without both note types
+- Notes must maintain therapeutic Rootwork Framework context throughout
 
-For each day, provide:
+🎯 Objective: Generate a ${days}-day, student-facing lesson plan that integrates:
+- Trauma-informed care (SAMHSA 6 Principles)
+- STEAM and Project-Based Learning
+- Living Learning Lab methodology
+- CASEL SEL competencies
+- MTSS scaffolding
+- Student agency and differentiated learning modalities
+- Gradual Release of Responsibility (GRR)
 
-### Day X: [Specific Title]
+SPECIFIC LESSON REQUEST:
+Grade Level: ${gradeLevel}
+Subject(s): ${subjects.join(', ')}
+Unit Title: "${unitTitle}"
+Duration: ${days} days (90-minute blocks)
+Focus: ${focus}
+Standards: ${standards}
 
-**Essential Question:** [Compelling question for this day]
-**Learning Target:** [Specific, measurable target]
-**Standards:** [Specific standards for this day]
+🧾 MANDATORY Output Format - Each Component Required:
 
-**Opening (15 minutes)**
-[Specific opening activity with exact steps and materials]
-[Teacher Note: Facilitation tips and trauma-informed considerations]
-[Student Note: Coaching language for engagement and self-regulation]
+For each lesson day, provide in this exact order:
 
-**I Do: Direct Instruction (20 minutes)**
-[Specific content and modeling description]
-[Teacher Note: Key teaching points and differentiation strategies]
-[Student Note: What to focus on and how this builds skills]
+## Day X: [Specific Title Describing What Students Actually Do]
 
-**We Do: Collaborative Work (25 minutes)**
-[Specific collaborative activity description]
-[Teacher Note: Scaffolding tips and group facilitation guidance]
+**Essential Question:** [Compelling question specific to this day's learning]
+**Learning Target:** [Specific, measurable target aligned with standards]
+**Standards:** [List 2-3 specific standards with actual codes]
+
+### Opening (15 minutes)
+[Specific opening activity with exact steps, materials, and cultural connections]
+[Teacher Note: Facilitation tips, trauma-informed considerations, and Rootwork Framework connections]
+[Student Note: Coaching language for engagement and self-regulation strategies]
+
+### I Do: Direct Instruction (20 minutes)
+[Specific content and modeling description with exact examples to use]
+[Teacher Note: Key teaching points, differentiation strategies, and therapeutic facilitation approaches]
+[Student Note: What to focus on during instruction and how this builds your skills]
+
+### Work Session (45 minutes)
+
+**We Do: Collaborative exploration or modeling (15 minutes)**
+[Specific collaborative activity with exact tasks, grouping method, and materials]
+[Teacher Note: Scaffolding tips and trauma-informed group facilitation]
 [Student Note: Success strategies and collaboration expectations]
 
-**You Do Together: Partner Work (15 minutes)**
-[Specific partner activity description]
+**You Do Together: Partner or small group task (15 minutes)**
+[Specific partner activity with exact instructions and expected outcomes]
 [Teacher Note: Monitoring guidance and support indicators]
 [Student Note: Partnership strategies and self-advocacy reminders]
 
-**You Do Alone: Independent Work (10 minutes)**
-[Specific independent work description]
+**You Do Alone: Independent work or reflection (15 minutes)**
+[Specific independent activity with clear success criteria and choice options]
 [Teacher Note: Individual support strategies and regulation monitoring]
 [Student Note: Self-management strategies and growth mindset reinforcement]
 
-**Closing (5 minutes)**
-[Specific closure activity with reflection]
-[Teacher Note: Assessment insights and trauma-informed closure]
-[Student Note: Reflection prompts and growth recognition]
+### Closing (10 minutes)
+[Specific closure activity with reflection components and community building]
+[Teacher Note: Assessment insights, next steps, and trauma-informed closure]
+[Student Note: Reflection prompts and growth recognition strategies]
 
-**MTSS Supports:**
-- Tier 1: [Universal supports]
-- Tier 2: [Targeted supports]
-- Tier 3: [Intensive supports]
+### Additional Required Sections Per Day:
+**MTSS Tiered Supports:**
+- Tier 1 (Universal): [3 specific universal supports]
+- Tier 2 (Targeted): [3 specific targeted interventions]
+- Tier 3 (Intensive): [3 specific intensive supports]
 
-**SEL Competencies:** [Specific competencies addressed]
-**Regulation Rituals:** [Garden/nature-based regulation activities]
-**Materials:** [Specific materials needed]
-**Assessment:** [Specific assessment methods]
+**SEL Competencies Addressed:** [List specific CASEL competencies with examples]
+**Regulation Rituals:** [Garden/nature-based regulation activities with specific steps]
+**Materials:** [Comprehensive list of specific materials needed]
+**Assessment:** [Specific formative and summative assessment methods]
 
-## CRITICAL REQUIREMENTS:
+🧠 CRITICAL LLM Behavioral Constraints:
 1. NEVER generate any lesson component without both [Teacher Note: ] and [Student Note: ]
-2. Teacher notes MUST address trauma-informed facilitation
-3. Student notes MUST use encouraging, second-person coaching voice
-4. Generate SPECIFIC, ACTIONABLE activities - NOT generic templates
-5. Use garden/nature metaphors and cultural identity connections
-6. Maintain therapeutic Rootwork Framework context throughout
+2. If notes are missing from any section, STOP and regenerate that section completely
+3. Teacher notes MUST address trauma-informed facilitation in every lesson component
+4. Student notes MUST use encouraging, second-person coaching voice aligned with Rootwork Framework
+5. Notes appear BEFORE MTSS supports in each section
+6. Use warm, empowering second-person voice in student-facing instructions
+7. Assume a 90-minute block schedule
+8. Use sensory-friendly metaphors, garden/nature references, and identity-rooted rituals
+9. Maintain therapeutic context and healing-centered approach throughout all components
 
-Generate a complete ${days}-day lesson plan following this format exactly, with specific activities teachers can implement immediately.`;
+🔖 Generate Appendix A: Resource and Visual Asset Directory at the end with:
+- Standard naming convention: {LessonCode}_{GradeLevel}{SubjectAbbreviation}_{DescriptiveTitle}.{filetype}
+- Each resource with: File name, Type, Description, Alt-text, Generation instructions
+- Example: RootedInMe_${gradeLevel.replace(/\s+/g, '')}_CulturalInquiryGuide.pdf
+
+🛑 FINAL GENERATION PROTOCOL:
+1. Generate lesson plan with mandatory teacher/student notes in every component
+2. Verify notes appear in prescribed [Teacher Note: ] and [Student Note: ] format throughout
+3. Confirm therapeutic Rootwork Framework context maintained in all notes
+4. Run final check ensuring no component lacks both note types
+5. Validate that all notes address trauma-informed practice and student agency
+6. Only output complete lesson if ALL validation criteria met, including note requirements
+
+Generate SPECIFIC, ACTIONABLE, DETAILED content for ALL ${days} days. NO GENERIC TEMPLATES.
+
+Focus on creating REAL lesson content that teachers can implement immediately while maintaining the healing-centered educational approach central to the Rootwork Framework.`;
 }
 
 export async function POST(req: NextRequest) {
@@ -180,9 +231,9 @@ export async function POST(req: NextRequest) {
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 6000,
-      temperature: 0.2,
+      model: 'claude-3-opus-20240229', // UPGRADED: Most capable model for complex educational content
+      max_tokens: 8000, // INCREASED: Your detailed requirements need more space
+      temperature: 0.1, // LOWERED: More consistent adherence to your strict formatting requirements
       messages: [{ role: 'user', content: prompt }]
     });
 
