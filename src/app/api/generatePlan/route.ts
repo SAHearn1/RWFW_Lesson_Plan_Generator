@@ -1,54 +1,224 @@
 // File: src/app/api/generatePlan/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
-import { NextResponse } from 'next/server';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
-export async function POST(req: Request) {
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+type GeneratePlanInput = {
+  gradeLevel?: string;
+  subjects?: string[];
+  duration?: number;
+  unitTitle?: string;
+  standards?: string;
+  focus?: string;
+  days?: number;
+};
+
+function createRootworkPrompt(input: GeneratePlanInput): string {
+  const days = input.days || input.duration || 3;
+  const gradeLevel = input.gradeLevel || '9th Grade';
+  const subjects = input.subjects || ['English Language Arts'];
+  const unitTitle = input.unitTitle || 'Cultural Identity and Expression';
+  const standards = input.standards || 'CCSS ELA Standards';
+  const focus = input.focus || 'Trauma-informed cultural exploration';
+
+  return `# ROOTWORK FRAMEWORK LESSON PLAN GENERATOR
+
+You are an expert trauma-informed educator creating a ${days}-day lesson plan using the Rootwork Framework.
+
+## LESSON REQUIREMENTS:
+- Grade Level: ${gradeLevel}
+- Subject(s): ${subjects.join(', ')}
+- Unit Title: ${unitTitle}
+- Standards: ${standards}
+- Focus: ${focus}
+- Duration: ${days} days (90 minutes each)
+
+## MANDATORY TEACHER & STUDENT NOTES PROTOCOL:
+Every lesson component MUST include both note types in this exact format:
+
+**Teacher Notes Format:**
+- Appear as [Teacher Note: ] immediately after each activity description
+- Include: pedagogical rationale, trauma-informed considerations, differentiation strategies
+- Tone: Professional, supportive mentor to colleague
+- Length: 1-3 sentences maximum
+
+**Student Notes Format:**
+- Appear as [Student Note: ] immediately after teacher notes
+- Include: coaching language, success strategies, self-advocacy prompts, growth mindset reinforcement
+- Tone: Warm, empowering, second-person voice
+- Length: 1-2 sentences maximum
+
+## REQUIRED LESSON STRUCTURE:
+
+For each day, provide:
+
+### Day X: [Specific Title]
+
+**Essential Question:** [Compelling question for this day]
+**Learning Target:** [Specific, measurable target]
+**Standards:** [Specific standards for this day]
+
+**Opening (15 minutes)**
+[Specific opening activity with exact steps and materials]
+[Teacher Note: Facilitation tips and trauma-informed considerations]
+[Student Note: Coaching language for engagement and self-regulation]
+
+**I Do: Direct Instruction (20 minutes)**
+[Specific content and modeling description]
+[Teacher Note: Key teaching points and differentiation strategies]
+[Student Note: What to focus on and how this builds skills]
+
+**We Do: Collaborative Work (25 minutes)**
+[Specific collaborative activity description]
+[Teacher Note: Scaffolding tips and group facilitation guidance]
+[Student Note: Success strategies and collaboration expectations]
+
+**You Do Together: Partner Work (15 minutes)**
+[Specific partner activity description]
+[Teacher Note: Monitoring guidance and support indicators]
+[Student Note: Partnership strategies and self-advocacy reminders]
+
+**You Do Alone: Independent Work (10 minutes)**
+[Specific independent work description]
+[Teacher Note: Individual support strategies and regulation monitoring]
+[Student Note: Self-management strategies and growth mindset reinforcement]
+
+**Closing (5 minutes)**
+[Specific closure activity with reflection]
+[Teacher Note: Assessment insights and trauma-informed closure]
+[Student Note: Reflection prompts and growth recognition]
+
+**MTSS Supports:**
+- Tier 1: [Universal supports]
+- Tier 2: [Targeted supports]
+- Tier 3: [Intensive supports]
+
+**SEL Competencies:** [Specific competencies addressed]
+**Regulation Rituals:** [Garden/nature-based regulation activities]
+**Materials:** [Specific materials needed]
+**Assessment:** [Specific assessment methods]
+
+## CRITICAL REQUIREMENTS:
+1. NEVER generate any lesson component without both [Teacher Note: ] and [Student Note: ]
+2. Teacher notes MUST address trauma-informed facilitation
+3. Student notes MUST use encouraging, second-person coaching voice
+4. Generate SPECIFIC, ACTIONABLE activities - NOT generic templates
+5. Use garden/nature metaphors and cultural identity connections
+6. Maintain therapeutic Rootwork Framework context throughout
+
+Generate a complete ${days}-day lesson plan following this format exactly, with specific activities teachers can implement immediately.`;
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { systemPrompt, userPrompt } = await req.json();
-    if (!systemPrompt || !userPrompt) {
-        return NextResponse.json({ error: 'System and user prompts are required.' }, { status: 400 });
+    // Check if this is a PDF download request
+    const format = req.nextUrl.searchParams.get('format');
+    
+    const body = await req.json();
+    console.log('Received request body:', body);
+
+    // Validate we have the required data
+    if (!body.gradeLevel || !body.subjects || body.subjects.length === 0) {
+      return NextResponse.json(
+        { error: 'Grade level and at least one subject are required.' },
+        { status: 400 }
+      );
     }
 
-    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicApiKey) {
-        throw new Error('The ANTHROPIC_API_KEY environment variable is not set in Vercel.');
+    // Check for API key
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY not found in environment');
+      return NextResponse.json(
+        { error: 'API key not configured.' },
+        { status: 500 }
+      );
     }
 
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-            'x-api-key': anthropicApiKey,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-            model: "claude-3-sonnet-20240229",
-            max_tokens: 4096,
-            system: systemPrompt,
-            messages: [{ role: "user", content: userPrompt }]
-        })
+    // Generate the lesson plan
+    const prompt = createRootworkPrompt(body);
+    console.log('Sending request to Anthropic...');
+
+    const response = await client.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 6000,
+      temperature: 0.2,
+      messages: [{ role: 'user', content: prompt }]
     });
 
-    // **IMPROVED ERROR HANDLING**
-    if (!anthropicResponse.ok) {
-        const errorText = await anthropicResponse.text();
-        console.error("Anthropic API Error:", errorText); // For server-side logs
-        return NextResponse.json({ 
-            error: `The AI model returned an error (Status: ${anthropicResponse.status}).`, 
-            details: errorText 
-        }, { status: 502 });
+    const lessonPlan = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    
+    if (!lessonPlan) {
+      return NextResponse.json(
+        { error: 'Empty response from AI model.' },
+        { status: 502 }
+      );
     }
 
-    const anthropicData = await anthropicResponse.json();
-    const lessonPlan = anthropicData.content[0].text;
+    console.log('✅ Generated lesson plan successfully');
 
-    return NextResponse.json({ lessonPlan });
+    // If PDF requested, generate PDF (simplified version)
+    if (format === 'pdf') {
+      try {
+        // For now, return a simple PDF-like response
+        // You can enhance this with actual PDF generation later
+        const pdfContent = `# ${body.unitTitle || 'Rootwork Lesson Plan'}
+
+**Grade Level:** ${body.gradeLevel}
+**Subject(s):** ${body.subjects.join(', ')}
+**Rootwork Framework: Trauma-Informed STEAM Lesson Plan**
+
+${lessonPlan}`;
+
+        const blob = Buffer.from(pdfContent, 'utf-8');
+        
+        return new NextResponse(blob, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${(body.unitTitle || 'lesson-plan').replace(/[^a-zA-Z0-9]/g, '_')}_RootworkFramework.pdf"`
+          }
+        });
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError);
+        // Fallback to regular response if PDF fails
+      }
+    }
+
+    // Return the lesson plan in the format your frontend expects
+    return NextResponse.json({
+      ok: true,
+      lessonPlan,
+      markdown: lessonPlan,
+      plan: {
+        markdown: lessonPlan,
+        meta: {
+          title: body.unitTitle || 'Rootwork Lesson Plan',
+          gradeLevel: body.gradeLevel,
+          subject: body.subjects.join(', '),
+          days: body.days || body.duration || 3
+        }
+      }
+    });
 
   } catch (error: any) {
-    console.error('Error in generatePlan POST handler:', error);
-    return NextResponse.json({ 
-        error: 'An internal server error occurred.', 
-        details: error.message 
+    console.error('Error in generatePlan:', error);
+    
+    // Check if it's an Anthropic API error
+    if (error.status) {
+      return NextResponse.json({
+        error: `The AI model returned an error (Status: ${error.status}).`,
+        details: error.message
+      }, { status: 502 });
+    }
+
+    // Generic error
+    return NextResponse.json({
+      error: 'An internal server error occurred.',
+      details: error.message
     }, { status: 500 });
   }
 }
