@@ -1,43 +1,17 @@
 // File: src/app/api/generatePlan/route.ts
 
 import { NextResponse } from 'next/server';
-// import admin from 'firebase-admin'; // Temporarily disabled
-
-/* // --- Temporarily disable all Firebase Admin setup ---
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
-const firestore = admin.firestore();
-const MONTHLY_LIMIT = 5;
-*/
 
 export async function POST(req: Request) {
   try {
-    /* // --- Temporarily disable all authentication and usage checks ---
-    const authorization = req.headers.get('Authorization');
-    if (!authorization || !authorization.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized: No token provided.' }, { status: 401 });
-    }
-    const token = authorization.split('Bearer ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const uid = decodedToken.uid;
-    // ... (usage check logic removed for brevity) ...
-    */
-
-    // --- Core Logic (Still Active) ---
     const { systemPrompt, userPrompt } = await req.json();
     if (!systemPrompt || !userPrompt) {
         return NextResponse.json({ error: 'System and user prompts are required.' }, { status: 400 });
     }
 
-    // Ensure the ANTHROPIC_API_KEY is also set as an environment variable in Vercel
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
     if (!anthropicApiKey) {
-        throw new Error('ANTHROPIC_API_KEY is not set in Vercel environment variables.');
+        throw new Error('The ANTHROPIC_API_KEY environment variable is not set in Vercel.');
     }
 
     const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
@@ -55,27 +29,26 @@ export async function POST(req: Request) {
         })
     });
 
+    // **IMPROVED ERROR HANDLING**
     if (!anthropicResponse.ok) {
-        const errorBody = await anthropicResponse.json();
-        return NextResponse.json({ error: 'Failed to get a response from the AI model.', details: errorBody }, { status: 502 });
+        const errorText = await anthropicResponse.text();
+        console.error("Anthropic API Error:", errorText); // For server-side logs
+        return NextResponse.json({ 
+            error: `The AI model returned an error (Status: ${anthropicResponse.status}).`, 
+            details: errorText 
+        }, { status: 502 });
     }
 
     const anthropicData = await anthropicResponse.json();
     const lessonPlan = anthropicData.content[0].text;
 
-    /* // --- Temporarily disable usage count update ---
-    await userRef.update({ usageCount: admin.firestore.FieldValue.increment(1) });
-    */
-
-    // --- Send Response to Frontend ---
-    return NextResponse.json({
-        lessonPlan,
-        // Mock usage info since it's disabled
-        usageInfo: { count: 1, limit: 5 }
-    });
+    return NextResponse.json({ lessonPlan });
 
   } catch (error: any) {
     console.error('Error in generatePlan POST handler:', error);
-    return NextResponse.json({ error: error.message || 'An internal server error occurred.' }, { status: 500 });
+    return NextResponse.json({ 
+        error: 'An internal server error occurred.', 
+        details: error.message 
+    }, { status: 500 });
   }
 }
