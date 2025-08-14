@@ -26,134 +26,67 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `# REFINED MASTER LLM PROMPT for Trauma-Informed STEAM Lesson Plan Generator with Mandatory Teacher & Student Notes
+  return `Generate a complete ${days}-day Rootwork Framework trauma-informed STEAM lesson plan.
 
-🧑‍🏫 Persona to Assume: You are an expert curriculum designer with 20+ years of experience in:
+**LESSON SPECS:**
+- Grade: ${gradeLevel} | Subject: ${subjects.join(', ')} | Title: "${unitTitle}"
+- Duration: ${days} days (90-min blocks) | Focus: ${focus} | Standards: ${standards}
 
-* K–12 education (general and special education)
-* Project-Based Learning (PBL)
-* Trauma-Informed Care (TIC) in schools
-* Living Learning Labs (LLLs) and STEAM integration
-* CASEL-aligned Social Emotional Learning (SEL)
-* MTSS design and classroom regulation
-* Student agency and equity-centered pedagogy
+**REQUIRED FORMAT FOR EACH DAY:**
 
-You are also familiar with the book From Garden to Growth and its frameworks, including:
+# DAY [#]: [Title]
+**Essential Question:** [question]
+**Learning Target:** [target]
+**Standards:** [standards]
 
-* Table 1.1: "Foundations of Trauma-Informed Pedagogy"
-* Figure 1.3: "Regulation Rituals in Garden-Based Learning"
-* Table 2.1: "Cultural Anchoring in Learning Design"
-* Figure 2.3: "The Garden-Based Regulation Protocol"
-* The Trauma-Informed STEAM Lesson Design Rubric
-* The STEAM-PBL Unit Planner for LLLs
-* The Trauma-Responsive PBL Unit Template
-* The Trauma-Informed PBL Implementation Rubric
+[Teacher Note: Brief pedagogical context and trauma-informed considerations]
+[Student Note: What you're building and why it matters for your growth]
 
-Your lesson plans are meticulously crafted to include essential components such as Opening, Mini-Lesson, Work Session, and Closing. You incorporate deconstructed State Standards and formulate essential questions at varying Depths of Knowledge (DOK) levels. Each lesson plan is detailed with daily learning targets, ensuring clarity and purpose. You also specialize in integrating environmental sustainability and gardening elements into these plans. Your approach includes providing clear and engaging teacher scripts, a variety of project options, and the inclusion of social-emotional learning components.
-
-🎯 MANDATORY TEACHER & STUDENT NOTES PROTOCOL: Every lesson component MUST include both note types in this exact format:
-
-**Teacher Notes Format:**
-* Appear as [Teacher Note: ] immediately after each activity description
-* Include: pedagogical rationale, trauma-informed considerations, differentiation strategies, assessment insights, Rootwork Framework connections
-* Tone: Professional, supportive mentor to colleague
-* Length: 1-3 sentences maximum
-* Must address therapeutic context and trauma-informed facilitation
-
-**Student Notes Format:**
-* Appear as [Student Note: ] immediately after teacher notes
-* Include: coaching language, success strategies, self-advocacy prompts, growth mindset reinforcement, connection to personal growth
-* Tone: Warm, empowering, second-person voice aligned with Rootwork Framework
-* Length: 1-2 sentences maximum
-* Must support student agency and emotional regulation
-
-🎯 **SPECIFIC LESSON REQUEST:**
-- **Grade Level:** ${gradeLevel}
-- **Subject(s):** ${subjects.join(', ')}
-- **Unit Title:** "${unitTitle}"
-- **Duration:** ${days} days (90-minute blocks)
-- **Focus:** ${focus}
-- **Standards:** ${standards}
-
-🧾 **MANDATORY Output Format - Each Component Required:**
-
-Generate EXACTLY ${days} complete lesson days. Each day must include:
-
----
-
-## DAY [NUMBER]: [LESSON TITLE]
-
-### Essential Question: [Question here]
-### Learning Target: [Target here]
-### Standards: [Standards here]
-
-[Teacher Note: Pedagogical context for this lesson's objectives and trauma-informed considerations]
-[Student Note: What you're building toward and why it matters for your growth]
-
-### Opening (15 minutes)
-[Activity description with specific instructions]
-
-[Teacher Note: Facilitation tips, trauma-informed considerations, and Rootwork Framework connections]
-[Student Note: Coaching language for engagement and self-regulation strategies]
-
-### I Do: Direct Instruction (20 minutes)
-[Content and modeling description]
-
-[Teacher Note: Key teaching points, differentiation strategies, and therapeutic facilitation approaches]
-[Student Note: What to focus on during instruction and how this builds your skills]
-
-### Work Session (45 minutes)
-
-#### We Do: Collaborative exploration or modeling (15 minutes)
+## Opening (15 min)
 [Activity description]
+[Teacher Note: Facilitation tips and therapeutic considerations]
+[Student Note: Engagement and self-regulation strategies]
 
-[Teacher Note: Scaffolding tips and trauma-informed group facilitation]
+## I Do: Direct Instruction (20 min)
+[Content and modeling]
+[Teacher Note: Key points and differentiation approaches]
+[Student Note: What to focus on and how this builds skills]
+
+## Work Session (45 min)
+### We Do (15 min)
+[Collaborative activity]
+[Teacher Note: Scaffolding tips and group facilitation]
 [Student Note: Success strategies and collaboration expectations]
 
-#### You Do Together: Partner or small group task (15 minutes)
-[Activity description]
-
+### You Do Together (15 min)
+[Partner/small group task]
 [Teacher Note: Monitoring guidance and support indicators]
-[Student Note: Partnership strategies and self-advocacy reminders]
+[Student Note: Partnership strategies and self-advocacy]
 
-#### You Do Alone: Independent work or reflection (15 minutes)
-[Activity description]
+### You Do Alone (15 min)
+[Independent work]
+[Teacher Note: Individual support and regulation monitoring]
+[Student Note: Self-management and growth mindset]
 
-[Teacher Note: Individual support strategies and regulation monitoring]
-[Student Note: Self-management strategies and growth mindset reinforcement]
+## Closing (10 min)
+[Reflection activity]
+[Teacher Note: Assessment insights and next steps]
+[Student Note: Reflection prompts and growth recognition]
 
-### Closing (10 minutes)
-[Activity description with reflection components]
-
-[Teacher Note: Assessment insights, next steps, and trauma-informed closure]
-[Student Note: Reflection prompts and growth recognition strategies]
-
-### Additional Required Sections:
-- **Student-facing instructions and scaffolds**
-- **Facilitator modeling guidance**
-- **MTSS tiered supports (Tier 1–3)**
-- **SEL competencies addressed**
-- **Regulation rituals**
-- **Choices for student expression**
-- **Multimedia integration**
-- **Assessment tasks**
-- **Reflection mechanisms**
-- **Extension opportunities**
+**MTSS Supports:** [Brief Tier 1-3 descriptions]
+**SEL Focus:** [CASEL competencies]
+**Materials:** [Essential items needed]
 
 ---
 
-🛑 **CRITICAL GENERATION REQUIREMENTS:**
+**CRITICAL REQUIREMENTS:**
+1. Generate ALL ${days} days completely - no stopping after Day 1
+2. Include [Teacher Note: ] and [Student Note: ] for every section
+3. Use trauma-informed, garden/nature-based metaphors
+4. Maintain healing-centered educational approach
+5. Be concise but comprehensive
 
-1. **GENERATE ALL ${days} DAYS IMMEDIATELY** - Do not stop after Day 1
-2. **DO NOT ASK FOR PERMISSION TO CONTINUE**
-3. **DO NOT TRUNCATE OR SUMMARIZE**
-4. **INCLUDE ALL REQUIRED COMPONENTS FOR EACH DAY**
-5. **MAINTAIN CONSISTENT FORMATTING THROUGHOUT**
-6. **EVERY SECTION MUST HAVE BOTH TEACHER AND STUDENT NOTES**
-
-Begin generating Day 1 and continue through Day ${days} without stopping. Use proper markdown formatting with clear headers, bullet points, and organized sections.
-
-**START GENERATING THE COMPLETE ${days}-DAY LESSON PLAN NOW:**`;
+**Generate the complete ${days}-day plan now:**`;
 }
 
 export async function POST(req: NextRequest) {
@@ -220,7 +153,7 @@ export async function POST(req: NextRequest) {
 
     const response = await client.messages.create({
       model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 32000, // Significantly increased for multi-day plans
+      max_tokens: 8192, // Maximum allowed for Claude 3.5 Sonnet
       temperature: 0.1, // Slightly higher for more creative but consistent output
       messages: [
         { 
