@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300; // Increase to 5 minutes (max for Vercel Pro)
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -26,77 +26,61 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `You are an expert trauma-informed STEAM educator. Generate a COMPLETE ${days}-day lesson plan with ALL required elements. DO NOT STOP after Day 1.
+  return `Expert trauma-informed STEAM educator: Generate COMPLETE ${days}-day lesson plan. ALL days required.
 
-${days}-DAY ROOTWORK FRAMEWORK: "${unitTitle}"
-Grade: ${gradeLevel} | Subjects: ${subjects.join(' + ')} | Standards: ${standards}
-Focus: ${focus} | Trauma-Informed + Project-Based + STEAM Integration
+**${days}-DAY ROOTWORK: "${unitTitle}"**
+Grade ${gradeLevel} | ${subjects.join('+')} | ${standards}
 
-CRITICAL: Include ALL components for EACH day - Opening, I Do, We Do, You Do Together, You Do Alone, Closing + Teacher/Student Notes + STEAM connections + Assessment
+**Each Day Must Include:**
 
-FORMAT FOR EACH DAY:
+# DAY X: [STEAM Title]
+**Question:** [Cross-curricular essential question]
+**Target:** [Measurable learning goal]
+**Project:** [What students create/build]
 
-# DAY X: [Compelling Title with STEAM Connection]
+[Teacher Note: Trauma-informed approach, differentiation, STEAM connections]
+[Student Note: Growth focus, agency building, success strategies]
 
-Essential Question: [Cross-curricular question connecting all subjects]
-Learning Target: [Specific, measurable, trauma-informed]
-STEAM Integration: [How science, tech, engineering, arts, math connect]
-Project Component: [What students build/create/design]
+## Opening (15min): [Regulation + Hook]
+[Garden-based grounding activity connecting to lesson]
+[Teacher Note: Dysregulation watch, cultural responsiveness]
+[Student Note: Self-regulation, personal connection]
 
-[Teacher Note: Trauma-informed facilitation approach, differentiation strategies, and cross-curricular connections]
-[Student Note: Personal growth focus, agency building, and success strategies]
+## I Do (20min): [Content + STEAM Modeling]
+[Core concepts with real-world connections across all subjects]
+[Teacher Note: Scaffolding, visual supports, assessment checks]
+[Student Note: Active listening, note-taking, prior knowledge links]
 
-## Opening (15min): [Regulation Ritual + Hook Activity]
-Activity: [Garden/nature-based grounding + engaging opener connecting to student lives]
-Materials: [Specific items needed]
-[Teacher Note: Trauma-informed facilitation, watch for dysregulation, cultural responsiveness]
-[Student Note: Self-regulation strategies, connection to personal experiences, growth mindset]
+## Work Session (45min):
+### We Do (15min): [Collaborative STEAM Problem-Solving]
+[Guided practice integrating all subject areas]
+[Teacher Note: Group facilitation, progress monitoring]
+[Student Note: Collaboration skills, voice and choice]
 
-## I Do: Direct Instruction (20min): [Content + Modeling]
-Content: [Core concepts with real-world STEAM connections, accessible language, visual supports]
-Modeling: [Think-aloud, demonstration, worked examples across disciplines]
-[Teacher Note: Scaffolding strategies, differentiation for diverse learners, assessment checkpoints]
-[Student Note: Active listening strategies, note-taking methods, connection to prior knowledge]
+### You Do Together (15min): [Partner Project Building]
+[Structured partner work on project components]
+[Teacher Note: Peer mediation, formative assessment]
+[Student Note: Partnership strategies, self-advocacy]
 
-## Work Session (45min): Gradual Release Framework
-
-### We Do (15min): [Collaborative Exploration]
-Activity: [Guided practice with cross-curricular problem-solving, partner/small group work]
-STEAM Connection: [Specific integration of subjects, real-world application]
-[Teacher Note: Group formation strategies, peer support facilitation, progress monitoring]
-[Student Note: Collaboration skills, peer learning strategies, voice and choice opportunities]
-
-### You Do Together (15min): [Partner Investigation]
-Task: [Structured partner work building project components, inquiry-based exploration]
-Choices: [Multiple pathways/options respecting learning differences]
-[Teacher Note: Scaffolding supports, peer mediation, formative assessment opportunities]
-[Student Note: Partnership strategies, self-advocacy skills, celebrating diverse strengths]
-
-### You Do Alone (15min): [Independent Application]
-Work: [Individual reflection/creation connected to larger project, multiple modalities]
-Regulation Support: [Built-in breaks, movement, choice in workspace]
-[Teacher Note: Individual conferencing, differentiated supports, trauma-informed check-ins]
-[Student Note: Self-management techniques, growth reflection, personal goal setting]
+### You Do Alone (15min): [Independent Creation]
+[Individual work with multiple modalities and choice]
+[Teacher Note: Conferencing, differentiated supports]
+[Student Note: Self-management, goal setting]
 
 ## Closing (10min): [Reflection + Connection]
-Activity: [Reflective practice connecting learning to student identity and future goals]
-Assessment: [Formative check, exit ticket, peer sharing]
-[Teacher Note: Closure techniques, emotional regulation support, preview connections]
-[Student Note: Learning celebration, goal reflection, preparation for next steps]
+[Identity-connected reflection and peer sharing]
+[Teacher Note: Emotional regulation, preview connections]
+[Student Note: Learning celebration, growth recognition]
 
-Materials: [Comprehensive list of supplies, technology, handouts]
-MTSS Supports: 
-- Tier 1: [Universal supports for all students]
-- Tier 2: [Targeted interventions for some students] 
-- Tier 3: [Intensive supports for individual students]
-SEL Integration: [Specific CASEL competencies addressed]
-Assessment: [Formative and summative measures, multiple modalities]
-Extensions: [Enrichment and acceleration opportunities]
-Project Connection: [How this day builds toward culminating project]
+**Materials:** [Complete supply list]
+**MTSS:** Tier 1: [Universal] | Tier 2: [Targeted] | Tier 3: [Intensive]
+**SEL:** [CASEL competencies]
+**Assessment:** [Formative/summative measures]
 
-CRITICAL INSTRUCTION: Generate ALL ${days} days with complete detail. Each day must include all sections above with rich, trauma-informed, cross-curricular content. DO NOT summarize or truncate. Provide full lesson details for every component.
+---
 
-START DAY 1 AND CONTINUE THROUGH DAY ${days} WITHOUT STOPPING:`;
+GENERATE ALL ${days} DAYS WITH FULL DETAIL NOW. NO STOPPING. NO ASKING PERMISSION.`;
+}
 }
 
 export async function POST(req: NextRequest) {
@@ -156,10 +140,15 @@ export async function POST(req: NextRequest) {
     const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
-    const response = await client.messages.create({
+    // Add timeout wrapper
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout after 4 minutes')), 240000);
+    });
+
+    const apiPromise = client.messages.create({
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 8192,
-      temperature: 0.05,
+      temperature: 0.1, // Slightly higher for faster generation
       messages: [
         { 
           role: 'user', 
@@ -168,7 +157,9 @@ export async function POST(req: NextRequest) {
       ]
     });
 
-    const lessonPlan = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    const response = await Promise.race([apiPromise, timeoutPromise]) as any;
+
+    const lessonPlan = response.content?.[0]?.type === 'text' ? response.content[0].text : '';
     
     if (!lessonPlan) {
       return NextResponse.json(
@@ -197,6 +188,14 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in generatePlan:', error);
+    
+    // Handle timeout specifically
+    if (error.message?.includes('timeout')) {
+      return NextResponse.json({
+        error: 'Lesson plan generation is taking longer than expected. Please try with fewer days or a simpler topic.',
+        details: 'Request timeout - try reducing complexity'
+      }, { status: 504 });
+    }
     
     if (error.status) {
       return NextResponse.json({
