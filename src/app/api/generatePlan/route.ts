@@ -1,9 +1,9 @@
 // File: src/app/api/generatePlan/route.ts
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
+// import admin from 'firebase-admin'; // Temporarily disabled
 
-// --- Firebase Configuration ---
+/* // --- Temporarily disable all Firebase Admin setup ---
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
 
 if (!admin.apps.length) {
@@ -11,14 +11,13 @@ if (!admin.apps.length) {
     credential: admin.credential.cert(serviceAccount)
   });
 }
-
 const firestore = admin.firestore();
 const MONTHLY_LIMIT = 5;
+*/
 
-// --- API Route Handler for POST requests ---
 export async function POST(req: Request) {
   try {
-    // 1. Authenticate the User
+    /* // --- Temporarily disable all authentication and usage checks ---
     const authorization = req.headers.get('Authorization');
     if (!authorization || !authorization.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized: No token provided.' }, { status: 401 });
@@ -26,40 +25,25 @@ export async function POST(req: Request) {
     const token = authorization.split('Bearer ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
     const uid = decodedToken.uid;
+    // ... (usage check logic removed for brevity) ...
+    */
 
-    // 2. Check User's Usage
-    const userRef = firestore.collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    let usageCount = 0;
-    const currentMonth = new Date().getMonth();
-
-    if (userDoc.exists) {
-        const userData = userDoc.data()!;
-        const lastResetMonth = userData.lastResetDate ? new Date(userData.lastResetDate.toMillis()).getMonth() : -1;
-        if (currentMonth !== lastResetMonth) {
-            await userRef.update({ usageCount: 0, lastResetDate: new Date() });
-            usageCount = 0;
-        } else {
-            usageCount = userData.usageCount || 0;
-        }
-    } else {
-        await userRef.set({ uid, usageCount: 0, lastResetDate: new Date() });
-    }
-
-    if (usageCount >= MONTHLY_LIMIT) {
-        return NextResponse.json({ error: `Monthly limit of ${MONTHLY_LIMIT} plans reached.` }, { status: 429 });
-    }
-
-    // 3. Get Prompts and Call Anthropic API
+    // --- Core Logic (Still Active) ---
     const { systemPrompt, userPrompt } = await req.json();
     if (!systemPrompt || !userPrompt) {
         return NextResponse.json({ error: 'System and user prompts are required.' }, { status: 400 });
     }
 
+    // Ensure the ANTHROPIC_API_KEY is also set as an environment variable in Vercel
+    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+    if (!anthropicApiKey) {
+        throw new Error('ANTHROPIC_API_KEY is not set in Vercel environment variables.');
+    }
+
     const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-            'x-api-key': process.env.ANTHROPIC_API_KEY!,
+            'x-api-key': anthropicApiKey,
             'anthropic-version': '2023-06-01',
             'content-type': 'application/json'
         },
@@ -73,31 +57,25 @@ export async function POST(req: Request) {
 
     if (!anthropicResponse.ok) {
         const errorBody = await anthropicResponse.json();
-        console.error("Anthropic API Error:", errorBody);
-        return NextResponse.json({ error: 'Failed to get a response from the AI model.' }, { status: 502 });
+        return NextResponse.json({ error: 'Failed to get a response from the AI model.', details: errorBody }, { status: 502 });
     }
 
     const anthropicData = await anthropicResponse.json();
     const lessonPlan = anthropicData.content[0].text;
 
-    // 4. Update Usage Count
+    /* // --- Temporarily disable usage count update ---
     await userRef.update({ usageCount: admin.firestore.FieldValue.increment(1) });
-    const newUsageCount = usageCount + 1;
+    */
 
-    // 5. Send Response to Frontend
+    // --- Send Response to Frontend ---
     return NextResponse.json({
         lessonPlan,
-        usageInfo: {
-            count: newUsageCount,
-            limit: MONTHLY_LIMIT
-        }
+        // Mock usage info since it's disabled
+        usageInfo: { count: 1, limit: 5 }
     });
 
   } catch (error: any) {
     console.error('Error in generatePlan POST handler:', error);
-    if (error.code === 'auth/id-token-expired') {
-        return NextResponse.json({ error: 'Unauthorized: Token has expired.' }, { status: 401 });
-    }
     return NextResponse.json({ error: error.message || 'An internal server error occurred.' }, { status: 500 });
   }
 }
