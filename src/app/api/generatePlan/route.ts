@@ -26,58 +26,69 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `Expert trauma-informed STEAM educator: Generate COMPLETE ${days}-day lesson plan. ALL days required.
+  return `Expert trauma-informed STEAM educator: Generate COMPLETE ${days}-day lesson plan with deep interdisciplinary integration.
 
 ${days}-DAY ROOTWORK: "${unitTitle}"
 Grade ${gradeLevel} | ${subjects.join('+')} | ${standards}
 
+CRITICAL: Each day must include authentic STEAM integration where Science, Technology, Engineering, Arts, and Mathematics are meaningfully woven together, not just mentioned separately.
+
 Each Day Must Include:
 
-# DAY X: [STEAM Title]
-Question: [Cross-curricular essential question]
-Target: [Measurable learning goal]
-Project: [What students create/build]
+# DAY X: [Title connecting all subjects with garden/nature metaphor]
+Question: [Essential question requiring knowledge from ALL selected subjects]
+Target: [Measurable goal demonstrating cross-curricular mastery]
+Project Component: [Sophisticated multi-step creation requiring all disciplines]
+STEAM Bridge: [Specific explanation of how S-T-E-A-M connect in this lesson]
 
-[Teacher Note: Trauma-informed approach, differentiation, STEAM connections]
-[Student Note: Growth focus, agency building, success strategies]
+[Teacher Note: Trauma-informed facilitation, specific differentiation strategies, assessment checkpoints]
+[Student Note: Growth mindset language, agency building, connection to personal identity]
 
-## Opening (15min): [Regulation + Hook]
-[Garden-based grounding activity connecting to lesson]
-[Teacher Note: Dysregulation watch, cultural responsiveness]
-[Student Note: Self-regulation, personal connection]
+## Opening (15min): Garden-Based Regulation + Content Hook
+[Nature-based grounding activity directly connecting to lesson content across all subjects]
+Materials: [Specific sensory items, plants, or nature elements]
+[Teacher Note: Dysregulation monitoring, cultural responsiveness, accessibility accommodations]
+[Student Note: Self-regulation strategies, connection to personal/cultural knowledge]
 
-## I Do (20min): [Content + STEAM Modeling]
-[Core concepts with real-world connections across all subjects]
-[Teacher Note: Scaffolding, visual supports, assessment checks]
-[Student Note: Active listening, note-taking, prior knowledge links]
+## I Do (20min): Integrated Content Modeling
+[Demonstrate how today's concepts connect across ALL selected subjects with specific examples and think-alouds]
+Cross-curricular connections: [Explicit links between subjects with specific examples]
+[Teacher Note: Scaffolding for diverse learners, visual/auditory/kinesthetic supports, assessment for understanding]
+[Student Note: Active engagement strategies, note-taking methods that work for you, building on prior knowledge]
 
-## Work Session (45min):
-### We Do (15min): [Collaborative STEAM Problem-Solving]
-[Guided practice integrating all subject areas]
-[Teacher Note: Group facilitation, progress monitoring]
-[Student Note: Collaboration skills, voice and choice]
+## Work Session (45min): Collaborative Investigation
+### We Do (15min): Guided Multi-Disciplinary Problem-Solving
+[Structured activity requiring knowledge from all subjects to solve authentic problem]
+Authentic Assessment: [Real-world application demonstrating subject integration]
+[Teacher Note: Collaborative grouping strategies, progress monitoring, peer support facilitation]
+[Student Note: Communication skills, leveraging individual strengths, voice and choice in process]
 
-### You Do Together (15min): [Partner Project Building]
-[Structured partner work on project components]
-[Teacher Note: Peer mediation, formative assessment]
-[Student Note: Partnership strategies, self-advocacy]
+### You Do Together (15min): Partnership Creation
+[Partner work building sophisticated project components requiring multiple subject areas]
+Choice Menu: [3-4 different pathways respecting learning preferences and strengths]
+[Teacher Note: Formative assessment opportunities, conflict mediation, scaffolding supports]
+[Student Note: Partnership strategies, self-advocacy skills, celebrating diverse perspectives]
 
-### You Do Alone (15min): [Independent Creation]
-[Individual work with multiple modalities and choice]
-[Teacher Note: Conferencing, differentiated supports]
-[Student Note: Self-management, goal setting]
+### You Do Alone (15min): Individual Synthesis
+[Independent work demonstrating personal understanding across subjects with multiple modalities]
+Regulation Supports: [Built-in movement, choice, sensory breaks]
+[Teacher Note: Individual conferencing, differentiated expectations, trauma-informed check-ins]
+[Student Note: Self-management techniques, reflection on learning, personal goal setting]
 
-## Closing (10min): [Reflection + Connection]
-[Identity-connected reflection and peer sharing]
-[Teacher Note: Emotional regulation, preview connections]
-[Student Note: Learning celebration, growth recognition]
+## Closing (10min): Identity-Connected Reflection
+[Reflective practice connecting learning to student identity, culture, and future aspirations]
+Community Connection: [How today's learning connects to student's community and goals]
+[Teacher Note: Emotional regulation support, culturally responsive validation, transition preparation]
+[Student Note: Learning celebration, growth recognition, preparation for tomorrow's challenge]
 
-Materials: [Complete supply list]
-MTSS: Tier 1: [Universal] | Tier 2: [Targeted] | Tier 3: [Intensive]
-SEL: [CASEL competencies]
-Assessment: [Formative/summative measures]
+Materials: [Comprehensive list including nature elements, technology, hands-on materials, texts]
+MTSS: Tier 1: [Universal design features] | Tier 2: [Targeted supports] | Tier 3: [Intensive accommodations]
+SEL: [Specific CASEL competencies with examples]
+Assessment: [Formative checkpoints and authentic performance measures across all subjects]
+Standards: [Specific alignment to provided standards with citations]
+Extensions: [Accelerated learning options and community connections]
 
-GENERATE ALL ${days} DAYS WITH FULL DETAIL NOW. NO STOPPING. NO ASKING PERMISSION.`;
+GENERATE ALL ${days} DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.`;
 }
 
 export async function POST(req: NextRequest) {
