@@ -2,16 +2,12 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-// If you installed remark-gfm, uncomment the next line and add: import remarkGfm from 'remark-gfm';
-// import remarkGfm from 'remark-gfm';
 
 type Tab = 'generator' | 'results';
-type Viewer = 'teacher' | 'student' | 'print';
 
 export default function HomePage() {
   // UI state
   const [tab, setTab] = useState<Tab>('generator');
-  const [viewer, setViewer] = useState<Viewer>('teacher');
 
   // Form state
   const [gradeLevel, setGradeLevel] = useState('');
@@ -32,15 +28,145 @@ export default function HomePage() {
     setSubjects(values);
   };
 
-  const handleDownloadMarkdown = () => {
+  const handleDownloadPDF = async () => {
     if (!lessonPlan) return;
-    const blob = new Blob([lessonPlan], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${unitTitle || 'rootwork-lesson-plan'}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    
+    const payload = {
+      gradeLevel,
+      subjects,
+      duration: parseInt(duration, 10),
+      days: parseInt(duration, 10),
+      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
+      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
+      focus: focus || 'None specified'
+    };
+
+    try {
+      setIsLoading(true);
+      
+      // Create HTML content for PDF
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${unitTitle || 'Rootwork Lesson Plan'}</title>
+    <style>
+        body { 
+            font-family: 'Times New Roman', serif; 
+            margin: 1in; 
+            line-height: 1.6; 
+            font-size: 12pt;
+        }
+        h1 { 
+            color: #2c5f2d; 
+            border-bottom: 2px solid #2c5f2d; 
+            page-break-before: avoid;
+        }
+        h2 { 
+            color: #4a7c59; 
+            margin-top: 1.5em; 
+            page-break-after: avoid;
+        }
+        h3 { 
+            color: #5a8a6a; 
+            margin-top: 1.2em;
+            page-break-after: avoid;
+        }
+        .header-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .teacher-note { 
+            background-color: #e8f5e8; 
+            padding: 8px 12px; 
+            margin: 8px 0; 
+            border-left: 4px solid #2c5f2d; 
+            font-style: italic;
+            page-break-inside: avoid;
+        }
+        .student-note { 
+            background-color: #e3f2fd; 
+            padding: 8px 12px; 
+            margin: 8px 0; 
+            border-left: 4px solid #1976d2; 
+            font-weight: bold;
+            page-break-inside: avoid;
+        }
+        .day-section {
+            page-break-before: auto;
+            margin-bottom: 30px;
+        }
+        .lesson-component {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        @media print {
+            body { margin: 0.5in; font-size: 11pt; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-info">
+        <h1>🌱 ${unitTitle || 'Rootwork Lesson Plan'}</h1>
+        <p><strong>Rootwork Framework: Trauma-Informed STEAM Lesson Plan</strong></p>
+        <p><strong>Grade Level:</strong> ${gradeLevel}</p>
+        <p><strong>Subject(s):</strong> ${subjects.join(', ')}</p>
+        <p><strong>Duration:</strong> ${duration} days (${parseInt(duration) * 90} minutes total)</p>
+        ${standards ? `<p><strong>Standards:</strong> ${standards}</p>` : ''}
+        ${focus ? `<p><strong>Focus:</strong> ${focus}</p>` : ''}
+    </div>
+    
+    <div class="lesson-content">
+        ${lessonPlan.split('\n').map(line => {
+          // Convert markdown-style formatting to HTML
+          let htmlLine = line
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\[Teacher Note: (.*?)\]/g, '<div class="teacher-note"><strong>Teacher Note:</strong> $1</div>')
+            .replace(/\[Student Note: (.*?)\]/g, '<div class="student-note"><strong>Student Note:</strong> $1</div>');
+          
+          // Handle paragraphs
+          if (htmlLine.trim() && !htmlLine.includes('<h') && !htmlLine.includes('<div')) {
+            htmlLine = `<p>${htmlLine}</p>`;
+          }
+          
+          return htmlLine;
+        }).join('')}
+    </div>
+</body>
+</html>`;
+
+      // Create and download the file
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(unitTitle || 'rootwork-lesson-plan').replace(/[^a-zA-Z0-9]/g, '_')}_RootworkFramework.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert('✅ Lesson plan downloaded as HTML! You can open this file and print to PDF from your browser.');
+    } catch (err: any) {
+      setError(`Download failed: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGeneratePlan: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -91,194 +217,16 @@ export default function HomePage() {
       } else if (data?.markdown) {
         markdown = data.markdown;
       } else if (data?.lessonPlan) {
-        // Convert lesson plan object to markdown if needed
-        markdown = JSON.stringify(data.lessonPlan, null, 2);
+        // Handle if lessonPlan is a string
+        markdown = typeof data.lessonPlan === 'string' ? data.lessonPlan : JSON.stringify(data.lessonPlan, null, 2);
       } else {
         throw new Error(data?.error || 'Empty response from generator');
       }
 
       setLessonPlan(markdown);
       setTab('results');
-      setViewer('teacher');
     } catch (err: any) {
       setError(err?.message || 'Failed to generate lesson plan.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleQualityPass = async () => {
-    if (!lessonPlan) return;
-    setError(null);
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/qualityPass', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          markdown: lessonPlan,
-          tightenAppendix: true,
-          enforceNotes: true,
-          branding: { product: 'Root Work Framework', tagline: 'S.T.E.A.M. Powered, Trauma Informed, Project Based' },
-        }),
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-      const data = (await res.json()) as { markdown?: string; error?: string };
-      if (!data?.markdown) throw new Error(data?.error || 'Empty response from quality pass');
-      setLessonPlan(data.markdown);
-    } catch (err: any) {
-      setError(`Quality pass failed: ${err?.message || 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateVisuals = async () => {
-    if (!lessonPlan) return;
-    setError(null);
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/generateAssets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          markdown: lessonPlan,
-          unitTitle: unitTitle || 'Rooted in Me',
-        }),
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-      // We don't need to parse the payload here; the API can inject asset links back into Appendix A
-      // or return a summary. If you return updated markdown, uncomment below:
-      // const data = await res.json();
-      // if (data?.markdown) setLessonPlan(data.markdown);
-      alert('Visual asset prompts have been generated. Check Appendix A for updates.');
-    } catch (err: any) {
-      setError(
-        (err?.message || '').includes('organization must be verified')
-          ? 'Your OpenAI org must be verified to use gpt-image-1. Try again after verification or disable image generation in /api/generateAssets.'
-          : `Failed to generate visual assets: ${err?.message || 'Unknown error'}`
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Enhanced export function that works with the new API
-  const handleExportPack = async () => {
-    if (!lessonPlan) return;
-    setError(null);
-    setIsLoading(true);
-    
-    const payload = {
-      gradeLevel,
-      subjects,
-      duration: parseInt(duration, 10),
-      days: parseInt(duration, 10),
-      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
-      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
-      focus: focus || 'None specified'
-    };
-
-    try {
-      // Try the new PDF API first
-      try {
-        const pdfRes = await fetch('/api/generatePlan?format=pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        
-        if (pdfRes.ok) {
-          const blob = await pdfRes.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${unitTitle || 'rootwork-lesson-plan'}_RootworkFramework.pdf`;
-          a.click();
-          URL.revokeObjectURL(url);
-          
-          // Also create a simple DOCX from markdown
-          const docContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>${unitTitle || 'Rootwork Lesson Plan'}</title>
-    <style>
-        body { font-family: 'Times New Roman', serif; margin: 1in; line-height: 1.6; }
-        h1 { color: #2c5f2d; border-bottom: 2px solid #2c5f2d; }
-        h2 { color: #4a7c59; margin-top: 1.5em; }
-        .teacher-note { background-color: #e8f5e8; padding: 8px; margin: 8px 0; border-left: 4px solid #2c5f2d; font-style: italic; }
-        .student-note { background-color: #e3f2fd; padding: 8px; margin: 8px 0; border-left: 4px solid #1976d2; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h1>${unitTitle || 'Rootwork Lesson Plan'}</h1>
-    <p><strong>Rootwork Framework: Trauma-Informed STEAM Lesson Plan</strong></p>
-    <p><strong>Grade Level:</strong> ${gradeLevel}</p>
-    <p><strong>Subject(s):</strong> ${subjects.join(', ')}</p>
-    <pre style="white-space: pre-wrap; font-family: inherit;">${lessonPlan}</pre>
-</body>
-</html>`;
-          
-          const docBlob = new Blob([docContent], { 
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-          });
-          const docUrl = URL.createObjectURL(docBlob);
-          const docA = document.createElement('a');
-          docA.href = docUrl;
-          docA.download = `${unitTitle || 'rootwork-lesson-plan'}_RootworkFramework.docx`;
-          docA.click();
-          URL.revokeObjectURL(docUrl);
-          
-          alert('✅ Ready-to-Teach Pack downloaded! PDF and Word documents are ready.');
-          return;
-        }
-      } catch (e) {
-        console.log('New API failed, trying original export endpoints...');
-      }
-
-      // Fallback to original export API
-      try {
-        // PDF
-        const pdfRes = await fetch('/api/export/pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            markdown: lessonPlan,
-            meta: { title: unitTitle || 'Rootwork Lesson', gradeLevel, subjects },
-          }),
-        });
-        if (!pdfRes.ok) throw new Error(`PDF: HTTP ${pdfRes.status}`);
-        const { url: pdfUrl } = (await pdfRes.json()) as { url: string };
-
-        // DOCX
-        const docxRes = await fetch('/api/export/docx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            markdown: lessonPlan,
-            meta: { title: unitTitle || 'Rootwork Lesson', gradeLevel, subjects },
-          }),
-        });
-        if (!docxRes.ok) throw new Error(`DOCX: HTTP ${docxRes.status}`);
-        const { url: docxUrl } = (await docxRes.json()) as { url: string };
-
-        // Offer downloads
-        const go = confirm('Ready-to-Teach Pack created.\nOK to download PDF now? (DOCX will open after)');
-        if (go) window.open(pdfUrl, '_blank');
-        setTimeout(() => window.open(docxUrl, '_blank'), 600);
-      } catch (originalApiError) {
-        throw new Error('Both new and original export APIs failed');
-      }
-    } catch (err: any) {
-      setError(`Export failed: ${err?.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -438,88 +386,106 @@ export default function HomePage() {
                 <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{error}</div>
               )}
 
-              {/* Top actions */}
+              {/* Simple top actions - ONLY New Plan and Download */}
               <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between mb-6">
-                <div className="inline-flex rounded-xl overflow-hidden ring-1 ring-slate-200">
+                <div className="flex gap-3">
                   <button
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      viewer === 'teacher' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'
-                    }`}
-                    onClick={() => setViewer('teacher')}
-                  >
-                    Teacher View
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      viewer === 'student' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'
-                    }`}
-                    onClick={() => setViewer('student')}
-                  >
-                    Student View
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      viewer === 'print' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'
-                    }`}
-                    onClick={() => setViewer('print')}
-                  >
-                    Print View
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
+                    className="px-6 py-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 font-semibold transition"
                     onClick={() => setTab('generator')}
                   >
                     New Plan
                   </button>
                   <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={handleDownloadMarkdown}
-                  >
-                    Download .md
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={handleQualityPass}
+                    className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-500 font-semibold transition"
+                    onClick={handleDownloadPDF}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Working…' : 'Quality Pass'}
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={handleGenerateVisuals}
-                    disabled={isLoading}
-                  >
-                    Generate Visual Assets
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500"
-                    onClick={handleExportPack}
-                    disabled={isLoading}
-                  >
-                    Ready-to-Teach Pack (PDF & DOCX)
+                    {isLoading ? 'Preparing Download...' : 'Download PDF/DOC'}
                   </button>
                 </div>
               </div>
 
-              {/* Rendered plan */}
-              <div className="prose max-w-none prose-headings:scroll-mt-24">
-                <ReactMarkdown /* remarkPlugins={[remarkGfm]} */>{lessonPlan}</ReactMarkdown>
-              </div>
-
-              {/* Print helper */}
-              {viewer === 'print' && (
-                <div className="mt-6">
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50"
-                    onClick={() => window.print()}
+              {/* Enhanced lesson plan display with better styling */}
+              <div className="lesson-plan-container bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+                <div 
+                  className="prose prose-lg max-w-none 
+                    prose-headings:text-emerald-800 
+                    prose-h1:text-2xl prose-h1:font-bold prose-h1:border-b prose-h1:border-emerald-200 prose-h1:pb-2
+                    prose-h2:text-xl prose-h2:font-semibold prose-h2:text-emerald-700 prose-h2:mt-8 prose-h2:mb-4
+                    prose-h3:text-lg prose-h3:font-medium prose-h3:text-emerald-600 prose-h3:mt-6 prose-h3:mb-3
+                    prose-p:leading-relaxed prose-p:mb-4
+                    prose-ul:ml-6 prose-ol:ml-6
+                    prose-li:mb-2
+                    prose-strong:text-gray-900
+                    prose-em:text-gray-700"
+                  style={{
+                    /* Custom styles for Teacher and Student Notes */
+                  }}
+                >
+                  <ReactMarkdown 
+                    components={{
+                      // Custom renderer for better formatting
+                      p: ({ children }) => {
+                        const text = children?.toString() || '';
+                        
+                        // Handle Teacher Notes
+                        if (text.includes('[Teacher Note:')) {
+                          return (
+                            <div className="teacher-note bg-emerald-50 border-l-4 border-emerald-500 p-4 my-4 rounded-r-lg">
+                              <div className="font-semibold text-emerald-800 text-sm mb-1">👩‍🏫 Teacher Note:</div>
+                              <div className="text-emerald-700 italic">{text.replace(/\[Teacher Note:\s*/, '').replace(/\]$/, '')}</div>
+                            </div>
+                          );
+                        }
+                        
+                        // Handle Student Notes
+                        if (text.includes('[Student Note:')) {
+                          return (
+                            <div className="student-note bg-blue-50 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
+                              <div className="font-semibold text-blue-800 text-sm mb-1">🎓 Student Note:</div>
+                              <div className="text-blue-700 font-medium">{text.replace(/\[Student Note:\s*/, '').replace(/\]$/, '')}</div>
+                            </div>
+                          );
+                        }
+                        
+                        return <p className="mb-4 leading-relaxed">{children}</p>;
+                      },
+                      
+                      h1: ({ children }) => (
+                        <h1 className="text-3xl font-bold text-emerald-800 border-b-2 border-emerald-200 pb-3 mb-6 mt-8 first:mt-0">
+                          {children}
+                        </h1>
+                      ),
+                      
+                      h2: ({ children }) => (
+                        <h2 className="text-2xl font-semibold text-emerald-700 mt-8 mb-4 first:mt-0">
+                          {children}
+                        </h2>
+                      ),
+                      
+                      h3: ({ children }) => (
+                        <h3 className="text-xl font-medium text-emerald-600 mt-6 mb-3">
+                          {children}
+                        </h3>
+                      ),
+                      
+                      ul: ({ children }) => (
+                        <ul className="ml-6 mb-4 space-y-2 list-disc">{children}</ul>
+                      ),
+                      
+                      ol: ({ children }) => (
+                        <ol className="ml-6 mb-4 space-y-2 list-decimal">{children}</ol>
+                      ),
+                      
+                      li: ({ children }) => (
+                        <li className="leading-relaxed">{children}</li>
+                      ),
+                    }}
                   >
-                    Print This Page
-                  </button>
+                    {lessonPlan}
+                  </ReactMarkdown>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
