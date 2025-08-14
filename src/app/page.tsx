@@ -7,7 +7,9 @@ import ReactMarkdown from 'react-markdown';
 import { onAuthStateChanged, User, signOut, getIdToken } from 'firebase/auth';
 import { auth } from '../firebase';
 import { masterPrompt } from '../masterPrompt';
-import SignIn from '../components/SignIn';
+import dynamic from 'next/dynamic';
+
+const SignIn = dynamic(() => import('../components/SignIn'), { ssr: false });
 
 type Tab = 'generator' | 'results';
 type Viewer = 'teacher' | 'student' | 'print';
