@@ -57,6 +57,7 @@ export default function HomePage() {
       gradeLevel,
       subjects,
       duration: parseInt(duration, 10), // Convert to number
+      days: parseInt(duration, 10), // Also send as days for compatibility
       unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
       standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
       focus: focus || 'None specified'
@@ -76,18 +77,27 @@ export default function HomePage() {
       }
 
       const data = (await res.json()) as { 
+        ok?: boolean;
+        plan?: any; 
+        markdown?: string;
         lessonPlan?: any; 
-        markdown?: { teacher: string; student: string }; 
         error?: string 
       };
 
-      // Handle the response format from your API
-      const teacherMarkdown = data?.markdown?.teacher || '';
-      if (!teacherMarkdown) {
+      // Handle the new API response format
+      let markdown = '';
+      if (data?.plan?.markdown) {
+        markdown = data.plan.markdown;
+      } else if (data?.markdown) {
+        markdown = data.markdown;
+      } else if (data?.lessonPlan) {
+        // Convert lesson plan object to markdown if needed
+        markdown = JSON.stringify(data.lessonPlan, null, 2);
+      } else {
         throw new Error(data?.error || 'Empty response from generator');
       }
 
-      setLessonPlan(teacherMarkdown);
+      setLessonPlan(markdown);
       setTab('results');
       setViewer('teacher');
     } catch (err: any) {
@@ -159,39 +169,114 @@ export default function HomePage() {
     }
   };
 
+  // Enhanced export function that works with the new API
   const handleExportPack = async () => {
     if (!lessonPlan) return;
     setError(null);
     setIsLoading(true);
+    
+    const payload = {
+      gradeLevel,
+      subjects,
+      duration: parseInt(duration, 10),
+      days: parseInt(duration, 10),
+      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
+      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
+      focus: focus || 'None specified'
+    };
+
     try {
-      // PDF
-      const pdfRes = await fetch('/api/export/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          markdown: lessonPlan,
-          meta: { title: unitTitle || 'Rootwork Lesson', gradeLevel, subjects },
-        }),
-      });
-      if (!pdfRes.ok) throw new Error(`PDF: HTTP ${pdfRes.status}`);
-      const { url: pdfUrl } = (await pdfRes.json()) as { url: string };
+      // Try the new PDF API first
+      try {
+        const pdfRes = await fetch('/api/generatePlan?format=pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        
+        if (pdfRes.ok) {
+          const blob = await pdfRes.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${unitTitle || 'rootwork-lesson-plan'}_RootworkFramework.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          // Also create a simple DOCX from markdown
+          const docContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${unitTitle || 'Rootwork Lesson Plan'}</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; margin: 1in; line-height: 1.6; }
+        h1 { color: #2c5f2d; border-bottom: 2px solid #2c5f2d; }
+        h2 { color: #4a7c59; margin-top: 1.5em; }
+        .teacher-note { background-color: #e8f5e8; padding: 8px; margin: 8px 0; border-left: 4px solid #2c5f2d; font-style: italic; }
+        .student-note { background-color: #e3f2fd; padding: 8px; margin: 8px 0; border-left: 4px solid #1976d2; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>${unitTitle || 'Rootwork Lesson Plan'}</h1>
+    <p><strong>Rootwork Framework: Trauma-Informed STEAM Lesson Plan</strong></p>
+    <p><strong>Grade Level:</strong> ${gradeLevel}</p>
+    <p><strong>Subject(s):</strong> ${subjects.join(', ')}</p>
+    <pre style="white-space: pre-wrap; font-family: inherit;">${lessonPlan}</pre>
+</body>
+</html>`;
+          
+          const docBlob = new Blob([docContent], { 
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+          });
+          const docUrl = URL.createObjectURL(docBlob);
+          const docA = document.createElement('a');
+          docA.href = docUrl;
+          docA.download = `${unitTitle || 'rootwork-lesson-plan'}_RootworkFramework.docx`;
+          docA.click();
+          URL.revokeObjectURL(docUrl);
+          
+          alert('✅ Ready-to-Teach Pack downloaded! PDF and Word documents are ready.');
+          return;
+        }
+      } catch (e) {
+        console.log('New API failed, trying original export endpoints...');
+      }
 
-      // DOCX
-      const docxRes = await fetch('/api/export/docx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          markdown: lessonPlan,
-          meta: { title: unitTitle || 'Rootwork Lesson', gradeLevel, subjects },
-        }),
-      });
-      if (!docxRes.ok) throw new Error(`DOCX: HTTP ${docxRes.status}`);
-      const { url: docxUrl } = (await docxRes.json()) as { url: string };
+      // Fallback to original export API
+      try {
+        // PDF
+        const pdfRes = await fetch('/api/export/pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            markdown: lessonPlan,
+            meta: { title: unitTitle || 'Rootwork Lesson', gradeLevel, subjects },
+          }),
+        });
+        if (!pdfRes.ok) throw new Error(`PDF: HTTP ${pdfRes.status}`);
+        const { url: pdfUrl } = (await pdfRes.json()) as { url: string };
 
-      // Offer downloads
-      const go = confirm('Ready-to-Teach Pack created.\nOK to download PDF now? (DOCX will open after)');
-      if (go) window.open(pdfUrl, '_blank');
-      setTimeout(() => window.open(docxUrl, '_blank'), 600);
+        // DOCX
+        const docxRes = await fetch('/api/export/docx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            markdown: lessonPlan,
+            meta: { title: unitTitle || 'Rootwork Lesson', gradeLevel, subjects },
+          }),
+        });
+        if (!docxRes.ok) throw new Error(`DOCX: HTTP ${docxRes.status}`);
+        const { url: docxUrl } = (await docxRes.json()) as { url: string };
+
+        // Offer downloads
+        const go = confirm('Ready-to-Teach Pack created.\nOK to download PDF now? (DOCX will open after)');
+        if (go) window.open(pdfUrl, '_blank');
+        setTimeout(() => window.open(docxUrl, '_blank'), 600);
+      } catch (originalApiError) {
+        throw new Error('Both new and original export APIs failed');
+      }
     } catch (err: any) {
       setError(`Export failed: ${err?.message || 'Unknown error'}`);
     } finally {
