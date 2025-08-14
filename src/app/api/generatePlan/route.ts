@@ -26,7 +26,9 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `Generate a complete ${days}-day Rootwork Framework trauma-informed STEAM lesson plan.
+  return `You are a lesson plan generator. You MUST generate ALL ${days} days in this response. DO NOT STOP after Day 1. DO NOT ask for permission to continue.
+
+Generate a complete ${days}-day Rootwork Framework trauma-informed STEAM lesson plan.
 
 **LESSON SPECS:**
 - Grade: ${gradeLevel} | Subject: ${subjects.join(', ')} | Title: "${unitTitle}"
@@ -37,56 +39,56 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
 # DAY [#]: [Title]
 **Essential Question:** [question]
 **Learning Target:** [target]
-**Standards:** [standards]
 
-[Teacher Note: Brief pedagogical context and trauma-informed considerations]
-[Student Note: What you're building and why it matters for your growth]
+[Teacher Note: Brief pedagogical context]
+[Student Note: What you're building]
 
 ## Opening (15 min)
-[Activity description]
-[Teacher Note: Facilitation tips and therapeutic considerations]
-[Student Note: Engagement and self-regulation strategies]
+[Activity]
+[Teacher Note: Tips]
+[Student Note: Strategy]
 
-## I Do: Direct Instruction (20 min)
-[Content and modeling]
-[Teacher Note: Key points and differentiation approaches]
-[Student Note: What to focus on and how this builds skills]
+## I Do (20 min)
+[Content]
+[Teacher Note: Key points]
+[Student Note: Focus]
 
 ## Work Session (45 min)
 ### We Do (15 min)
-[Collaborative activity]
-[Teacher Note: Scaffolding tips and group facilitation]
-[Student Note: Success strategies and collaboration expectations]
+[Activity]
+[Teacher Note: Tips]
+[Student Note: Strategy]
 
 ### You Do Together (15 min)
-[Partner/small group task]
-[Teacher Note: Monitoring guidance and support indicators]
-[Student Note: Partnership strategies and self-advocacy]
+[Task]
+[Teacher Note: Monitor]
+[Student Note: Partnership]
 
 ### You Do Alone (15 min)
-[Independent work]
-[Teacher Note: Individual support and regulation monitoring]
-[Student Note: Self-management and growth mindset]
+[Work]
+[Teacher Note: Support]
+[Student Note: Self-management]
 
 ## Closing (10 min)
-[Reflection activity]
-[Teacher Note: Assessment insights and next steps]
-[Student Note: Reflection prompts and growth recognition]
+[Reflection]
+[Teacher Note: Assessment]
+[Student Note: Growth]
 
-**MTSS Supports:** [Brief Tier 1-3 descriptions]
-**SEL Focus:** [CASEL competencies]
-**Materials:** [Essential items needed]
+**Materials:** [List]
+**MTSS:** [Support levels]
 
 ---
 
-**CRITICAL REQUIREMENTS:**
-1. Generate ALL ${days} days completely - no stopping after Day 1
-2. Include [Teacher Note: ] and [Student Note: ] for every section
-3. Use trauma-informed, garden/nature-based metaphors
-4. Maintain healing-centered educational approach
-5. Be concise but comprehensive
+GENERATE ALL ${days} DAYS NOW. START WITH DAY 1 AND CONTINUE IMMEDIATELY TO DAY 2${days > 2 ? `, THEN DAY ${days}` : ''}. DO NOT STOP. DO NOT ASK QUESTIONS.
 
-**Generate the complete ${days}-day plan now:**`;
+DAY 1:`; NOT TRUNCATE - Include complete Days 1, 2, and ${days === 3 ? '3' : days}
+4. Include [Teacher Note: ] and [Student Note: ] for every section
+5. Use trauma-informed, garden/nature-based metaphors
+6. Be concise but complete all days immediately
+
+**YOU MUST GENERATE THE COMPLETE ${days}-DAY PLAN WITHOUT STOPPING:**
+
+START WITH DAY 1 AND CONTINUE THROUGH DAY ${days} NOW:`;
 }
 
 export async function POST(req: NextRequest) {
@@ -147,14 +149,14 @@ export async function POST(req: NextRequest) {
       days: parseInt(String(days), 10)
     };
 
-    // Generate the lesson plan with simplified, single message approach
+    // Generate the lesson plan with corrected token limit
     const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 8192, // Maximum allowed for Claude 3.5 Sonnet
-      temperature: 0.1, // Slightly higher for more creative but consistent output
+      model: 'claude-3-5-sonnet-20240620', // Original Claude 3.5 Sonnet with higher token limits
+      max_tokens: 16000, // This version supports up to 16k tokens
+      temperature: 0.05, // Lower temperature for more consistent output
       messages: [
         { 
           role: 'user', 
