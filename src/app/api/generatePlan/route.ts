@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // Increase to 5 minutes (max for Vercel Pro)
+export const maxDuration = 300;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -28,15 +28,15 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
 
   return `Expert trauma-informed STEAM educator: Generate COMPLETE ${days}-day lesson plan. ALL days required.
 
-**${days}-DAY ROOTWORK: "${unitTitle}"**
+${days}-DAY ROOTWORK: "${unitTitle}"
 Grade ${gradeLevel} | ${subjects.join('+')} | ${standards}
 
-**Each Day Must Include:**
+Each Day Must Include:
 
 # DAY X: [STEAM Title]
-**Question:** [Cross-curricular essential question]
-**Target:** [Measurable learning goal]
-**Project:** [What students create/build]
+Question: [Cross-curricular essential question]
+Target: [Measurable learning goal]
+Project: [What students create/build]
 
 [Teacher Note: Trauma-informed approach, differentiation, STEAM connections]
 [Student Note: Growth focus, agency building, success strategies]
@@ -72,15 +72,12 @@ Grade ${gradeLevel} | ${subjects.join('+')} | ${standards}
 [Teacher Note: Emotional regulation, preview connections]
 [Student Note: Learning celebration, growth recognition]
 
-**Materials:** [Complete supply list]
-**MTSS:** Tier 1: [Universal] | Tier 2: [Targeted] | Tier 3: [Intensive]
-**SEL:** [CASEL competencies]
-**Assessment:** [Formative/summative measures]
-
----
+Materials: [Complete supply list]
+MTSS: Tier 1: [Universal] | Tier 2: [Targeted] | Tier 3: [Intensive]
+SEL: [CASEL competencies]
+Assessment: [Formative/summative measures]
 
 GENERATE ALL ${days} DAYS WITH FULL DETAIL NOW. NO STOPPING. NO ASKING PERMISSION.`;
-}
 }
 
 export async function POST(req: NextRequest) {
@@ -140,7 +137,6 @@ export async function POST(req: NextRequest) {
     const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
-    // Add timeout wrapper
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Request timeout after 4 minutes')), 240000);
     });
@@ -148,7 +144,7 @@ export async function POST(req: NextRequest) {
     const apiPromise = client.messages.create({
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 8192,
-      temperature: 0.1, // Slightly higher for faster generation
+      temperature: 0.1,
       messages: [
         { 
           role: 'user', 
@@ -189,7 +185,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error in generatePlan:', error);
     
-    // Handle timeout specifically
     if (error.message?.includes('timeout')) {
       return NextResponse.json({
         error: 'Lesson plan generation is taking longer than expected. Please try with fewer days or a simpler topic.',
