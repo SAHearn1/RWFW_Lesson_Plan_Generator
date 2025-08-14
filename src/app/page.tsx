@@ -1,316 +1,90 @@
 // File: src/app/page.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, getIdToken, User } from 'firebase/auth';
-import { masterPrompt } from '../masterPrompt'; // Import the master prompt
-
-// --- Firebase Configuration ---
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { auth } from '../firebase'; // Use the new central config
+import { masterPrompt } from '../masterPrompt';
+import SignIn from '../components/SignIn'; // Import the new component
 
 type Tab = 'generator' | 'results';
 type Viewer = 'teacher' | 'student' | 'print';
 
 export default function HomePage() {
-  // UI and Auth state
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+  
+  // Other state variables...
   const [tab, setTab] = useState<Tab>('generator');
   const [viewer, setViewer] = useState<Viewer>('teacher');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  // Form state
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
   const [duration, setDuration] = useState('3');
   const [unitTitle, setUnitTitle] = useState('');
   const [standards, setStandards] = useState('');
   const [focus, setFocus] = useState('');
-
-  // Generation state
   const [isLoading, setIsLoading] = useState(false);
   const [lessonPlan, setLessonPlan] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   
-  // Listen for user auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      setAuthLoaded(true); // Mark auth as loaded
     });
     return () => unsubscribe();
   }, []);
 
-  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const values = Array.from(e.target.selectedOptions).map((o) => o.value);
-    setSubjects(values);
-  };
-
-  const handleDownloadMarkdown = () => {
-    if (!lessonPlan) return;
-    const blob = new Blob([lessonPlan], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${unitTitle || 'rootwork-lesson-plan'}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // --- Main Generator Function (Fully Updated) ---
-  const handleGeneratePlan: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!currentUser) {
-        return setError('You must be signed in to generate a lesson plan.');
-    }
-    if (!gradeLevel) return setError('Please select a grade level.');
-    if (subjects.length === 0) return setError('Please select at least one subject.');
-
-    setIsLoading(true);
-
-    try {
-      // 1. Get the Firebase auth token
-      const token = await getIdToken(currentUser);
-
-      // 2. Construct the user prompt from form data
-      const userPrompt = `Please generate a lesson plan with the following specifications:
-- Grade Level: ${gradeLevel}
-- Subject(s): ${subjects.join(', ')}
-- Duration: ${duration} day(s)
-- Unit Title: ${unitTitle || 'Not specified'}
-- Standards: ${standards || 'Align with relevant national or state standards.'}
-- Additional Focus Areas: ${focus || 'None specified.'}`;
-
-      // 3. Create the payload with both prompts
-      const payload = {
-        systemPrompt: masterPrompt,
-        userPrompt: userPrompt,
-      };
-
-      // 4. Call the API with the auth token and payload
-      const res = await fetch('/api/generatePlan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || `HTTP Error: ${res.status}`);
-      }
-
-      if (!data.lessonPlan) {
-        throw new Error('Received an empty lesson plan from the server.');
-      }
-
-      setLessonPlan(data.lessonPlan);
-      setTab('results');
-      setViewer('teacher');
-
-    } catch (err: any) {
-      setError(err.message || 'An unknown error occurred while generating the plan.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSignOut = () => {
+    signOut(auth).catch((error) => console.error('Sign Out Error', error));
   };
   
-  // NOTE: Your other handler functions (handleQualityPass, handleGenerateVisuals, etc.)
-  // will also need to be updated to include the Firebase Authorization header in their
-  // fetch requests, just like in `handleGeneratePlan`.
+  // ... (keep all your other handler functions: handleSubjectChange, handleDownloadMarkdown, handleGeneratePlan, etc.)
+  // IMPORTANT: You will need to re-enable the Firebase Admin code in your API route later for full security.
 
-  const heading = (
+  const header = (
     <header className="relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-emerald-600 to-purple-700" />
       <div className="relative container mx-auto px-6 py-14 text-white">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm ring-1 ring-white/20 backdrop-blur">
-            <span>🌱</span>
-            <span className="font-medium">Root Work Framework</span>
-          </div>
-          <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight">
-            Healing-Centered Lesson Design
-          </h1>
-          <p className="mt-3 text-white/90 max-w-3xl mx-auto">
-            S.T.E.A.M. Powered, Trauma Informed, Project Based lesson planning for real classrooms.
-          </p>
+        <div className="flex justify-between items-center">
+            <div></div> {/* Spacer */}
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              Healing-Centered Lesson Design
+            </h1>
+            {currentUser && (
+                <button 
+                  onClick={handleSignOut} 
+                  className="bg-white/20 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/30 transition">
+                  Sign Out
+                </button>
+            )}
         </div>
+        <p className="mt-3 text-white/90 max-w-3xl mx-auto text-center">
+            S.T.E.A.M. Powered, Trauma Informed, Project Based lesson planning for real classrooms.
+        </p>
       </div>
     </header>
   );
 
+  if (!authLoaded) {
+    return <div>Loading...</div>; // Or a spinner component
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-purple-50">
-      {heading}
+      {header}
       <main className="container mx-auto px-6 -mt-10 pb-16">
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6 md:p-8">
-          {tab === 'generator' && (
+          {!currentUser ? (
+            <SignIn />
+          ) : (
+            // This is the generator form, only shown to logged-in users
+            // The existing <form> and <div tab="results"> logic goes here...
             <form onSubmit={handleGeneratePlan}>
-              {error && (
-                <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
-                  {error}
-                </div>
-              )}
-              <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
-                <h3 className="text-lg font-bold mb-1">🌱 Root Work Framework</h3>
-                <p>Trauma-informed, culturally responsive, GRR-aligned planning—beautiful and practical.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Grade Level *</label>
-                  <select
-                    value={gradeLevel}
-                    onChange={(e) => setGradeLevel(e.target.value)}
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                    required
-                  >
-                    <option value="">Select Grade</option>
-                    {['Kindergarten', ...Array.from({ length: 12 }, (_, i) => `${i + 1}${[1, 2, 3].includes(i + 1) ? (i + 1 === 1 ? 'st' : i + 1 === 2 ? 'nd' : 'rd') : 'th'} Grade`)].map(
-                      (g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Duration *</label>
-                  <select
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  >
-                    {[1, 2, 3, 4, 5].map((d) => (
-                      <option key={d} value={String(d)}>
-                        {d} Day{d > 1 ? 's' : ''} ({d * 90} min total)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Unit Title</label>
-                  <input
-                    type="text"
-                    value={unitTitle}
-                    onChange={(e) => setUnitTitle(e.target.value)}
-                    placeholder="e.g., Community Storytelling"
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2 font-semibold text-slate-700">Subject Area(s) *</label>
-                <select
-                  multiple
-                  value={subjects}
-                  onChange={handleSubjectChange}
-                  className="w-full p-3 h-40 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  required
-                >
-                  {[
-                    'English Language Arts', 'Mathematics', 'Science', 'Social Studies', 'Art', 'Music',
-                    'Physical Education', 'Special Education', 'STEAM', 'Agriculture', 'Career and Technical Education',
-                  ].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <div className="text-sm text-slate-500 mt-1">Use Cmd/Ctrl to multi-select.</div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Standards Alignment</label>
-                  <textarea
-                    rows={3}
-                    value={standards}
-                    onChange={(e) => setStandards(e.target.value)}
-                    placeholder="Enter relevant state standards or learning objectives…"
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Additional Focus Areas</label>
-                  <textarea
-                    rows={3}
-                    value={focus}
-                    onChange={(e) => setFocus(e.target.value)}
-                    placeholder="Special accommodations, therapeutic goals, etc."
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading || !currentUser}
-                className="w-full py-3 text-lg font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Generating…' : !currentUser ? 'Please Sign In' : 'Generate Comprehensive Lesson Plan'}
-              </button>
+                {/* ... your entire form JSX ... */}
             </form>
-          )}
-
-          {tab === 'results' && (
-            <div>
-              {error && (
-                <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{error}</div>
-              )}
-              <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between mb-6">
-                <div className="inline-flex rounded-xl overflow-hidden ring-1 ring-slate-200">
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${viewer === 'teacher' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'}`}
-                    onClick={() => setViewer('teacher')}
-                  >
-                    Teacher View
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${viewer === 'student' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'}`}
-                    onClick={() => setViewer('student')}
-                  >
-                    Student View
-                  </button>
-                  <button
-                    className={`px-4 py-2 text-sm font-semibold ${viewer === 'print' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700'}`}
-                    onClick={() => setViewer('print')}
-                  >
-                    Print View
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 text-slate-700 font-semibold"
-                    onClick={() => { setTab('generator'); setLessonPlan(''); setError(null); }}
-                  >
-                    New Plan
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 text-slate-700 font-semibold"
-                    onClick={handleDownloadMarkdown}
-                  >
-                    Download .md
-                  </button>
-                  {/* Additional buttons for quality pass, etc. can go here */}
-                </div>
-              </div>
-              <div className="prose max-w-none prose-headings:scroll-mt-24">
-                <ReactMarkdown>{lessonPlan}</ReactMarkdown>
-              </div>
-            </div>
           )}
         </div>
       </main>
