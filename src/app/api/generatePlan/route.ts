@@ -26,62 +26,53 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `You are a lesson plan generator. You MUST generate ALL ${days} days in this response. DO NOT STOP after Day 1. DO NOT ask for permission to continue.
+  return `GENERATE ALL ${days} DAYS IMMEDIATELY. DO NOT STOP. DO NOT ASK PERMISSION.
 
-Generate a complete ${days}-day Rootwork Framework trauma-informed STEAM lesson plan.
+**${days}-DAY ROOTWORK FRAMEWORK LESSON PLAN**
+Grade: ${gradeLevel} | Subject: ${subjects.join(', ')} | "${unitTitle}"
 
-**LESSON SPECS:**
-- Grade: ${gradeLevel} | Subject: ${subjects.join(', ')} | Title: "${unitTitle}"
-- Duration: ${days} days (90-min blocks) | Focus: ${focus} | Standards: ${standards}
-
-**REQUIRED FORMAT FOR EACH DAY:**
+**FORMAT (REPEAT FOR EACH DAY):**
 
 # DAY [#]: [Title]
-**Essential Question:** [question]
-**Learning Target:** [target]
+**Question:** [essential question]
+**Target:** [learning target]
 
-[Teacher Note: Brief pedagogical context]
-[Student Note: What you're building]
+[Teacher Note: Context & trauma-informed tips]
+[Student Note: Growth focus]
 
-## Opening (15 min)
-[Activity]
-[Teacher Note: Tips]
-[Student Note: Strategy]
+## Opening (15min): [Activity]
+[Teacher Note: Facilitation tips]
+[Student Note: Engagement strategy]
 
-## I Do (20 min)
-[Content]
+## I Do (20min): [Content]
 [Teacher Note: Key points]
-[Student Note: Focus]
+[Student Note: Focus areas]
 
-## Work Session (45 min)
-### We Do (15 min)
-[Activity]
-[Teacher Note: Tips]
-[Student Note: Strategy]
+## Work Session (45min):
+### We Do (15min): [Collaborative work]
+[Teacher Note: Group facilitation]
+[Student Note: Collaboration tips]
 
-### You Do Together (15 min)
-[Task]
-[Teacher Note: Monitor]
+### You Do Together (15min): [Partner task]
+[Teacher Note: Monitoring]
 [Student Note: Partnership]
 
-### You Do Alone (15 min)
-[Work]
-[Teacher Note: Support]
+### You Do Alone (15min): [Independent work]
+[Teacher Note: Support strategies]
 [Student Note: Self-management]
 
-## Closing (10 min)
-[Reflection]
+## Closing (10min): [Reflection]
 [Teacher Note: Assessment]
-[Student Note: Growth]
+[Student Note: Growth recognition]
 
-**Materials:** [List]
-**MTSS:** [Support levels]
+**Materials:** [List] | **MTSS:** [Supports]
 
 ---
 
-GENERATE ALL ${days} DAYS NOW. START WITH DAY 1 AND CONTINUE IMMEDIATELY TO DAY 2${days > 2 ? `, THEN DAY ${days}` : ''}. DO NOT STOP. DO NOT ASK QUESTIONS.
+CRITICAL: GENERATE ALL ${days} DAYS NOW. START WITH DAY 1, CONTINUE TO DAY 2${days > 2 ? `, THEN DAY ${days}` : ''}. NO STOPPING.
 
-Begin with DAY 1:`;
+DAY 1:`;
+}
 }
 
 export async function POST(req: NextRequest) {
@@ -147,8 +138,8 @@ export async function POST(req: NextRequest) {
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20240620', // Original Claude 3.5 Sonnet with higher token limits
-      max_tokens: 16000, // This version supports up to 16k tokens
+      model: 'claude-3-5-sonnet-20240620', // Original Claude 3.5 Sonnet
+      max_tokens: 8192, // CORRECTED: All Claude 3.5 Sonnet versions have 8192 max
       temperature: 0.05, // Lower temperature for more consistent output
       messages: [
         { 
