@@ -229,7 +229,7 @@ DO NOT ask for permission to continue. Generate the COMPLETE ${days}-day lesson 
 CRITICAL: You MUST generate ALL ${days} days in your response. Do NOT stop after Day 1. Do NOT truncate. Do NOT ask "would you like me to continue." Generate Days 1 through ${days} completely and immediately.
 
 Begin with Day 1 and continue through Day ${days} without stopping.`;
-}}
+}
 
 export async function POST(req: NextRequest) {
   try {
