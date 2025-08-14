@@ -224,8 +224,12 @@ Always ask clarifying questions to a 98% confidence level that you will develop 
 
 Generate the full lesson plan only after checking that every component above is addressed, with special attention to the mandatory teacher and student notes in every section. Embed creativity, clarity, and actionable tools for both teacher and student use while maintaining the healing-centered educational approach central to the Rootwork Framework.
 
-DO NOT ask for permission to continue. Generate the COMPLETE ${days}-day lesson plan immediately with ALL required components, Teacher/Student notes in EVERY section, MTSS supports, SEL competencies, regulation rituals, materials lists, assessments, and Appendix A resource directory.`;
-}
+DO NOT ask for permission to continue. Generate the COMPLETE ${days}-day lesson plan immediately with ALL required components, Teacher/Student notes in EVERY section, MTSS supports, SEL competencies, regulation rituals, materials lists, assessments, and Appendix A resource directory.
+
+CRITICAL: You MUST generate ALL ${days} days in your response. Do NOT stop after Day 1. Do NOT truncate. Do NOT ask "would you like me to continue." Generate Days 1, 2, 3${days > 3 ? `, 4${days > 4 ? ', 5' : ''}` : ''} completely and immediately.
+
+Begin with Day 1 and continue through Day ${days} without stopping.`;
+}}
 
 export async function POST(req: NextRequest) {
   try {
@@ -293,10 +297,23 @@ export async function POST(req: NextRequest) {
     console.log('Sending request to Anthropic...');
 
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022', // Latest and most capable available model
-      max_tokens: 8000, // Maximum for comprehensive content - may need multiple calls if truncated
-      temperature: 0.05, // Very low for strict format adherence
-      messages: [{ role: 'user', content: prompt }]
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 8000,
+      temperature: 0.05,
+      messages: [
+        { 
+          role: 'user', 
+          content: prompt 
+        },
+        {
+          role: 'assistant',
+          content: `I'll generate a complete ${days}-day Rootwork Framework lesson plan with all required components. Here's the full lesson plan:`
+        },
+        {
+          role: 'user',
+          content: `Generate the COMPLETE ${days}-day lesson plan now. Include ALL days, ALL sections, ALL Teacher/Student notes, MTSS supports, materials, assessments, and Appendix A. Do NOT stop after Day 1. Do NOT ask for permission. Generate everything immediately.`
+        }
+      ]
     });
 
     const lessonPlan = response.content[0]?.type === 'text' ? response.content[0].text : '';
