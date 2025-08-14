@@ -226,7 +226,7 @@ Generate the full lesson plan only after checking that every component above is 
 
 DO NOT ask for permission to continue. Generate the COMPLETE ${days}-day lesson plan immediately with ALL required components, Teacher/Student notes in EVERY section, MTSS supports, SEL competencies, regulation rituals, materials lists, assessments, and Appendix A resource directory.
 
-CRITICAL: You MUST generate ALL ${days} days in your response. Do NOT stop after Day 1. Do NOT truncate. Do NOT ask "would you like me to continue." Generate Days 1, 2, 3${days > 3 ? `, 4${days > 4 ? ', 5' : ''}` : ''} completely and immediately.
+CRITICAL: You MUST generate ALL ${days} days in your response. Do NOT stop after Day 1. Do NOT truncate. Do NOT ask "would you like me to continue." Generate Days 1 through ${days} completely and immediately.
 
 Begin with Day 1 and continue through Day ${days} without stopping.`;
 }}
