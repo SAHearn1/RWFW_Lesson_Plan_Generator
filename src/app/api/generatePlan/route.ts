@@ -1,6 +1,3 @@
-// FILE PATH: src/app/api/generatePlan/route.ts
-// Copy this entire file to: src/app/api/generatePlan/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -167,10 +164,10 @@ export async function POST(req: NextRequest) {
     const prompt = createOptimizedPrompt(input);
     console.log('[WORKING] Prompt created, length:', prompt.length);
 
-    // CRITICAL: Use 8192 token limit (Claude's maximum)
+    // *** THIS IS THE CORRECTED LINE ***
     const response = await client.messages.create({
       model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 8192, // This is the maximum allowed!
+      max_tokens: 4000, // Reduced from 8192 to prevent timeouts
       temperature: 0.3,
       messages: [{ role: 'user', content: prompt }]
     });
