@@ -1,9 +1,9 @@
 // FILE PATH: src/app/api/generatePlan/route.ts
-// This version uses your existing, robust master prompt file.
+// This version has the corrected import path for your master prompt.
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { masterPrompt } from '../../../src/masterPrompt'; // Correctly imports your existing file
+import { masterPrompt } from '../../../masterPrompt'; // THIS LINE IS NOW CORRECTED
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Application not configured correctly.' }, { status: 500 });
     }
 
-    // Create a simple user prompt from the form data to give the AI its specific task
+    // Create a simple user prompt from the form data
     const userPrompt = `
       Please generate a lesson plan with the following specifications:
       - Grade Level: ${body.gradeLevel}
@@ -40,10 +40,9 @@ export async function POST(req: NextRequest) {
 
     const response = await client.messages.create({
       model: 'claude-3-5-sonnet-20240620',
-      // This token count is a good starting point for balancing detail and avoiding timeouts
       max_tokens: 6000, 
       temperature: 0.3,
-      system: masterPrompt, // Use your original master prompt as the main system instructions
+      system: masterPrompt, // Use your original master prompt as the system prompt
       messages: [{ role: 'user', content: userPrompt }]
     });
 
@@ -63,7 +62,7 @@ export async function POST(req: NextRequest) {
     if (dayHeadersCount < daysRequested) {
       qualityIssues.push(`only ${dayHeadersCount} of ${daysRequested} days were generated`);
     }
-    // A high-quality day has at least 5 sections with notes
+    // A high-quality day has at least 5 sections with notes.
     if (teacherNotesCount < dayHeadersCount * 5) {
       qualityIssues.push('is missing some Teacher Notes');
     }
