@@ -319,24 +319,20 @@ export async function POST(req: NextRequest) {
     // If Resource Appendix is missing, add a note
     let finalLessonPlan = lessonPlan;
     if (!hasResourceAppendix) {
-      finalLessonPlan += `\n\n## WARNING: RESOURCE APPENDIX GENERATION NOTICE
-
-The complete Resource Appendix was not fully generated due to length constraints. 
-To get your complete Resource Appendix with:
-- DALL-E image generation prompts
-- Complete handout templates
-- Assessment rubrics
-- Materials procurement guide with costs and quantities
-
-**Recommended Action:** Try generating a shorter lesson plan (1-2 days) or contact support for the complete resource package.
-
-**Quick Resource Guide:**
-- **Basic Materials:** Construction paper, markers, poster board, sticky notes
-- **Technology:** Chromebooks/tablets for research, Google Slides for presentations
-- **Storage:** Clear bins with labels, numbered hooks for organization
-- **Budget:** Approximately $3-8 per student for basic materials
-
-For immediate implementation, use this lesson plan and source materials locally. The complete Resource Appendix with specific quantities, costs, and DALL-E prompts can be generated separately.`;
+      finalLessonPlan += "\n\n## WARNING: RESOURCE APPENDIX GENERATION NOTICE\n\n" +
+        "The complete Resource Appendix was not fully generated due to length constraints.\n" +
+        "To get your complete Resource Appendix with:\n" +
+        "- DALL-E image generation prompts\n" +
+        "- Complete handout templates\n" +
+        "- Assessment rubrics\n" +
+        "- Materials procurement guide with costs and quantities\n\n" +
+        "**Recommended Action:** Try generating a shorter lesson plan (1-2 days) or contact support for the complete resource package.\n\n" +
+        "**Quick Resource Guide:**\n" +
+        "- **Basic Materials:** Construction paper, markers, poster board, sticky notes\n" +
+        "- **Technology:** Chromebooks/tablets for research, Google Slides for presentations\n" +
+        "- **Storage:** Clear bins with labels, numbered hooks for organization\n" +
+        "- **Budget:** Approximately $3-8 per student for basic materials\n\n" +
+        "For immediate implementation, use this lesson plan and source materials locally. The complete Resource Appendix with specific quantities, costs, and DALL-E prompts can be generated separately.";
     }
 
     return NextResponse.json({
