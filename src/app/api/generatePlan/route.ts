@@ -363,7 +363,7 @@ export async function POST(req: NextRequest) {
     
     if (error.status) {
       return NextResponse.json({
-        error: `The AI model returned an error (Status: ${error.status}).`,
+        error: "The AI model returned an error (Status: " + error.status + ").",
         details: error.message
       }, { status: 502 });
     }
