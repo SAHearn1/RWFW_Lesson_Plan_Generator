@@ -26,67 +26,88 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return `Expert trauma-informed STEAM educator: Generate COMPLETE ${days}-day lesson plan with deep interdisciplinary integration.
+  return `You are an expert trauma-informed educator with deep classroom experience. Generate a COMPLETE ${days}-day lesson plan with the same level of detail, specificity, and practical wisdom as a master teacher's actual classroom implementation.
 
-${days}-DAY ROOTWORK: "${unitTitle}"
-Grade ${gradeLevel} | ${subjects.join('+')} | ${standards}
+${days}-DAY ROOTWORK FRAMEWORK: "${unitTitle}"
+Grade ${gradeLevel} | ${subjects.join(' + ')} | Standards: ${standards}
+Focus: ${focus}
 
-CRITICAL: Each day must include authentic STEAM integration where Science, Technology, Engineering, Arts, and Mathematics are meaningfully woven together, not just mentioned separately.
+CRITICAL: Include specific implementation details, exact materials with quantities, storage solutions, voluntary participation options, choice menus, and practical logistics that a substitute teacher could follow.
 
-Each Day Must Include:
+For Each Day, Include ALL These Elements:
 
-# DAY X: [Title connecting all subjects with garden/nature metaphor]
-Question: [Essential question requiring knowledge from ALL selected subjects]
-Target: [Measurable goal demonstrating cross-curricular mastery]
-Project Component: [Sophisticated multi-step creation requiring all disciplines]
-STEAM Bridge: [Specific explanation of how S-T-E-A-M connect in this lesson]
+# DAY X: [Specific, evocative title with cultural connection]
 
-[Teacher Note: Trauma-informed facilitation, specific differentiation strategies, assessment checkpoints]
-[Student Note: Growth mindset language, agency building, connection to personal identity]
+Essential Question: [Question requiring authentic integration of ALL selected subjects]
+Learning Target: [Specific, measurable, identity-affirming goal]
+Standards: [Specific state standard citations for each subject]
+SEL Alignment: [Specific CASEL competencies with examples]
 
-## Opening (15min): Garden-Based Regulation + Content Hook
-[Nature-based grounding activity directly connecting to lesson content across all subjects]
-Materials: [Specific sensory items, plants, or nature elements]
-[Teacher Note: Dysregulation monitoring, cultural responsiveness, accessibility accommodations]
-[Student Note: Self-regulation strategies, connection to personal/cultural knowledge]
+## Opening (15min): [Specific regulation ritual name]
+[Detailed description of trauma-informed opening with exact materials, setup instructions, and participation options]
+Materials Needed: [Specific list with quantities]
+Implementation Notes: [Storage, timing, alternatives for different student needs]
+[Teacher Note: Specific facilitation guidance, what to watch for, accessibility considerations]
+[Student Note: Clear expectations, choice options, self-advocacy language]
 
-## I Do (20min): Integrated Content Modeling
-[Demonstrate how today's concepts connect across ALL selected subjects with specific examples and think-alouds]
-Cross-curricular connections: [Explicit links between subjects with specific examples]
-[Teacher Note: Scaffolding for diverse learners, visual/auditory/kinesthetic supports, assessment for understanding]
-[Student Note: Active engagement strategies, note-taking methods that work for you, building on prior knowledge]
+## I Do (20min): [Specific content title with cross-curricular modeling]
+[Detailed explanation of content delivery with specific examples, think-alouds, and subject connections]
+Cross-Curricular Connections: [Explicit examples of how each subject contributes to understanding]
+Visual Supports: [Specific charts, diagrams, or digital tools to use]
+[Teacher Note: Scaffolding strategies, differentiation moves, assessment checkpoints]
+[Student Note: Active engagement strategies, note-taking options, building on strengths]
 
-## Work Session (45min): Collaborative Investigation
-### We Do (15min): Guided Multi-Disciplinary Problem-Solving
-[Structured activity requiring knowledge from all subjects to solve authentic problem]
-Authentic Assessment: [Real-world application demonstrating subject integration]
-[Teacher Note: Collaborative grouping strategies, progress monitoring, peer support facilitation]
-[Student Note: Communication skills, leveraging individual strengths, voice and choice in process]
+## Work Session (45min): [Sophisticated collaborative investigation]
 
-### You Do Together (15min): Partnership Creation
-[Partner work building sophisticated project components requiring multiple subject areas]
-Choice Menu: [3-4 different pathways respecting learning preferences and strengths]
-[Teacher Note: Formative assessment opportunities, conflict mediation, scaffolding supports]
-[Student Note: Partnership strategies, self-advocacy skills, celebrating diverse perspectives]
+### We Do (15min): [Specific guided practice activity]
+[Step-by-step instructions for collaborative work requiring all subject areas]
+Materials Setup: [Specific arrangement and distribution instructions]
+[Teacher Note: Group formation strategies, monitoring techniques, intervention protocols]
+[Student Note: Collaboration expectations, communication strategies, individual accountability]
 
-### You Do Alone (15min): Individual Synthesis
-[Independent work demonstrating personal understanding across subjects with multiple modalities]
-Regulation Supports: [Built-in movement, choice, sensory breaks]
-[Teacher Note: Individual conferencing, differentiated expectations, trauma-informed check-ins]
-[Student Note: Self-management techniques, reflection on learning, personal goal setting]
+### You Do Together (15min): [Specific partner creation task]
+[Detailed partner work instructions with choice menu of 3-4 pathways]
+Choice Menu Options:
+- Option A: [Specific pathway for visual learners]
+- Option B: [Specific pathway for kinesthetic learners]  
+- Option C: [Specific pathway for analytical learners]
+- Option D: [Open-ended creative pathway]
+[Teacher Note: Pairing strategies, progress monitoring, conflict resolution]
+[Student Note: Partnership protocols, self-advocacy options, quality indicators]
 
-## Closing (10min): Identity-Connected Reflection
-[Reflective practice connecting learning to student identity, culture, and future aspirations]
-Community Connection: [How today's learning connects to student's community and goals]
-[Teacher Note: Emotional regulation support, culturally responsive validation, transition preparation]
-[Student Note: Learning celebration, growth recognition, preparation for tomorrow's challenge]
+### You Do Alone (15min): [Individual synthesis with multiple modalities]
+[Specific independent work options with clear success criteria]
+Regulation Supports: [Built-in breaks, movement options, sensory tools]
+[Teacher Note: Conferencing approach, differentiated expectations, trauma-informed check-ins]
+[Student Note: Self-management tools, reflection prompts, goal-setting options]
 
-Materials: [Comprehensive list including nature elements, technology, hands-on materials, texts]
-MTSS: Tier 1: [Universal design features] | Tier 2: [Targeted supports] | Tier 3: [Intensive accommodations]
-SEL: [Specific CASEL competencies with examples]
-Assessment: [Formative checkpoints and authentic performance measures across all subjects]
-Standards: [Specific alignment to provided standards with citations]
-Extensions: [Accelerated learning options and community connections]
+## Closing (10min): [Identity-connected reflection with community building]
+[Specific closing routine connecting to cultural identity and community]
+Sharing Protocol: [Exact structure for voluntary sharing with alternatives]
+[Teacher Note: Emotional regulation support, validation strategies, transition preparation]
+[Student Note: Celebration language, growth recognition, preparation for next steps]
+
+## Implementation Details:
+Materials List: [Complete list with quantities, alternatives, and storage instructions]
+Room Setup: [Specific arrangements for different activities]
+Time Management: [Pacing guides and transition strategies]
+Technology Integration: [Specific tools with setup instructions]
+Assessment Tools: [Rubrics, checklists, observation protocols]
+
+## MTSS Supports:
+Tier 1 (All Students): [Specific universal design features with implementation details]
+Tier 2 (Targeted Support): [Specific interventions with when/how to implement]
+Tier 3 (Intensive Support): [Specific accommodations with documentation requirements]
+
+## Extensions and Connections:
+Advanced Learners: [Specific acceleration options]
+Community Connections: [Real partnerships or outreach opportunities]
+Home-School Bridge: [Family engagement options that respect diverse family structures]
+
+## Standards Alignment:
+[Specific citation for each subject with explanation of how the lesson addresses it]
+
+---
 
 GENERATE ALL ${days} DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.
 
@@ -114,7 +135,7 @@ Specific sourcing information for physical materials mentioned, including:
 - Storage suggestions
 
 GENERATE COMPLETE LESSON PLAN FIRST, THEN COMPREHENSIVE RESOURCE APPENDIX.`;
-}}
+}
 
 export async function POST(req: NextRequest) {
   try {
