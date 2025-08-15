@@ -6,7 +6,6 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
 export default function HomePage() {
-  // All of your state variables are preserved
   const [unitTitle, setUnitTitle] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
@@ -50,9 +49,7 @@ export default function HomePage() {
     return progressInterval;
   };
 
-  // This function ONLY prepares the custom notes for styling before display.
-  // ReactMarkdown will handle all other formatting (headers, tables, bold, etc.).
-  const preprocessMarkdownForDisplay = (markdown: string): string => {
+  const preprocessMarkdownForNotes = (markdown: string): string => {
     if (!markdown) return '';
     return markdown
       .replace(/\[Teacher Note: (.*?)\]/g, '<div class="teacher-note"><strong>Teacher Note:</strong> $1</div>')
@@ -60,24 +57,23 @@ export default function HomePage() {
   };
 
   const generateLessonPlan = async () => {
-    // Your robust form validation is preserved
     if (!unitTitle.trim()) {
-      setGenerationStatus("❌ Please enter a unit title. Try something like 'Building Communities' or 'Environmental Science Connections'");
+      setGenerationStatus("❌ Please enter a unit title.");
       setTimeout(() => setGenerationStatus(''), 5000);
       return;
     }
     if (!gradeLevel) {
-      setGenerationStatus("❌ Please select a grade level for your lesson plan.");
+      setGenerationStatus("❌ Please select a grade level.");
       setTimeout(() => setGenerationStatus(''), 5000);
       return;
     }
     if (subjects.length === 0) {
-      setGenerationStatus("❌ Please select at least one subject. For interdisciplinary units, select multiple subjects!");
+      setGenerationStatus("❌ Please select at least one subject.");
       setTimeout(() => setGenerationStatus(''), 5000);
       return;
     }
     if (!days) {
-      setGenerationStatus("❌ Please select the number of days for your lesson plan.");
+      setGenerationStatus("❌ Please select the number of days.");
       setTimeout(() => setGenerationStatus(''), 5000);
       return;
     }
@@ -92,4 +88,35 @@ export default function HomePage() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
+      
+      const response = await fetch('/api/generatePlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unitTitle,
+          gradeLevel,
+          subjects,
+          standards,
+          focus,
+          days: parseInt(days),
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Server responded with an error");
+      }
+      
+      clearInterval(progressInterval);
+      
+      setProgress(100);
+      setGenerationStatus("✅ Complete! Your lesson plan is ready.");
+      setLessonPlan(data.lessonPlan);
+
+    } catch (error: any) {
+      console.error('Error generating lesson plan:', error);
+      clearInterval(progressInterval);
