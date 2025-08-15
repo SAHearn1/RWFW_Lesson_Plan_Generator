@@ -279,10 +279,10 @@ export default function HomePage() {
               <div>
                 <h3 className="font-semibold text-emerald-700 mb-2">✅ Perfect Unit Title Examples:</h3>
                 <ul className="text-sm text-gray-600 space-y-1 mb-4">
-                  <li>• "Building Communities Through Literature"</li>
-                  <li>• "Environmental Science Connections"</li>
-                  <li>• "Understanding Historical Perspectives"</li>
-                  <li>• "Mathematical Patterns in Nature"</li>
+                  <li>• &quot;Building Communities Through Literature&quot;</li>
+                  <li>• &quot;Environmental Science Connections&quot;</li>
+                  <li>• &quot;Understanding Historical Perspectives&quot;</li>
+                  <li>• &quot;Mathematical Patterns in Nature&quot;</li>
                 </ul>
                 
                 <h3 className="font-semibold text-emerald-700 mb-2">🤝 Collaborative Planning Tips:</h3>
@@ -486,7 +486,7 @@ export default function HomePage() {
                 placeholder="e.g., 'CCSS.ELA-LITERACY.RST.11-12.7, NGSS.HS-LS2-7' or 'Relevant Georgia ELA and Social Studies standards' or leave blank for AI to suggest appropriate standards"
               />
               <p className="mt-1 text-xs text-gray-500">
-                🧠 <strong>Smart AI:</strong> You can specify exact standards, describe general areas ("Common Core ELA for grade 8"), or leave blank for AI recommendations. Perfect for collaborative planning across subjects!
+                🧠 <strong>Smart AI:</strong> You can specify exact standards, describe general areas (&quot;Common Core ELA for grade 8&quot;), or leave blank for AI recommendations. Perfect for collaborative planning across subjects!
               </p>
             </div>
 
