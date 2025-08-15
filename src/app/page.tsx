@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 type Tab = 'generator' | 'results';
 
@@ -430,7 +429,6 @@ export default function HomePage() {
                   }}
                 >
                   <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
                     components={{
                       // Custom renderer for better formatting
                       p: ({ children }) => {
@@ -454,6 +452,44 @@ export default function HomePage() {
                               <div className="text-blue-700 font-medium">{text.replace(/\[Student Note:\s*/, '').replace(/\]$/, '')}</div>
                             </div>
                           );
+                        }
+
+                        // Handle simple table formatting (for rubrics)
+                        if (text.includes('|') && text.includes('---')) {
+                          const lines = text.split('\n');
+                          const tableLines = lines.filter(line => line.includes('|'));
+                          
+                          if (tableLines.length > 1) {
+                            const headerRow = tableLines[0];
+                            const dataRows = tableLines.slice(2); // Skip header and separator
+                            
+                            return (
+                              <div className="overflow-x-auto my-6">
+                                <table className="min-w-full border-collapse border border-gray-300 bg-white">
+                                  <thead className="bg-emerald-100">
+                                    <tr>
+                                      {headerRow.split('|').map((cell, idx) => (
+                                        <th key={idx} className="border border-gray-300 px-4 py-2 text-left font-semibold text-emerald-800">
+                                          {cell.trim()}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {dataRows.map((row, rowIdx) => (
+                                      <tr key={rowIdx}>
+                                        {row.split('|').map((cell, cellIdx) => (
+                                          <td key={cellIdx} className="border border-gray-300 px-4 py-2 text-sm">
+                                            {cell.trim()}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            );
+                          }
                         }
 
                         // Handle Day Headers (look for "DAY 1:", "DAY 2:", etc.)
@@ -522,31 +558,6 @@ export default function HomePage() {
                       
                       li: ({ children }) => (
                         <li className="leading-relaxed pl-2">{children}</li>
-                      ),
-
-                      // Handle tables (for rubrics)
-                      table: ({ children }) => (
-                        <div className="overflow-x-auto my-6">
-                          <table className="min-w-full border-collapse border border-gray-300 bg-white">
-                            {children}
-                          </table>
-                        </div>
-                      ),
-                      
-                      thead: ({ children }) => (
-                        <thead className="bg-emerald-100">{children}</thead>
-                      ),
-                      
-                      th: ({ children }) => (
-                        <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-emerald-800">
-                          {children}
-                        </th>
-                      ),
-                      
-                      td: ({ children }) => (
-                        <td className="border border-gray-300 px-4 py-2 text-sm">
-                          {children}
-                        </td>
                       ),
 
                       // Handle strong text with special formatting for key terms
