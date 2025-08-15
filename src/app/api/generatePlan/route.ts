@@ -111,30 +111,110 @@ Home-School Bridge: [Family engagement options that respect diverse family struc
 
 GENERATE ALL ${days} DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.
 
-## CRITICAL: RESOURCE GENERATION APPENDIX
+## COMPREHENSIVE RESOURCE APPENDIX (REQUIRED)
 
-After completing all lesson days, create a comprehensive Resource Generation Appendix with:
+After completing all lesson days, create a complete Resource Appendix with ready-to-use materials:
 
-### A. IMAGE GENERATION PROMPTS
-For each visual resource mentioned in lessons, provide detailed prompts for DALL-E/Copilot:
-Format: "DALL-E Prompt for [Resource Name]: [Detailed 2-3 sentence description with style, colors, composition, and educational elements]"
+### A. DALL-E IMAGE GENERATION PROMPTS
+For each visual resource mentioned in the lessons, provide copy-paste prompts:
 
-### B. TEXT-BASED RESOURCES  
-Generate actual content for text-based materials:
-- Handout text and instructions
-- Worksheet questions and answer keys
-- Rubric criteria and scoring guides
-- Student reflection prompts
-- Assessment tools mentioned in lessons
+Format Example:
+**DALL-E Prompt for Community Identity Anchor Chart:**
+"Create an educational poster showing diverse community symbols including family traditions, cultural celebrations, neighborhood landmarks, and personal interests. Use warm, inclusive colors like emerald green, golden yellow, and deep blue. Include space for student writing with clear sections labeled 'My Family', 'My Culture', 'My Community', and 'My Dreams'. Style: clean educational illustration with diverse representation, modern typography, inspiring and welcoming feeling. No text overlay needed - spaces for writing should be clearly defined white areas."
 
-### C. MATERIALS PROCUREMENT GUIDE
-Specific sourcing information for physical materials mentioned, including:
-- Where to obtain items
-- Approximate costs
-- Suitable alternatives
-- Storage suggestions
+**DALL-E Prompt for [Each Visual Resource]:** [2-3 sentence detailed description with colors, style, educational elements, composition]
 
-GENERATE COMPLETE LESSON PLAN FIRST, THEN COMPREHENSIVE RESOURCE APPENDIX.`;
+### B. COMPLETE HANDOUT TEMPLATES
+
+#### Template 1: [Handout Name]
+**Purpose:** [What this handout accomplishes]
+**Materials:** [Paper size, printing specifications]
+**Storage:** [Where to keep, how to organize]
+
+[COMPLETE HANDOUT TEXT - Include all instructions, questions, reflection prompts, answer spaces, visual elements described in text format]
+
+#### Template 2: [Next Handout]
+[Continue for ALL handouts mentioned in lessons]
+
+### C. DETAILED ASSESSMENT RUBRIC
+
+**Assessment Tool:** [Name of assessment]
+**Purpose:** [What it measures]
+**When to Use:** [Specific timing and context]
+
+| Criteria | Exceeding (4 points) | Meeting (3 points) | Approaching (2 points) | Beginning (1 point) |
+|----------|---------------------|-------------------|----------------------|-------------------|
+| [Specific Criteria 1] | [Detailed description] | [Detailed description] | [Detailed description] | [Detailed description] |
+| [Specific Criteria 2] | [Detailed description] | [Detailed description] | [Detailed description] | [Detailed description] |
+| [Continue for all criteria] | | | | |
+
+**Scoring Guide:**
+- Total Points: ___/__ 
+- Grade Conversion: [Specific grade scale]
+- Feedback Prompts: [Sentence starters for meaningful feedback]
+
+### D. MATERIALS PROCUREMENT GUIDE
+
+#### Essential Materials List
+
+**Item 1: [Specific Material]**
+- **Quantity Needed:** [Exact number] (e.g., "30 sheets of 12x18 construction paper")
+- **Where to Purchase:** [Specific stores/websites] (e.g., "Amazon, Staples, local office supply")
+- **Approximate Cost:** [Price range] (e.g., "$8-12 for pack of 50 sheets")
+- **Storage Solution:** [Specific storage method] (e.g., "Vertical file folder in designated cabinet drawer")
+- **Budget Alternative:** [Cheaper option] (e.g., "Use recycled cardboard cut to size, free from local grocery stores")
+- **Accessibility Alternative:** [Inclusive option] (e.g., "Provide pre-cut pieces for students with fine motor challenges")
+
+**Item 2: [Next Material]**
+[Continue same format for ALL materials mentioned]
+
+#### Classroom Setup Materials
+
+**Storage Solutions:**
+- **Material Organization:** [Specific systems] (e.g., "6 clear plastic bins with printed labels, stored on bookshelf shelf 3")
+- **Student Access:** [How students get materials] (e.g., "Numbered hooks on wall for folder rotation")
+- **Clean-up System:** [Specific procedures] (e.g., "5-minute timer with designated student helpers")
+
+**Technology Needs:**
+- **Required Tech:** [Specific devices/software] (e.g., "Chromebook access for 30 minutes, Google Slides template")
+- **Alternative Options:** [Non-tech versions] (e.g., "Paper version template, physical poster materials")
+- **Setup Instructions:** [Specific steps] (e.g., "Share Google Slides template 24 hours before lesson")
+
+#### Budget Planning
+
+**Total Estimated Costs:**
+- **Essential Materials:** $[X-Y range] 
+- **Enhanced Options:** $[X-Y range] (e.g., "laminator sheets, premium art supplies")
+- **One-Time Setup:** $[X-Y range] (e.g., "storage bins, permanent classroom displays")
+- **Per-Student Cost:** $[X-Y range] (e.g., "Approximately $3-5 per student for materials")
+
+**Cost-Saving Strategies:**
+- [Specific suggestions for reducing costs]
+- [Community donation opportunities]
+- [Reusable material options]
+- [Bulk purchasing recommendations]
+
+#### Procurement Timeline
+
+**3 Weeks Before:** [What to order/gather]
+**1 Week Before:** [Final preparations]
+**Day Before:** [Setup checklist]
+
+### E. IMPLEMENTATION SUPPORT DOCUMENTS
+
+#### Substitute Teacher Guide
+[Step-by-step instructions for all activities with contingency plans]
+
+#### Parent/Family Communication
+[Template letter explaining unit, home extension opportunities, cultural celebration invitations]
+
+#### Administrative Summary
+[One-page overview showing standards alignment, resource needs, learning outcomes]
+
+#### Student Self-Assessment Tools
+[Reflection prompts, goal-setting sheets, progress monitoring tools]
+
+ENSURE EVERY RESOURCE IS PRACTICAL, IMMEDIATELY USABLE, AND INCLUDES SPECIFIC QUANTITIES, COSTS, AND ALTERNATIVES.`;
 }
 
 export async function POST(req: NextRequest) {
