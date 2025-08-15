@@ -88,8 +88,33 @@ Assessment: [Formative checkpoints and authentic performance measures across all
 Standards: [Specific alignment to provided standards with citations]
 Extensions: [Accelerated learning options and community connections]
 
-GENERATE ALL ${days} DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.`;
-}
+GENERATE ALL ${days} DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.
+
+## CRITICAL: RESOURCE GENERATION APPENDIX
+
+After completing all lesson days, create a comprehensive Resource Generation Appendix with:
+
+### A. IMAGE GENERATION PROMPTS
+For each visual resource mentioned in lessons, provide detailed prompts for DALL-E/Copilot:
+Format: "DALL-E Prompt for [Resource Name]: [Detailed 2-3 sentence description with style, colors, composition, and educational elements]"
+
+### B. TEXT-BASED RESOURCES  
+Generate actual content for text-based materials:
+- Handout text and instructions
+- Worksheet questions and answer keys
+- Rubric criteria and scoring guides
+- Student reflection prompts
+- Assessment tools mentioned in lessons
+
+### C. MATERIALS PROCUREMENT GUIDE
+Specific sourcing information for physical materials mentioned, including:
+- Where to obtain items
+- Approximate costs
+- Suitable alternatives
+- Storage suggestions
+
+GENERATE COMPLETE LESSON PLAN FIRST, THEN COMPREHENSIVE RESOURCE APPENDIX.`;
+}}
 
 export async function POST(req: NextRequest) {
   try {
