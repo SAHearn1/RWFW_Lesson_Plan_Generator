@@ -109,7 +109,7 @@ export default function HomePage() {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Server responded with status: ${response.status}`);
+        throw new Error("Server responded with status: " + response.status);
       }
 
       const data = await response.json();
@@ -122,11 +122,11 @@ export default function HomePage() {
       
       if (dayCount < expectedDays) {
         setProgress(90);
-        setGenerationStatus(`⚠️ Generated ${dayCount} of ${expectedDays} days. Would you like to regenerate for complete content?`);
+        setGenerationStatus("⚠️ Generated " + dayCount + " of " + expectedDays + " days. Would you like to regenerate for complete content?");
         
         // Show the partial content but with a warning
         setTimeout(() => {
-          setLessonPlan(data.lessonPlan + `\n\n<div style="background: #fef3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;"><strong>⚠️ Quality Notice:</strong> This lesson plan contains ${dayCount} of ${expectedDays} requested days. Consider regenerating with a simpler topic or fewer days for complete content.</div>`);
+          setLessonPlan(data.lessonPlan + "\n\n<div style=\"background: #fef3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;\"><strong>⚠️ Quality Notice:</strong> This lesson plan contains " + dayCount + " of " + expectedDays + " requested days. Consider regenerating with a simpler topic or fewer days for complete content.</div>");
         }, 1000);
       } else {
         setProgress(100);
@@ -137,7 +137,7 @@ export default function HomePage() {
         }, 500);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating lesson plan:', error);
       clearInterval(progressInterval);
       
@@ -161,7 +161,7 @@ export default function HomePage() {
         userFriendlyMessage = "❓ Something went wrong generating your lesson plan. Try simplifying your unit title or reducing the number of days, then try again.";
       }
       
-      setGenerationStatus(`${userFriendlyMessage}`);
+      setGenerationStatus(userFriendlyMessage);
       
       // Keep error message visible longer for user to read
       setTimeout(() => {
@@ -300,10 +300,10 @@ export default function HomePage() {
             Generate trauma-informed, culturally responsive lesson plans that integrate social justice, environmental awareness, and interdisciplinary learning.
           </p>
           
-          {/* Pilot Support Contact */}
+          {/* Support Contact */}
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg max-w-2xl mx-auto">
             <p className="text-sm text-blue-800">
-              <strong>🚀 Monday Pilot Support:</strong> Questions during your session? 
+              <strong>🚀 Need Help?</strong> 
               <button 
                 onClick={() => setShowQuickStart(!showQuickStart)}
                 className="ml-2 text-blue-600 underline hover:text-blue-800"
@@ -311,7 +311,7 @@ export default function HomePage() {
                 Quick Start Guide
               </button>
               {" | "}
-              <a href="mailto:support@rootwork.edu" className="text-blue-600 underline hover:text-blue-800">
+              <a href="mailto:hearn.sa@gmail.com" className="text-blue-600 underline hover:text-blue-800">
                 Contact Support
               </a>
             </p>
@@ -362,7 +362,7 @@ export default function HomePage() {
                 <h3 className="font-semibold text-emerald-700 mb-2">📱 Need Help?</h3>
                 <p className="text-sm text-gray-600">
                   Generation taking too long? Try fewer days or simpler topics. 
-                  <strong className="text-emerald-700"> Contact support</strong> for immediate assistance during your pilot session.
+                  <strong className="text-emerald-700"> Contact support</strong> for immediate assistance.
                 </p>
               </div>
             </div>
