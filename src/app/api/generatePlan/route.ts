@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+export const maxDuration = 300; // Increased for comprehensive generation
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -26,89 +26,188 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return "You are an expert trauma-informed educator with decades of classroom experience. Generate a COMPLETE " + days + "-day lesson plan with master teacher-level detail and practical wisdom.\n\n" +
-    "CRITICAL SUCCESS FACTORS:\n" +
-    "- Every component must be substitute-teacher ready with exact timing and materials\n" +
-    "- Include comprehensive Teacher Notes and Student Notes for each section\n" +
-    "- Integrate ALL selected subjects authentically throughout each day\n" +
-    "- Provide specific quantities for materials and practical storage solutions\n" +
-    "- Include detailed MTSS supports with implementation guidance\n" +
-    "- MUST end with complete Resource Appendix\n\n" +
-    days + "-DAY ROOTWORK FRAMEWORK: \"" + unitTitle + "\"\n" +
-    "Grade " + gradeLevel + " | " + subjects.join(' + ') + " | Standards: " + standards + "\n" +
-    "Focus: " + focus + "\n\n" +
-    "LESSON STRUCTURE (Required for Each Day):\n\n" +
-    "# DAY X: [Culturally-connected title]\n\n" +
-    "Essential Question: [Complex question integrating ALL subjects]\n" +
-    "Learning Target: [Specific, measurable, identity-affirming objective]\n" +
-    "Standards: [Exact citations for each subject]\n" +
-    "SEL Alignment: [Specific CASEL competencies with examples]\n\n" +
-    "## Opening (15min): [Trauma-informed regulation ritual]\n" +
-    "[Detailed 3-paragraph description with setup, facilitation, and participation options]\n" +
-    "Materials Needed: [Complete list with quantities and storage]\n" +
-    "[Teacher Note: Comprehensive facilitation guidance, differentiation strategies, and trauma-informed responses]\n" +
-    "[Student Note: Clear expectations, choice options, and self-advocacy language]\n\n" +
-    "## I Do (20min): [Cross-curricular content delivery]\n" +
-    "[Detailed 3-paragraph description with content delivery, examples, and subject connections]\n" +
-    "Cross-Curricular Connections: [Specific examples for each subject]\n" +
-    "Visual Supports: [Specific charts and tools]\n" +
-    "[Teacher Note: Scaffolding strategies, assessment checkpoints, and differentiation]\n" +
-    "[Student Note: Engagement strategies, note-taking options, and strength-building]\n\n" +
-    "## Work Session (45min): [Collaborative investigation]\n\n" +
-    "### We Do (15min): [Guided practice]\n" +
-    "[Detailed instructions for collaborative work with all subjects]\n" +
-    "Materials Setup: [Specific arrangement procedures]\n" +
-    "[Teacher Note: Group formation, monitoring, and intervention protocols]\n" +
-    "[Student Note: Collaboration expectations and communication strategies]\n\n" +
-    "### You Do Together (15min): [Partner creation]\n" +
-    "[Detailed partner work with comprehensive choice menu]\n" +
-    "Choice Menu Options:\n" +
-    "- Option A: [Visual/spatial pathway with materials]\n" +
-    "- Option B: [Kinesthetic pathway with activities]\n" +
-    "- Option C: [Analytical pathway with tools]\n" +
-    "- Option D: [Creative pathway with techniques]\n" +
-    "[Teacher Note: Pairing strategies and progress monitoring]\n" +
-    "[Student Note: Partnership protocols and quality indicators]\n\n" +
-    "### You Do Alone (15min): [Individual synthesis]\n" +
-    "[Detailed independent work with regulation supports]\n" +
-    "Regulation Supports: [Movement options, sensory tools, quiet spaces]\n" +
-    "[Teacher Note: Conferencing approach and trauma-informed check-ins]\n" +
-    "[Student Note: Self-management tools and reflection prompts]\n\n" +
-    "## Closing (10min): [Identity-connected reflection]\n" +
-    "[Detailed closing routine with community building]\n" +
-    "Sharing Protocol: [Voluntary sharing with alternatives]\n" +
-    "[Teacher Note: Emotional regulation support and transition preparation]\n" +
-    "[Student Note: Celebration language and growth recognition]\n\n" +
-    "## Implementation Details:\n" +
-    "Materials List: [Complete inventory with quantities, costs, and storage]\n" +
-    "Room Setup: [Detailed arrangements for activities]\n" +
-    "Time Management: [Pacing guides and transition strategies]\n" +
-    "Assessment Tools: [Rubrics, checklists, and protocols]\n\n" +
-    "## MTSS Supports:\n" +
-    "Tier 1: [Universal design features with implementation]\n" +
-    "Tier 2: [Targeted interventions with criteria]\n" +
-    "Tier 3: [Intensive accommodations with procedures]\n\n" +
-    "## Extensions and Standards:\n" +
-    "Advanced Learners: [Acceleration options]\n" +
-    "Community Connections: [Real partnerships]\n" +
-    "Standards Alignment: [Citation and explanation for each subject]\n\n" +
-    "---\n\n" +
-    "GENERATE ALL " + days + " DAYS with this comprehensive detail, ensuring authentic cross-curricular integration.\n\n" +
-    "## ESSENTIAL RESOURCE APPENDIX (REQUIRED)\n\n" +
-    "### A. DALL-E IMAGE PROMPTS\n" +
-    "**Visual Resource 1:** \"[2-sentence prompt with colors, style, educational elements]\"\n" +
-    "**Visual Resource 2:** \"[2-sentence prompt with colors, style, educational elements]\"\n" +
-    "[Continue for each visual mentioned]\n\n" +
-    "### B. KEY MATERIALS PROCUREMENT\n" +
-    "**Material 1:** Qty: [exact number] | Cost: $[range] | Source: [store] | Storage: [method] | Alternative: [option]\n" +
-    "**Material 2:** [same format]\n" +
-    "[Continue for all essential materials]\n\n" +
-    "### C. ASSESSMENT RUBRIC\n" +
-    "| Criteria | Exceeding (4) | Meeting (3) | Approaching (2) | Beginning (1) |\n" +
-    "|----------|---------------|-------------|-----------------|---------------|\n" +
-    "| [Criteria] | [Description] | [Description] | [Description] | [Description] |\n\n" +
-    "**Budget:** $[range] | **Per Student:** $[range] | **Setup:** [timeline]\n\n" +
-    "CRITICAL: Complete ALL sections including full Resource Appendix for teacher implementation success.";
+  // Enhanced prompt with explicit quality requirements
+  return `🧑‍🏫 EXPERT CURRICULUM DESIGNER: You are a master teacher with 20+ years creating trauma-informed, culturally responsive lesson plans. Your expertise includes K-12 education, Project-Based Learning, STEAM integration, MTSS design, and Rootwork Framework implementation.
+
+GENERATE COMPREHENSIVE ${days}-DAY LESSON PLAN MATCHING PROFESSIONAL EXEMPLAR QUALITY
+
+**LESSON SPECIFICATIONS:**
+- Grade Level: ${gradeLevel}
+- Subject(s): ${subjects.join(' + ')} ${subjects.length > 1 ? '(INTERDISCIPLINARY INTEGRATION)' : ''}
+- Unit Title: ${unitTitle}
+- Standards: ${standards}
+- Focus: ${focus}
+- Duration: ${days} days (90 minutes each)
+
+**CRITICAL QUALITY STANDARDS:**
+✅ Every section MUST include both [Teacher Note: ] and [Student Note: ]
+✅ Detailed implementation guidance with specific materials and quantities
+✅ Comprehensive MTSS supports across all three tiers
+✅ Complete Resource Appendix with DALL-E prompts and procurement guides
+✅ Professional formatting ready for immediate classroom implementation
+
+**MANDATORY STRUCTURE FOR EACH DAY:**
+
+# DAY X: [Engaging, culturally-connected title]
+
+Essential Question: [Complex question integrating ${subjects.length > 1 ? 'ALL subjects' : 'subject content'}]
+Learning Target: [Specific, measurable, identity-affirming objective]
+Standards: [Exact citations for each subject: ${subjects.join(', ')}]
+SEL Alignment: [Specific CASEL competencies with implementation examples]
+
+## Opening (15min): "[Trauma-informed regulation ritual name]"
+
+[Detailed 3-paragraph description including:]
+- Setup procedures and room arrangement
+- Facilitation steps with specific dialogue
+- Multiple participation pathways for diverse learners
+
+Materials Needed: 
+- [Complete list with exact quantities, storage locations, and cost estimates]
+- [Include backup materials and alternatives]
+
+Implementation Notes: [Setup timing, preparation requirements, cleanup procedures]
+
+[Teacher Note: Comprehensive guidance on trauma-informed facilitation, differentiation strategies, cultural responsiveness, and monitoring for regulation needs. Address potential challenges and intervention strategies.]
+
+[Student Note: Clear expectations using warm, empowering language. Include choice options, self-advocacy reminders, and connection to personal growth and identity affirmation.]
+
+## I Do (20min): "[Cross-curricular content delivery title]"
+
+[Detailed 3-paragraph description including:]
+- Content delivery with specific examples and modeling
+- Think-aloud strategies demonstrating connections between ${subjects.join(' and ')}
+- Visual supports and accessibility features
+
+Cross-Curricular Connections:
+${subjects.map(subject => `- ${subject}: [Specific examples and integration points]`).join('\n')}
+
+Visual Supports: [Detailed descriptions of charts, graphic organizers, multimedia resources]
+
+[Teacher Note: Key teaching points, scaffolding strategies, formative assessment checkpoints, and differentiation for diverse learners. Include pacing guidance and transition preparation.]
+
+[Student Note: What to focus on during instruction, note-taking strategies, and how this learning builds your skills and connects to your experiences. Include engagement strategies and self-regulation techniques.]
+
+## Work Session (45min): "[Collaborative investigation title]"
+
+### We Do (15min): "[Guided practice activity]"
+[Detailed description of collaborative exploration with step-by-step procedures]
+${subjects.length > 1 ? `Integration requirement: Every activity must authentically connect ${subjects.join(', ')} through real-world applications.` : ''}
+
+Materials Setup: [Specific arrangement procedures, group formation, resource distribution]
+
+[Teacher Note: Group formation strategies, monitoring protocols, intervention guidance, and support for collaborative learning. Address potential conflicts and maintain trauma-informed environment.]
+
+[Student Note: Collaboration expectations, communication strategies, and ways to contribute your unique perspectives. Include protocols for asking for help and celebrating diverse thinking.]
+
+### You Do Together (15min): "[Partner creation activity]"
+[Detailed partner work with comprehensive choice menu addressing multiple learning modalities]
+
+Choice Menu Options:
+- Option A: [Visual/artistic pathway with specific materials and techniques]
+- Option B: [Kinesthetic/movement pathway with activities and space requirements]
+- Option C: [Analytical/research pathway with tools and resources]
+- Option D: [Creative/multimedia pathway with technology and platforms]
+
+[Teacher Note: Pairing strategies considering strengths and needs, progress monitoring techniques, and support for partnership dynamics. Include guidance for students who prefer independent work.]
+
+[Student Note: Partnership protocols, quality indicators for success, and strategies for effective collaboration. Include self-advocacy language and celebration of different working styles.]
+
+### You Do Alone (15min): "[Individual synthesis activity]"
+[Detailed independent work with multiple regulation and accessibility supports]
+
+Regulation Supports: [Movement options, sensory tools, quiet spaces, alternative seating, fidget tools, headphones, standing desks]
+
+[Teacher Note: Conferencing approach, trauma-informed check-ins, and individualized support strategies. Include guidance for different processing speeds and accommodation needs.]
+
+[Student Note: Self-management tools, reflection prompts, and strategies for maintaining focus. Include permission for breaks and celebration of individual progress.]
+
+## Closing (10min): "[Identity-connected reflection activity]"
+
+[Detailed closing routine with community building and cultural affirmation]
+Sharing Protocol: [Voluntary sharing with multiple alternatives for participation]
+
+[Teacher Note: Emotional regulation support, transition preparation, and celebration of diverse contributions. Include guidance for processing emotions and preparing for next learning.]
+
+[Student Note: Reflection language that honors growth, celebrates identity, and builds community. Include options for different sharing comfort levels and recognition of learning journey.]
+
+## Implementation Details:
+
+Materials List: 
+[Complete inventory with quantities, estimated costs, storage solutions, and alternatives]
+- Material 1: Qty: X | Cost: $X-X | Source: [Store] | Storage: [Method] | Alternative: [Option]
+- [Continue for all materials]
+
+Room Setup: [Detailed arrangements for each activity phase with transition procedures]
+Time Management: [Pacing guides, visible timers, transition signals, and flexibility options]
+Technology Integration: [Specific platforms, backup plans, accessibility features]
+Assessment Tools: [Rubrics, checklists, observation protocols, and student self-assessment options]
+
+## MTSS Supports:
+
+Tier 1 (Universal): [Specific design features with implementation guidance]
+- Visual schedules with progress indicators
+- Multiple representation modes (visual, auditory, kinesthetic)
+- Built-in choice and movement opportunities
+- Clear expectations with modeling
+
+Tier 2 (Targeted): [Specific interventions with criteria and procedures]
+- Small group reteaching with alternative explanations
+- Extended processing time with scaffolded support
+- Peer partnerships with structured protocols
+- Modified assessment formats
+
+Tier 3 (Intensive): [Individualized accommodations with implementation procedures]
+- One-on-one support with specialized strategies
+- Alternative participation formats
+- Sensory regulation tools and quiet spaces
+- Modified expectations with progress monitoring
+
+## Extensions and Connections:
+
+Advanced Learners: [Specific acceleration and enrichment opportunities]
+Community Connections: [Real partnerships with local organizations, experts, or cultural institutions]
+Home-School Bridge: [Family engagement opportunities and cultural connections]
+
+## Standards Alignment:
+${subjects.map(subject => `**${subject}:** [Specific standard citations with explanations of how each is addressed in the lesson]`).join('\n')}
+
+[Continue this comprehensive format for ALL ${days} days]
+
+---
+
+## ESSENTIAL RESOURCE APPENDIX
+
+### A. DALL-E IMAGE PROMPTS
+
+**Visual 1:** "Create a [detailed 2-sentence description with specific colors, style, cultural elements, and educational purpose]. Include diverse students engaged in [specific activity] with warm, natural lighting and educational materials visible."
+
+**Visual 2:** "Design a [detailed 2-sentence description for second visual resource]. Use [specific color palette] and show [specific educational elements] that support trauma-informed learning environments."
+
+[Continue for each visual resource mentioned in lesson plans]
+
+### B. KEY MATERIALS PROCUREMENT
+
+**Primary Materials:**
+- Item 1: Qty: [exact number] | Cost: $[specific range] | Source: [specific store/vendor] | Storage: [method] | Alternative: [budget option]
+- Item 2: [same detailed format]
+[Continue for all essential materials]
+
+**Technology Requirements:**
+- Platform 1: [specifications, account requirements, alternatives]
+[Continue for all tech needs]
+
+### C. ASSESSMENT RUBRIC
+
+| Criteria | Exceeding (4) | Meeting (3) | Approaching (2) | Beginning (1) |
+|----------|---------------|-------------|-----------------|---------------|
+| [Subject Integration] | [Detailed description] | [Detailed description] | [Detailed description] | [Detailed description] |
+| [Cultural Responsiveness] | [Detailed description] | [Detailed description] | [Detailed description] | [Detailed description] |
+| [Trauma-Informed Practice] | [Detailed description] | [Detailed description] | [Detailed description] | [Detailed description] |
+
+**Total Budget:** $[specific range] | **Per Student:** $[specific range] | **Setup Time:** [specific hours] per day
+
+CRITICAL: Generate ALL ${days} days with complete Resource Appendix for immediate implementation success.`;
 }
 
 export async function POST(req: NextRequest) {
@@ -168,14 +267,16 @@ export async function POST(req: NextRequest) {
     const prompt = createRootworkPrompt(input);
     console.log('Sending request to Anthropic...');
 
+    // Extended timeout for comprehensive generation
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timeout after 4 minutes')), 240000);
+      setTimeout(() => reject(new Error('Request timeout after 5 minutes')), 300000);
     });
 
+    // CRITICAL FIXES: Updated model and increased token limit
     const apiPromise = client.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 8192,
-      temperature: 0.1,
+      model: 'claude-3-5-sonnet-20241022', // Updated model
+      max_tokens: 25000,                   // INCREASED from 8192 - this was the main issue!
+      temperature: 0.3,                    // Slightly increased for creativity
       messages: [
         { 
           role: 'user', 
@@ -195,33 +296,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if Resource Appendix was generated - improved detection
+    // Enhanced Resource Appendix detection
     const hasResourceAppendix = lessonPlan.includes('RESOURCE APPENDIX') || 
                                 lessonPlan.includes('RESOURCE GENERATION APPENDIX') ||
                                 lessonPlan.includes('DALL-E') || 
                                 lessonPlan.includes('MATERIALS PROCUREMENT') ||
                                 lessonPlan.includes('A. DALL-E IMAGE PROMPTS') ||
-                                lessonPlan.includes('B. KEY MATERIALS PROCUREMENT');
+                                lessonPlan.includes('B. KEY MATERIALS PROCUREMENT') ||
+                                lessonPlan.includes('ESSENTIAL RESOURCE APPENDIX');
 
+    // Enhanced quality validation
+    const hasTeacherNotes = lessonPlan.includes('[Teacher Note:');
+    const hasStudentNotes = lessonPlan.includes('[Student Note:');
+    const dayCount = (lessonPlan.match(/# DAY \d+:/g) || []).length;
+    
     console.log('Generated lesson plan successfully');
     console.log('Lesson plan length:', lessonPlan.length);
     console.log('Resource Appendix included:', hasResourceAppendix);
+    console.log('Teacher Notes included:', hasTeacherNotes);
+    console.log('Student Notes included:', hasStudentNotes);
+    console.log('Days generated:', dayCount, 'of', days, 'requested');
 
-    // If Resource Appendix is missing, add a note
+    // Enhanced feedback for quality
     let finalLessonPlan = lessonPlan;
-    if (!hasResourceAppendix) {
-      finalLessonPlan += "\n\n## RESOURCE APPENDIX NOTICE\n\n" +
-        "The complete Resource Appendix with detailed procurement guides was not fully generated due to length constraints.\n" +
-        "Your lesson plan is complete and ready for implementation. For the full Resource Appendix with:\n" +
-        "- Copy-paste DALL-E image generation prompts\n" +
-        "- Detailed materials procurement with costs and alternatives\n" +
-        "- Complete assessment rubrics\n\n" +
-        "**Quick Resource Guide:**\n" +
-        "- **Basic Materials:** Construction paper, markers, poster board, sticky notes\n" +
-        "- **Technology:** Chromebooks/tablets, Google Slides, projection screen\n" +
-        "- **Storage:** Clear bins with labels, numbered hooks for organization\n" +
-        "- **Budget:** Approximately $3-8 per student for basic supplies\n\n" +
-        "Contact support at hearn.sa@gmail.com for the complete Resource Appendix or try generating a shorter lesson plan for full appendix inclusion.";
+    if (!hasResourceAppendix || !hasTeacherNotes || !hasStudentNotes || dayCount < days) {
+      finalLessonPlan += "\n\n## GENERATION QUALITY NOTICE\n\n";
+      
+      if (dayCount < days) {
+        finalLessonPlan += `⚠️ **Partial Generation:** ${dayCount} of ${days} requested days completed.\n`;
+      }
+      if (!hasTeacherNotes || !hasStudentNotes) {
+        finalLessonPlan += `⚠️ **Missing Notes:** Comprehensive Teacher/Student Notes may be incomplete.\n`;
+      }
+      if (!hasResourceAppendix) {
+        finalLessonPlan += `⚠️ **Resource Appendix:** Complete procurement guide may be incomplete.\n`;
+      }
+      
+      finalLessonPlan += "\n**For complete exemplar-quality output:**\n" +
+        "- Try reducing to 2-3 days for complex interdisciplinary units\n" +
+        "- Simplify focus area for initial generation\n" +
+        "- Generate additional days separately if needed\n\n" +
+        "**Contact:** hearn.sa@gmail.com for support with complex lesson plan requirements.";
     }
 
     return NextResponse.json({
@@ -235,7 +350,11 @@ export async function POST(req: NextRequest) {
           gradeLevel: gradeLevel,
           subject: subjects.join(', '),
           days: days,
-          hasResourceAppendix: hasResourceAppendix
+          hasResourceAppendix: hasResourceAppendix,
+          hasTeacherNotes: hasTeacherNotes,
+          hasStudentNotes: hasStudentNotes,
+          actualDays: dayCount,
+          quality: hasResourceAppendix && hasTeacherNotes && hasStudentNotes && dayCount === days ? 'Complete' : 'Partial'
         }
       }
     });
@@ -245,20 +364,20 @@ export async function POST(req: NextRequest) {
     
     if (error.message?.includes('timeout')) {
       return NextResponse.json({
-        error: 'Lesson plan generation is taking longer than expected. Please try with fewer days or a simpler topic.',
-        details: 'Request timeout - try reducing complexity'
+        error: 'Comprehensive lesson plan generation requires more time. Try fewer days or simpler focus for faster generation.',
+        details: 'Request timeout - reduce complexity for faster results'
       }, { status: 504 });
     }
     
     if (error.status) {
       return NextResponse.json({
-        error: "The AI model returned an error (Status: " + error.status + ").",
+        error: "AI model error (Status: " + error.status + "). Try simplifying your request.",
         details: error.message
       }, { status: 502 });
     }
 
     return NextResponse.json({
-      error: 'An internal server error occurred.',
+      error: 'Generation failed. Try reducing days or simplifying the topic.',
       details: error.message
     }, { status: 500 });
   }
