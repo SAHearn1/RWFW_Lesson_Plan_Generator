@@ -319,7 +319,7 @@ export async function POST(req: NextRequest) {
     // If Resource Appendix is missing, add a note
     let finalLessonPlan = lessonPlan;
     if (!hasResourceAppendix) {
-      finalLessonPlan += `\n\n## ⚠️ RESOURCE APPENDIX GENERATION NOTICE
+      finalLessonPlan += `\n\n## WARNING: RESOURCE APPENDIX GENERATION NOTICE
 
 The complete Resource Appendix was not fully generated due to length constraints. 
 To get your complete Resource Appendix with:
