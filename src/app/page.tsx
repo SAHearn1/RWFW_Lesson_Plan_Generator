@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
 export default function HomePage() {
-  // Your state variables are all preserved
+  // All of your state variables are preserved
   const [unitTitle, setUnitTitle] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
@@ -20,7 +20,6 @@ export default function HomePage() {
   const [progress, setProgress] = useState(0);
   const [showQuickStart, setShowQuickStart] = useState(false);
 
-  // Your status messages and progress simulation logic are preserved
   const statusMessages = [
     "Analyzing your standards and objectives...",
     "Integrating trauma-informed pedagogical approaches...",
@@ -30,11 +29,30 @@ export default function HomePage() {
     "Finalizing implementation guidance...",
     "Almost ready - polishing your lesson plan..."
   ];
-  const simulateProgress = (duration: number) => { /* ... your code ... */ return setInterval(() => {}, 15000) };
 
-  // This function now ONLY prepares the notes for styling.
-  // ReactMarkdown will handle all other formatting (headers, tables, etc.).
-  const preprocessMarkdownForNotes = (markdown: string): string => {
+  const simulateProgress = (duration: number) => {
+    const interval = 15000;
+    const steps = Math.floor(duration / interval);
+    let currentStep = 0;
+    const progressInterval = setInterval(() => {
+      if (currentStep < steps) {
+        const progressPercent = ((currentStep + 1) / steps) * 100;
+        setProgress(Math.min(progressPercent, 95));
+        if (currentStep < statusMessages.length) {
+          setGenerationStatus(statusMessages[currentStep]);
+        }
+        currentStep++;
+      } else {
+        setGenerationStatus("Almost ready - polishing your lesson plan...");
+        clearInterval(progressInterval);
+      }
+    }, interval);
+    return progressInterval;
+  };
+
+  // This function ONLY prepares the custom notes for styling before display.
+  // ReactMarkdown will handle all other formatting (headers, tables, bold, etc.).
+  const preprocessMarkdownForDisplay = (markdown: string): string => {
     if (!markdown) return '';
     return markdown
       .replace(/\[Teacher Note: (.*?)\]/g, '<div class="teacher-note"><strong>Teacher Note:</strong> $1</div>')
@@ -42,43 +60,36 @@ export default function HomePage() {
   };
 
   const generateLessonPlan = async () => {
-    // Your entire generateLessonPlan function is preserved
-    // ... no changes needed here
-  };
+    // Your robust form validation is preserved
+    if (!unitTitle.trim()) {
+      setGenerationStatus("❌ Please enter a unit title. Try something like 'Building Communities' or 'Environmental Science Connections'");
+      setTimeout(() => setGenerationStatus(''), 5000);
+      return;
+    }
+    if (!gradeLevel) {
+      setGenerationStatus("❌ Please select a grade level for your lesson plan.");
+      setTimeout(() => setGenerationStatus(''), 5000);
+      return;
+    }
+    if (subjects.length === 0) {
+      setGenerationStatus("❌ Please select at least one subject. For interdisciplinary units, select multiple subjects!");
+      setTimeout(() => setGenerationStatus(''), 5000);
+      return;
+    }
+    if (!days) {
+      setGenerationStatus("❌ Please select the number of days for your lesson plan.");
+      setTimeout(() => setGenerationStatus(''), 5000);
+      return;
+    }
 
-  const downloadLessonPlan = async () => {
-    // Your excellent HTML download function is also preserved
-    // ... no changes needed here
-  };
+    setIsLoading(true);
+    setLessonPlan('');
+    setGenerationStatus("Analyzing your standards and objectives...");
+    setProgress(0);
+    
+    const estimatedDuration = Math.max(parseInt(days) * 60000, 120000);
+    const progressInterval = simulateProgress(estimatedDuration);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
-      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-6xl">
-        {/* Your entire header, quick-start, and form JSX is preserved */}
-        {/* ... */}
-        
-        {lessonPlan && (
-          <div className="mt-6 sm:mt-8 bg-white rounded-xl shadow-lg p-4 sm:p-8">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Generated Lesson Plan</h2>
-              <button onClick={downloadLessonPlan} disabled={isDownloading} className="bg-emerald-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base">
-                {isDownloading ? ( <span>Preparing Download...</span> ) : ( <span>📄 Download as HTML</span> )}
-              </button>
-            </div>
-
-            {/* --- THIS IS THE CORRECTED DISPLAY LOGIC --- */}
-            <article className="prose prose-lg max-w-none">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]} // Enables table support
-                rehypePlugins={[rehypeRaw]}   // Allows the custom styled divs for notes
-              >
-                {preprocessMarkdownForNotes(lessonPlan)}
-              </ReactMarkdown>
-            </article>
-
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller
