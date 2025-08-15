@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Tab = 'generator' | 'results';
 
@@ -429,6 +430,7 @@ export default function HomePage() {
                   }}
                 >
                   <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
                     components={{
                       // Custom renderer for better formatting
                       p: ({ children }) => {
@@ -520,6 +522,31 @@ export default function HomePage() {
                       
                       li: ({ children }) => (
                         <li className="leading-relaxed pl-2">{children}</li>
+                      ),
+
+                      // Handle tables (for rubrics)
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-6">
+                          <table className="min-w-full border-collapse border border-gray-300 bg-white">
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      
+                      thead: ({ children }) => (
+                        <thead className="bg-emerald-100">{children}</thead>
+                      ),
+                      
+                      th: ({ children }) => (
+                        <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-emerald-800">
+                          {children}
+                        </th>
+                      ),
+                      
+                      td: ({ children }) => (
+                        <td className="border border-gray-300 px-4 py-2 text-sm">
+                          {children}
+                        </td>
                       ),
 
                       // Handle strong text with special formatting for key terms
