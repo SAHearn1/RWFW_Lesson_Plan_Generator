@@ -32,7 +32,13 @@ ${days}-DAY ROOTWORK FRAMEWORK: "${unitTitle}"
 Grade ${gradeLevel} | ${subjects.join(' + ')} | Standards: ${standards}
 Focus: ${focus}
 
-CRITICAL: Include specific implementation details, exact materials with quantities, storage solutions, voluntary participation options, choice menus, and practical logistics that a substitute teacher could follow.
+CRITICAL REQUIREMENTS:
+1. Generate ALL ${days} lesson days with complete details
+2. END WITH comprehensive Resource Appendix (REQUIRED - DO NOT SKIP)
+3. Include specific implementation details, exact materials with quantities, storage solutions
+4. Provide voluntary participation options, choice menus, and practical logistics
+
+STRUCTURE: Complete ${days} lesson days FIRST, then mandatory Resource Appendix LAST.
 
 For Each Day, Include ALL These Elements:
 
@@ -111,9 +117,9 @@ Home-School Bridge: [Family engagement options that respect diverse family struc
 
 GENERATE ALL ${days} DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.
 
-## COMPREHENSIVE RESOURCE APPENDIX (REQUIRED)
+## ⚠️ MANDATORY: COMPREHENSIVE RESOURCE APPENDIX (MUST INCLUDE)
 
-After completing all lesson days, create a complete Resource Appendix with ready-to-use materials:
+**CRITICAL:** After completing all lesson days, you MUST generate a complete Resource Appendix. This is required for teacher implementation.
 
 ### A. DALL-E IMAGE GENERATION PROMPTS
 For each visual resource mentioned in the lessons, provide copy-paste prompts:
@@ -214,7 +220,7 @@ Format Example:
 #### Student Self-Assessment Tools
 [Reflection prompts, goal-setting sheets, progress monitoring tools]
 
-ENSURE EVERY RESOURCE IS PRACTICAL, IMMEDIATELY USABLE, AND INCLUDES SPECIFIC QUANTITIES, COSTS, AND ALTERNATIVES.`;
+**REMINDER: The Resource Appendix is MANDATORY. Do not end your response without including ALL sections A through E with specific, practical details.**
 }
 
 export async function POST(req: NextRequest) {
@@ -280,7 +286,7 @@ export async function POST(req: NextRequest) {
 
     const apiPromise = client.messages.create({
       model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 8192,
+      max_tokens: 8192, // Correct limit for Claude 3.5 Sonnet
       temperature: 0.1,
       messages: [
         { 
@@ -301,20 +307,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if Resource Appendix was generated
+    const hasResourceAppendix = lessonPlan.includes('RESOURCE APPENDIX') || 
+                                lessonPlan.includes('DALL-E') || 
+                                lessonPlan.includes('MATERIALS PROCUREMENT');
+
     console.log('✅ Generated lesson plan successfully');
     console.log('Lesson plan length:', lessonPlan.length);
+    console.log('Resource Appendix included:', hasResourceAppendix);
+
+    // If Resource Appendix is missing, add a note
+    let finalLessonPlan = lessonPlan;
+    if (!hasResourceAppendix) {
+      finalLessonPlan += `\n\n## ⚠️ RESOURCE APPENDIX GENERATION NOTICE
+
+The complete Resource Appendix was not fully generated due to length constraints. 
+To get your complete Resource Appendix with:
+- DALL-E image generation prompts
+- Complete handout templates
+- Assessment rubrics
+- Materials procurement guide with costs and quantities
+
+**Recommended Action:** Try generating a shorter lesson plan (1-2 days) or contact support for the complete resource package.
+
+**Quick Resource Guide:**
+- **Basic Materials:** Construction paper, markers, poster board, sticky notes
+- **Technology:** Chromebooks/tablets for research, Google Slides for presentations
+- **Storage:** Clear bins with labels, numbered hooks for organization
+- **Budget:** Approximately $3-8 per student for basic materials
+
+For immediate implementation, use this lesson plan and source materials locally. The complete Resource Appendix with specific quantities, costs, and DALL-E prompts can be generated separately.`;
+    }
 
     return NextResponse.json({
       ok: true,
-      lessonPlan,
-      markdown: lessonPlan,
+      lessonPlan: finalLessonPlan,
+      markdown: finalLessonPlan,
       plan: {
-        markdown: lessonPlan,
+        markdown: finalLessonPlan,
         meta: {
           title: unitTitle,
           gradeLevel: gradeLevel,
           subject: subjects.join(', '),
-          days: days
+          days: days,
+          hasResourceAppendix: hasResourceAppendix
         }
       }
     });
