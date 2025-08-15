@@ -26,87 +26,120 @@ function createRootworkPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'CCSS ELA Standards';
   const focus = input.focus || 'Trauma-informed cultural exploration';
 
-  return "You are an expert trauma-informed educator with deep classroom experience. Generate a COMPLETE " + days + "-day lesson plan with the same level of detail, specificity, and practical wisdom as a master teacher's actual classroom implementation.\n\n" +
+  return "You are an expert trauma-informed educator with decades of classroom experience in diverse, high-needs schools. Generate a COMPLETE " + days + "-day lesson plan with the same level of detail, specificity, and practical wisdom as a master teacher's actual classroom implementation.\n\n" +
+    "CRITICAL SUCCESS FACTORS:\n" +
+    "- Every lesson component must be substitute-teacher ready with exact timing, materials, and procedures\n" +
+    "- Include extensive Teacher Notes with specific facilitation guidance, differentiation strategies, and trauma-informed approaches\n" +
+    "- Provide detailed Student Notes with choice options, self-advocacy language, and engagement strategies\n" +
+    "- Integrate ALL selected subjects authentically throughout each day\n" +
+    "- Include specific quantities for all materials and practical storage solutions\n" +
+    "- Provide comprehensive MTSS supports with specific implementation details\n\n" +
     days + "-DAY ROOTWORK FRAMEWORK: \"" + unitTitle + "\"\n" +
     "Grade " + gradeLevel + " | " + subjects.join(' + ') + " | Standards: " + standards + "\n" +
     "Focus: " + focus + "\n\n" +
-    "CRITICAL: Include specific implementation details, exact materials with quantities, storage solutions, voluntary participation options, choice menus, and practical logistics that a substitute teacher could follow.\n\n" +
-    "For Each Day, Include ALL These Elements:\n\n" +
-    "# DAY X: [Specific, evocative title with cultural connection]\n\n" +
-    "Essential Question: [Question requiring authentic integration of ALL selected subjects]\n" +
-    "Learning Target: [Specific, measurable, identity-affirming goal]\n" +
-    "Standards: [Specific state standard citations for each subject]\n" +
-    "SEL Alignment: [Specific CASEL competencies with examples]\n\n" +
-    "## Opening (15min): [Specific regulation ritual name]\n" +
-    "[Detailed description of trauma-informed opening with exact materials, setup instructions, and participation options]\n" +
-    "Materials Needed: [Specific list with quantities]\n" +
-    "Implementation Notes: [Storage, timing, alternatives for different student needs]\n" +
-    "[Teacher Note: Specific facilitation guidance, what to watch for, accessibility considerations]\n" +
-    "[Student Note: Clear expectations, choice options, self-advocacy language]\n\n" +
-    "## I Do (20min): [Specific content title with cross-curricular modeling]\n" +
-    "[Detailed explanation of content delivery with specific examples, think-alouds, and subject connections]\n" +
-    "Cross-Curricular Connections: [Explicit examples of how each subject contributes to understanding]\n" +
-    "Visual Supports: [Specific charts, diagrams, or digital tools to use]\n" +
-    "[Teacher Note: Scaffolding strategies, differentiation moves, assessment checkpoints]\n" +
-    "[Student Note: Active engagement strategies, note-taking options, building on strengths]\n\n" +
-    "## Work Session (45min): [Sophisticated collaborative investigation]\n\n" +
+    "LESSON PLAN STRUCTURE (Required for Each Day):\n\n" +
+    "# DAY X: [Evocative, culturally-connected title]\n\n" +
+    "Essential Question: [Complex question requiring integration of ALL selected subjects]\n" +
+    "Learning Target: [Specific, measurable, identity-affirming objective]\n" +
+    "Standards: [Exact state standard citations for each subject with specific alignment explanations]\n" +
+    "SEL Alignment: [Specific CASEL competencies with detailed examples]\n\n" +
+    "## Opening (15min): [Specific trauma-informed regulation ritual with cultural connection]\n" +
+    "[Detailed 3-4 paragraph description of the opening activity including:\n" +
+    "- Exact setup procedures and room arrangement\n" +
+    "- Step-by-step facilitation with specific teacher language\n" +
+    "- Multiple participation options for different comfort levels\n" +
+    "- Trauma-informed modifications and alternatives]\n\n" +
+    "Materials Needed: [Complete list with exact quantities, storage locations, and preparation time]\n" +
+    "Implementation Notes: [Detailed logistics including timing, transitions, accessibility considerations, and backup plans]\n\n" +
+    "[Teacher Note: Comprehensive facilitation guidance including what to watch for, specific language to use, differentiation strategies, assessment checkpoints, and trauma-informed responses to different student reactions]\n\n" +
+    "[Student Note: Clear expectations, multiple choice options, self-advocacy language, and specific strategies for engagement and self-regulation]\n\n" +
+    "## I Do (20min): [Specific content delivery title with explicit cross-curricular modeling]\n" +
+    "[Detailed 4-5 paragraph description including:\n" +
+    "- Specific content delivery with exact examples and think-alouds\n" +
+    "- Multiple modalities and visual supports\n" +
+    "- Real-time assessment strategies\n" +
+    "- Explicit connections between all subject areas]\n\n" +
+    "Cross-Curricular Connections: [Detailed explanation of how each subject contributes with specific examples and integration strategies]\n" +
+    "Visual Supports: [Specific charts, diagrams, digital tools, and physical materials with exact specifications]\n" +
+    "Assessment Checkpoints: [Specific formative assessment strategies with timing and response protocols]\n\n" +
+    "[Teacher Note: Detailed scaffolding strategies, differentiation moves, pacing guidance, common misconceptions to address, and specific language for building student confidence]\n\n" +
+    "[Student Note: Active engagement strategies, note-taking options, processing time accommodations, and specific ways to build on personal strengths and interests]\n\n" +
+    "## Work Session (45min): [Sophisticated collaborative investigation requiring all subjects]\n\n" +
     "### We Do (15min): [Specific guided practice activity]\n" +
-    "[Step-by-step instructions for collaborative work requiring all subject areas]\n" +
-    "Materials Setup: [Specific arrangement and distribution instructions]\n" +
-    "[Teacher Note: Group formation strategies, monitoring techniques, intervention protocols]\n" +
-    "[Student Note: Collaboration expectations, communication strategies, individual accountability]\n\n" +
+    "[Detailed 3-4 paragraph description including:\n" +
+    "- Step-by-step collaborative work instructions\n" +
+    "- Specific roles and responsibilities\n" +
+    "- Monitoring strategies and intervention protocols\n" +
+    "- Integration of all subject areas with specific examples]\n\n" +
+    "Materials Setup: [Exact arrangement and distribution procedures with timing and logistics]\n" +
+    "Grouping Strategy: [Specific formation methods considering academic needs, social dynamics, and trauma-informed practices]\n\n" +
+    "[Teacher Note: Detailed group formation strategies, specific monitoring techniques, intervention protocols for struggling students, conflict resolution procedures, and assessment strategies]\n\n" +
+    "[Student Note: Clear collaboration expectations, communication strategies, individual accountability measures, and specific protocols for seeking help or managing challenges]\n\n" +
     "### You Do Together (15min): [Specific partner creation task]\n" +
-    "[Detailed partner work instructions with choice menu of 3-4 pathways]\n" +
-    "Choice Menu Options:\n" +
-    "- Option A: [Specific pathway for visual learners]\n" +
-    "- Option B: [Specific pathway for kinesthetic learners]\n" +
-    "- Option C: [Specific pathway for analytical learners]\n" +
-    "- Option D: [Open-ended creative pathway]\n" +
-    "[Teacher Note: Pairing strategies, progress monitoring, conflict resolution]\n" +
-    "[Student Note: Partnership protocols, self-advocacy options, quality indicators]\n\n" +
+    "[Detailed 3-4 paragraph description of partner work including comprehensive choice menu]\n\n" +
+    "Choice Menu Options (students select based on learning preferences and strengths):\n" +
+    "- Option A: [Detailed visual/spatial pathway with specific materials and procedures]\n" +
+    "- Option B: [Detailed kinesthetic/movement pathway with specific activities and space requirements]\n" +
+    "- Option C: [Detailed analytical/logical pathway with specific tools and processes]\n" +
+    "- Option D: [Detailed creative/artistic pathway with specific materials and techniques]\n" +
+    "- Option E: [Detailed verbal/linguistic pathway with specific structures and supports]\n\n" +
+    "[Teacher Note: Detailed pairing strategies considering complementary strengths, specific progress monitoring techniques, conflict resolution procedures, and differentiated expectations for different partnerships]\n\n" +
+    "[Student Note: Partnership protocols including communication strategies, decision-making processes, self-advocacy options, quality indicators, and specific support-seeking procedures]\n\n" +
     "### You Do Alone (15min): [Individual synthesis with multiple modalities]\n" +
-    "[Specific independent work options with clear success criteria]\n" +
-    "Regulation Supports: [Built-in breaks, movement options, sensory tools]\n" +
-    "[Teacher Note: Conferencing approach, differentiated expectations, trauma-informed check-ins]\n" +
-    "[Student Note: Self-management tools, reflection prompts, goal-setting options]\n\n" +
+    "[Detailed 3-4 paragraph description including:\n" +
+    "- Multiple independent work options with clear success criteria\n" +
+    "- Specific regulation supports and sensory accommodations\n" +
+    "- Assessment and reflection components\n" +
+    "- Integration of learning from collaborative work]\n\n" +
+    "Regulation Supports: [Specific tools and strategies including movement options, sensory supports, quiet spaces, and self-monitoring tools]\n" +
+    "Assessment Options: [Multiple ways students can demonstrate learning with specific criteria and rubrics]\n\n" +
+    "[Teacher Note: Detailed conferencing approach, specific differentiated expectations, trauma-informed check-in procedures, assessment strategies, and intervention protocols for struggling students]\n\n" +
+    "[Student Note: Specific self-management tools, reflection prompts, goal-setting strategies, quality self-assessment procedures, and metacognitive support structures]\n\n" +
     "## Closing (10min): [Identity-connected reflection with community building]\n" +
-    "[Specific closing routine connecting to cultural identity and community]\n" +
-    "Sharing Protocol: [Exact structure for voluntary sharing with alternatives]\n" +
-    "[Teacher Note: Emotional regulation support, validation strategies, transition preparation]\n" +
-    "[Student Note: Celebration language, growth recognition, preparation for next steps]\n\n" +
+    "[Detailed 2-3 paragraph description including:\n" +
+    "- Specific closing routine connecting to cultural identity and community\n" +
+    "- Multiple sharing and reflection options\n" +
+    "- Emotional regulation support and validation strategies\n" +
+    "- Preparation for next learning steps]\n\n" +
+    "Sharing Protocol: [Exact structure for voluntary sharing with specific alternatives and accommodations]\n" +
+    "Reflection Methods: [Multiple options for processing learning with specific prompts and tools]\n\n" +
+    "[Teacher Note: Detailed emotional regulation support strategies, specific validation language, transition preparation procedures, and assessment of student understanding]\n\n" +
+    "[Student Note: Celebration language, specific growth recognition strategies, preparation procedures for next steps, and self-advocacy tools for ongoing learning]\n\n" +
     "## Implementation Details:\n" +
-    "Materials List: [Complete list with quantities, alternatives, and storage instructions]\n" +
-    "Room Setup: [Specific arrangements for different activities]\n" +
-    "Time Management: [Pacing guides and transition strategies]\n" +
-    "Technology Integration: [Specific tools with setup instructions]\n" +
-    "Assessment Tools: [Rubrics, checklists, observation protocols]\n\n" +
+    "Materials List: [Complete inventory with exact quantities, specific sources, approximate costs, storage solutions, and preparation requirements]\n" +
+    "Room Setup: [Detailed arrangements for different activities with specific furniture placement, traffic flow, and accessibility considerations]\n" +
+    "Time Management: [Specific pacing guides, transition strategies, timer usage, and flexibility protocols]\n" +
+    "Technology Integration: [Detailed setup instructions, troubleshooting procedures, and alternative options]\n" +
+    "Assessment Tools: [Specific rubrics, checklists, observation protocols, and documentation systems]\n\n" +
     "## MTSS Supports:\n" +
-    "Tier 1 (All Students): [Specific universal design features with implementation details]\n" +
-    "Tier 2 (Targeted Support): [Specific interventions with when/how to implement]\n" +
-    "Tier 3 (Intensive Support): [Specific accommodations with documentation requirements]\n\n" +
+    "Tier 1 (All Students): [Detailed universal design features with specific implementation procedures, timing, and effectiveness monitoring]\n" +
+    "Tier 2 (Targeted Support): [Specific interventions with detailed when-to-implement criteria, procedures, progress monitoring, and adjustment protocols]\n" +
+    "Tier 3 (Intensive Support): [Detailed intensive accommodations with specific implementation procedures, documentation requirements, and collaboration protocols]\n\n" +
     "## Extensions and Connections:\n" +
-    "Advanced Learners: [Specific acceleration options]\n" +
-    "Community Connections: [Real partnerships or outreach opportunities]\n" +
-    "Home-School Bridge: [Family engagement options that respect diverse family structures]\n\n" +
+    "Advanced Learners: [Specific acceleration options with detailed procedures and assessment criteria]\n" +
+    "Community Connections: [Detailed real partnerships or outreach opportunities with specific contact procedures and logistics]\n" +
+    "Home-School Bridge: [Specific family engagement options that respect diverse family structures with detailed communication strategies]\n\n" +
     "## Standards Alignment:\n" +
-    "[Specific citation for each subject with explanation of how the lesson addresses it]\n\n" +
+    "[Detailed citation for each subject with comprehensive explanation of how each lesson component specifically addresses the standard]\n\n" +
     "---\n\n" +
-    "GENERATE ALL " + days + " DAYS WITH AUTHENTIC CROSS-CURRICULAR INTEGRATION. ENSURE EVERY SELECTED SUBJECT IS MEANINGFULLY WOVEN THROUGHOUT EACH DAY.\n\n" +
+    "GENERATE ALL " + days + " DAYS with this level of comprehensive detail. Every day must include authentic cross-curricular integration with specific examples of how each subject contributes to student understanding.\n\n" +
     "## ESSENTIAL RESOURCE APPENDIX\n\n" +
     "### A. DALL-E IMAGE PROMPTS\n" +
-    "**Visual 1:** \"[2-sentence prompt with colors, style, educational elements]\"\n" +
-    "**Visual 2:** \"[2-sentence prompt with colors, style, educational elements]\"\n" +
-    "[Include for each visual mentioned in lessons]\n\n" +
+    "Provide copy-paste ready prompts for all visual resources mentioned:\n" +
+    "**Visual Resource 1:** \"[2-3 sentence detailed prompt with specific colors, composition, educational elements, and style specifications]\"\n" +
+    "**Visual Resource 2:** \"[2-3 sentence detailed prompt with specific colors, composition, educational elements, and style specifications]\"\n" +
+    "[Continue for each visual mentioned in lessons]\n\n" +
     "### B. KEY MATERIALS PROCUREMENT\n" +
-    "**Material 1:** Qty: [number] | Cost: $[range] | Source: [store] | Storage: [method] | Alternative: [cheaper option]\n" +
-    "**Material 2:** [same format]\n" +
-    "[Continue for essential materials]\n\n" +
+    "**Material 1:** Qty: [exact number] | Cost: $[specific range] | Source: [specific stores/websites] | Storage: [detailed method] | Alternative: [specific cheaper option]\n" +
+    "**Material 2:** [same detailed format]\n" +
+    "[Continue for all essential materials with specific procurement details]\n\n" +
     "### C. ASSESSMENT RUBRIC\n" +
     "| Criteria | 4-Exceeding | 3-Meeting | 2-Approaching | 1-Beginning |\n" +
     "|----------|-------------|-----------|---------------|-------------|\n" +
-    "| [Key criteria] | [Brief description] | [Brief description] | [Brief description] | [Brief description] |\n\n" +
-    "**Total Budget:** $[range] | **Per Student:** $[range] | **Setup Time:** [timeline]\n\n" +
-    "PRIORITIZE: Maintain full lesson detail, include essential practical resources for immediate implementation.";
+    "| [Specific criteria] | [Detailed description] | [Detailed description] | [Detailed description] | [Detailed description] |\n" +
+    "[Include multiple criteria rows with comprehensive descriptions]\n\n" +
+    "**Total Budget:** $[specific range] | **Per Student:** $[specific range] | **Setup Time:** [detailed timeline]\n\n" +
+    "GENERATE with the same comprehensive detail and practical specificity that made the earlier lesson plans exceptional.";
 }
 
 export async function POST(req: NextRequest) {
