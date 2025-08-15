@@ -1,679 +1,395 @@
 'use client';
 
-import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-
-type Tab = 'generator' | 'results';
+import { useState } from 'react';
 
 export default function HomePage() {
-  // UI state
-  const [tab, setTab] = useState<Tab>('generator');
-
-  // Form state
+  const [unitTitle, setUnitTitle] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
-  const [duration, setDuration] = useState('3');
-  const [unitTitle, setUnitTitle] = useState('');
   const [standards, setStandards] = useState('');
   const [focus, setFocus] = useState('');
-
-  // Gen state
+  const [days, setDays] = useState('');
+  const [lessonPlan, setLessonPlan] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [lessonPlan, setLessonPlan] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [generationStatus, setGenerationStatus] = useState('');
-  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(0);
+  const [progress, setProgress] = useState(0);
 
-  // Helpers
-  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const values = Array.from(e.target.selectedOptions).map((o) => o.value);
-    setSubjects(values);
+  const statusMessages = [
+    "Analyzing your standards and objectives...",
+    "Integrating trauma-informed pedagogical approaches...",
+    "Crafting interdisciplinary connections...",
+    "Developing engagement strategies...",
+    "Creating assessment frameworks...",
+    "Building resource materials...",
+    "Finalizing implementation guidance...",
+    "Almost ready - polishing your lesson plan..."
+  ];
+
+  const simulateProgress = (duration: number) => {
+    const interval = 15000; // Update every 15 seconds
+    const steps = Math.floor(duration / interval);
+    let currentStep = 0;
+
+    const progressInterval = setInterval(() => {
+      if (currentStep < steps) {
+        const progressPercent = ((currentStep + 1) / steps) * 100;
+        setProgress(Math.min(progressPercent, 95)); // Never quite reach 100% until complete
+        
+        if (currentStep < statusMessages.length) {
+          setGenerationStatus(statusMessages[currentStep]);
+        }
+        currentStep++;
+      } else {
+        setGenerationStatus("Almost ready - polishing your lesson plan...");
+        clearInterval(progressInterval);
+      }
+    }, interval);
+
+    return progressInterval;
   };
 
-  const handleDownloadPDF = async () => {
-    if (!lessonPlan) return;
-    
-    const payload = {
-      gradeLevel,
-      subjects,
-      duration: parseInt(duration, 10),
-      days: parseInt(duration, 10),
-      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
-      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
-      focus: focus || 'None specified'
-    };
-
-    try {
-      setIsLoading(true);
-      setGenerationStatus('Preparing your download...');
-      
-      // Create HTML content for PDF
-      const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>${unitTitle || 'Rootwork Lesson Plan'}</title>
-    <style>
-        body { 
-            font-family: 'Times New Roman', serif; 
-            margin: 1in; 
-            line-height: 1.6; 
-            font-size: 12pt;
-        }
-        h1 { 
-            color: #2c5f2d; 
-            border-bottom: 2px solid #2c5f2d; 
-            page-break-before: avoid;
-        }
-        h2 { 
-            color: #4a7c59; 
-            margin-top: 1.5em; 
-            page-break-after: avoid;
-        }
-        h3 { 
-            color: #5a8a6a; 
-            margin-top: 1.2em;
-            page-break-after: avoid;
-        }
-        .header-info {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        .teacher-note { 
-            background-color: #e8f5e8; 
-            padding: 8px 12px; 
-            margin: 8px 0; 
-            border-left: 4px solid #2c5f2d; 
-            font-style: italic;
-            page-break-inside: avoid;
-        }
-        .student-note { 
-            background-color: #e3f2fd; 
-            padding: 8px 12px; 
-            margin: 8px 0; 
-            border-left: 4px solid #1976d2; 
-            font-weight: bold;
-            page-break-inside: avoid;
-        }
-        .day-section {
-            page-break-before: auto;
-            margin-bottom: 30px;
-        }
-        .lesson-component {
-            margin-bottom: 20px;
-            page-break-inside: avoid;
-        }
-        pre {
-            white-space: pre-wrap;
-            font-family: inherit;
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-        }
-        @media print {
-            body { margin: 0.5in; font-size: 11pt; }
-            .no-print { display: none; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header-info">
-        <h1>🌱 ${unitTitle || 'Rootwork Lesson Plan'}</h1>
-        <p><strong>Rootwork Framework: Trauma-Informed STEAM Lesson Plan</strong></p>
-        <p><strong>Grade Level:</strong> ${gradeLevel}</p>
-        <p><strong>Subject(s):</strong> ${subjects.join(', ')}</p>
-        <p><strong>Duration:</strong> ${duration} days (${parseInt(duration) * 90} minutes total)</p>
-        ${standards ? `<p><strong>Standards:</strong> ${standards}</p>` : ''}
-        ${focus ? `<p><strong>Focus:</strong> ${focus}</p>` : ''}
-    </div>
-    
-    <div class="lesson-content">
-        ${lessonPlan.split('\n').map(line => {
-          // Convert markdown-style formatting to HTML
-          let htmlLine = line
-            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\[Teacher Note: (.*?)\]/g, '<div class="teacher-note"><strong>Teacher Note:</strong> $1</div>')
-            .replace(/\[Student Note: (.*?)\]/g, '<div class="student-note"><strong>Student Note:</strong> $1</div>');
-          
-          // Handle paragraphs
-          if (htmlLine.trim() && !htmlLine.includes('<h') && !htmlLine.includes('<div')) {
-            htmlLine = `<p>${htmlLine}</p>`;
-          }
-          
-          return htmlLine;
-        }).join('')}
-    </div>
-</body>
-</html>`;
-
-      // Create and download the file
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${(unitTitle || 'rootwork-lesson-plan').replace(/[^a-zA-Z0-9]/g, '_')}_RootworkFramework.html`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      alert('✅ Lesson plan downloaded as HTML! You can open this file and print to PDF from your browser.');
-    } catch (err: any) {
-      setError(`Download failed: ${err?.message || 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-      setGenerationStatus('');
+  const generateLessonPlan = async () => {
+    if (!unitTitle || !gradeLevel || subjects.length === 0 || !days) {
+      alert('Please fill in all required fields');
+      return;
     }
-  };
 
-  const handleGeneratePlan: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
-
-    setError(null);
-
-    // basic validations
-    if (!gradeLevel) return setError('Please select a grade level.');
-    if (subjects.length === 0) return setError('Please select at least one subject.');
-
-    // Build the correct payload format that matches your API expectations
-    const payload = {
-      gradeLevel,
-      subjects,
-      duration: parseInt(duration, 10), // Convert to number
-      days: parseInt(duration, 10), // Also send as days for compatibility
-      unitTitle: unitTitle || 'Rooted in Me: Exploring Culture, Identity, and Expression',
-      standards: standards || 'Please align with relevant standards (CCSS/NGSS/etc.)',
-      focus: focus || 'None specified'
-    };
+    setIsLoading(true);
+    setGenerationStatus("Analyzing your standards and objectives...");
+    setProgress(0);
+    
+    // Estimate duration based on number of days (roughly 60 seconds per day)
+    const estimatedDuration = Math.max(parseInt(days) * 60000, 120000); // Minimum 2 minutes
+    const progressInterval = simulateProgress(estimatedDuration);
 
     try {
-      setIsLoading(true);
-      setGenerationStatus('Initializing lesson plan generation...');
-      setEstimatedTimeRemaining(parseInt(duration, 10) * 60); // Estimate 60 seconds per day
-
-      // Progress simulation with encouraging messages
-      const progressMessages = [
-        'Analyzing your standards and objectives...',
-        'Integrating trauma-informed pedagogical approaches...',
-        'Crafting interdisciplinary connections...',
-        'Designing engaging student activities...',
-        'Creating teacher implementation guidance...',
-        'Developing assessment strategies...',
-        'Generating resource materials and handouts...',
-        'Finalizing your comprehensive lesson plan...'
-      ];
-
-      let currentMessage = 0;
-      const progressInterval = setInterval(() => {
-        if (currentMessage < progressMessages.length - 1) {
-          setGenerationStatus(progressMessages[currentMessage]);
-          currentMessage++;
-        }
-        setEstimatedTimeRemaining(prev => Math.max(0, prev - 15));
-      }, 15000); // Update every 15 seconds
-
-      const res = await fetch('/api/generatePlan', {
+      const response = await fetch('/api/generate-lesson-plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload), // Send the structured data, not a text prompt
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          unitTitle,
+          gradeLevel,
+          subjects,
+          standards,
+          focus,
+          days: parseInt(days),
+        }),
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to generate lesson plan');
+      }
+
+      const data = await response.json();
+      
       clearInterval(progressInterval);
+      setProgress(100);
+      setGenerationStatus("Complete! Your lesson plan is ready.");
+      
+      setTimeout(() => {
+        setLessonPlan(data.lessonPlan);
+      }, 500);
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-
-      const data = (await res.json()) as { 
-        ok?: boolean;
-        plan?: any; 
-        markdown?: string;
-        lessonPlan?: any; 
-        error?: string 
-      };
-
-      // Handle the new API response format
-      let markdown = '';
-      if (data?.plan?.markdown) {
-        markdown = data.plan.markdown;
-      } else if (data?.markdown) {
-        markdown = data.markdown;
-      } else if (data?.lessonPlan) {
-        // Handle if lessonPlan is a string
-        markdown = typeof data.lessonPlan === 'string' ? data.lessonPlan : JSON.stringify(data.lessonPlan, null, 2);
-      } else {
-        throw new Error(data?.error || 'Empty response from generator');
-      }
-
-      setLessonPlan(markdown);
-      setTab('results');
-      setGenerationStatus('');
-    } catch (err: any) {
-      setError(err?.message || 'Failed to generate lesson plan.');
+    } catch (error) {
+      console.error('Error generating lesson plan:', error);
+      clearInterval(progressInterval);
+      setGenerationStatus("There was an error generating your lesson plan. Please try again.");
+      alert('Failed to generate lesson plan. Please try again.');
     } finally {
       setIsLoading(false);
-      setGenerationStatus('');
-      setEstimatedTimeRemaining(0);
+      setTimeout(() => {
+        setGenerationStatus('');
+        setProgress(0);
+      }, 3000);
     }
   };
 
-  const heading = (
-    <header className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-emerald-600 to-purple-700" />
-      <div className="relative container mx-auto px-6 py-14 text-white">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm ring-1 ring-white/20 backdrop-blur">
-            <span>🌱</span>
-            <span className="font-medium">Root Work Framework</span>
-          </div>
-          <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight">
-            Healing-Centered Lesson Design
+  const downloadLessonPlan = async () => {
+    if (!lessonPlan) return;
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch('/api/download-lesson-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: lessonPlan,
+          unitTitle,
+          gradeLevel,
+          subjects,
+          days,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate download');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${unitTitle.replace(/[^a-zA-Z0-9]/g, '_')}_${gradeLevel}_${days}Day_RootworkFramework.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading lesson plan:', error);
+      alert('Failed to download lesson plan. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+            🌱 Rootwork Curriculum Framework
           </h1>
-          <p className="mt-3 text-white/90 max-w-3xl mx-auto">
-            S.T.E.A.M. Powered, Trauma Informed, Project Based lesson planning for real classrooms.
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Generate trauma-informed, culturally responsive lesson plans that integrate social justice, environmental awareness, and interdisciplinary learning.
           </p>
         </div>
-      </div>
-    </header>
-  );
 
-  // --- UI ---
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-purple-50">
-      {heading}
-
-      <main className="container mx-auto px-6 pt-8 pb-16">
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6 md:p-8">
-          {tab === 'generator' && (
-            <form onSubmit={handleGeneratePlan}>
-              {isLoading && (
-                <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mr-3"></div>
-                    <div className="text-emerald-800 font-semibold text-lg">
-                      Generating Your Comprehensive Lesson Plan
-                    </div>
-                  </div>
-                  
-                  <div className="text-center mb-4">
-                    <div className="text-emerald-700 text-base mb-2">
-                      {generationStatus || 'Preparing your lesson plan...'}
-                    </div>
-                    <div className="text-emerald-600 text-sm">
-                      {estimatedTimeRemaining > 0 ? (
-                        `Estimated time remaining: ${Math.ceil(estimatedTimeRemaining / 60)} minute${Math.ceil(estimatedTimeRemaining / 60) !== 1 ? 's' : ''}`
-                      ) : (
-                        'Almost ready...'
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-emerald-100 rounded-full h-2 mb-4">
-                    <div 
-                      className="bg-emerald-600 h-2 rounded-full transition-all duration-500 ease-out"
-                      style={{ 
-                        width: estimatedTimeRemaining > 0 ? 
-                          `${Math.max(10, 100 - (estimatedTimeRemaining / (parseInt(duration, 10) * 60)) * 100)}%` : 
-                          '95%' 
-                      }}
-                    ></div>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="text-emerald-600 text-sm font-medium mb-2">
-                      🌱 Creating trauma-informed, interdisciplinary content just for you
-                    </div>
-                    <div className="text-emerald-500 text-xs">
-                      This comprehensive lesson plan will include detailed implementation guidance,
-                      resource materials, and assessment tools ready for your classroom.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {error && (
-                <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
-                  {error}
-                </div>
-              )}
-
-              <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
-                <h3 className="text-lg font-bold mb-1">🌱 Root Work Framework</h3>
-                <p>Trauma-informed, culturally responsive, GRR-aligned planning—beautiful and practical.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Grade Level *</label>
-                  <select
-                    value={gradeLevel}
-                    onChange={(e) => setGradeLevel(e.target.value)}
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="">Select Grade</option>
-                    {['Kindergarten', ...Array.from({ length: 12 }, (_, i) => `${i + 1}${[1, 2, 3].includes(i + 1) ? (i + 1 === 1 ? 'st' : i + 1 === 2 ? 'nd' : 'rd') : 'th'} Grade`)].map(
-                      (g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Duration *</label>
-                  <select
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  >
-                    {[1, 2, 3, 4, 5].map((d) => (
-                      <option key={d} value={String(d)}>
-                        {d} Day{d > 1 ? 's' : ''} ({d * 90} min total)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Unit Title</label>
-                  <input
-                    type="text"
-                    value={unitTitle}
-                    onChange={(e) => setUnitTitle(e.target.value)}
-                    placeholder="e.g., Community Storytelling"
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-2 font-semibold text-slate-700">Subject Area(s) *</label>
-                <select
-                  multiple
-                  size={8}
-                  value={subjects}
-                  onChange={handleSubjectChange}
-                  className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 bg-white"
-                  style={{ minHeight: '180px' }}
-                >
-                  {[
-                    'English Language Arts',
-                    'Mathematics',
-                    'Science',
-                    'Social Studies',
-                    'Art',
-                    'Music',
-                    'Physical Education',
-                    'Special Education',
-                    'STEAM',
-                    'Agriculture',
-                    'Career and Technical Education',
-                  ].map((s) => (
-                    <option key={s} value={s} className="p-2 hover:bg-emerald-50">
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <div className="text-sm text-slate-500 mt-2">
-                  <strong>Hold Ctrl (PC) or Cmd (Mac)</strong> while clicking to select multiple subjects.
-                  <br />
-                  <strong>Selected:</strong> {subjects.length > 0 ? subjects.join(', ') : 'None'}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Standards Alignment</label>
-                  <textarea
-                    rows={3}
-                    value={standards}
-                    onChange={(e) => setStandards(e.target.value)}
-                    placeholder="Enter relevant state standards or learning objectives…"
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 font-semibold text-slate-700">Additional Focus Areas</label>
-                  <textarea
-                    rows={3}
-                    value={focus}
-                    onChange={(e) => setFocus(e.target.value)}
-                    placeholder="Special accommodations, therapeutic goals, etc."
-                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 text-lg font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Generating Lesson Plan...
-                  </span>
-                ) : (
-                  'Generate Comprehensive Lesson Plan'
-                )}
-              </button>
-            </form>
-          )}
-
-          {tab === 'results' && (
-            <div>
-              {error && (
-                <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{error}</div>
-              )}
-
-              {/* Simple top actions - ONLY New Plan and Download */}
-              <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between mb-6">
-                <div className="flex gap-3">
-                  <button
-                    className="px-6 py-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 font-semibold transition"
-                    onClick={() => setTab('generator')}
-                  >
-                    New Plan
-                  </button>
-                  <button
-                    className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-500 font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
-                    onClick={handleDownloadPDF}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Preparing Download...
-                      </span>
-                    ) : (
-                      'Download PDF/DOC'
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Enhanced lesson plan display with better styling */}
-              <div className="lesson-plan-container bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
-                <div 
-                  className="prose prose-lg max-w-none 
-                    prose-headings:text-emerald-800 
-                    prose-h1:text-2xl prose-h1:font-bold prose-h1:border-b prose-h1:border-emerald-200 prose-h1:pb-2
-                    prose-h2:text-xl prose-h2:font-semibold prose-h2:text-emerald-700 prose-h2:mt-8 prose-h2:mb-4
-                    prose-h3:text-lg prose-h3:font-medium prose-h3:text-emerald-600 prose-h3:mt-6 prose-h3:mb-3
-                    prose-p:leading-relaxed prose-p:mb-4
-                    prose-ul:ml-6 prose-ol:ml-6
-                    prose-li:mb-2
-                    prose-strong:text-gray-900
-                    prose-em:text-gray-700"
-                  style={{
-                    /* Custom styles for Teacher and Student Notes */
-                  }}
-                >
-                  <ReactMarkdown 
-                    components={{
-                      // Custom renderer for better formatting
-                      p: ({ children }) => {
-                        const text = children?.toString() || '';
-                        
-                        // Handle Teacher Notes
-                        if (text.includes('[Teacher Note:')) {
-                          return (
-                            <div className="teacher-note bg-emerald-50 border-l-4 border-emerald-500 p-4 my-4 rounded-r-lg">
-                              <div className="font-semibold text-emerald-800 text-sm mb-1">👩‍🏫 Teacher Note:</div>
-                              <div className="text-emerald-700 italic">{text.replace(/\[Teacher Note:\s*/, '').replace(/\]$/, '')}</div>
-                            </div>
-                          );
-                        }
-                        
-                        // Handle Student Notes
-                        if (text.includes('[Student Note:')) {
-                          return (
-                            <div className="student-note bg-blue-50 border-l-4 border-blue-500 p-4 my-4 rounded-r-lg">
-                              <div className="font-semibold text-blue-800 text-sm mb-1">🎓 Student Note:</div>
-                              <div className="text-blue-700 font-medium">{text.replace(/\[Student Note:\s*/, '').replace(/\]$/, '')}</div>
-                            </div>
-                          );
-                        }
-
-                        // Handle simple table formatting (for rubrics)
-                        if (text.includes('|') && text.includes('---')) {
-                          const lines = text.split('\n');
-                          const tableLines = lines.filter(line => line.includes('|'));
-                          
-                          if (tableLines.length > 1) {
-                            const headerRow = tableLines[0];
-                            const dataRows = tableLines.slice(2); // Skip header and separator
-                            
-                            return (
-                              <div className="overflow-x-auto my-6">
-                                <table className="min-w-full border-collapse border border-gray-300 bg-white">
-                                  <thead className="bg-emerald-100">
-                                    <tr>
-                                      {headerRow.split('|').map((cell, idx) => (
-                                        <th key={idx} className="border border-gray-300 px-4 py-2 text-left font-semibold text-emerald-800">
-                                          {cell.trim()}
-                                        </th>
-                                      ))}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {dataRows.map((row, rowIdx) => (
-                                      <tr key={rowIdx}>
-                                        {row.split('|').map((cell, cellIdx) => (
-                                          <td key={cellIdx} className="border border-gray-300 px-4 py-2 text-sm">
-                                            {cell.trim()}
-                                          </td>
-                                        ))}
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            );
-                          }
-                        }
-
-                        // Handle Day Headers (look for "DAY 1:", "DAY 2:", etc.)
-                        if (text.match(/^DAY\s+\d+:/i)) {
-                          return (
-                            <div className="day-header bg-gradient-to-r from-emerald-100 to-blue-100 border-2 border-emerald-300 rounded-lg p-6 my-8 shadow-md">
-                              <h1 className="text-3xl font-bold text-emerald-800 mb-2 border-b-2 border-emerald-400 pb-2">
-                                🌱 {text}
-                              </h1>
-                            </div>
-                          );
-                        }
-                        
-                        return <p className="mb-4 leading-relaxed">{children}</p>;
-                      },
-                      
-                      h1: ({ children }) => {
-                        const text = children?.toString() || '';
-                        // If it's a day header, use special styling
-                        if (text.match(/^DAY\s+\d+:/i)) {
-                          return (
-                            <div className="day-header bg-gradient-to-r from-emerald-100 to-blue-100 border-2 border-emerald-300 rounded-lg p-6 my-8 shadow-md">
-                              <h1 className="text-3xl font-bold text-emerald-800 mb-2">
-                                🌱 {children}
-                              </h1>
-                            </div>
-                          );
-                        }
-                        return (
-                          <h1 className="text-3xl font-bold text-emerald-800 border-b-2 border-emerald-200 pb-3 mb-6 mt-8 first:mt-0">
-                            {children}
-                          </h1>
-                        );
-                      },
-                      
-                      h2: ({ children }) => {
-                        const text = children?.toString() || '';
-                        // Special styling for main lesson components
-                        if (text.includes('Opening') || text.includes('Work Session') || text.includes('Closing') || text.includes('I Do')) {
-                          return (
-                            <h2 className="text-2xl font-semibold text-emerald-700 mt-8 mb-4 p-3 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
-                              📚 {children}
-                            </h2>
-                          );
-                        }
-                        return (
-                          <h2 className="text-2xl font-semibold text-emerald-700 mt-8 mb-4 first:mt-0">
-                            {children}
-                          </h2>
-                        );
-                      },
-                      
-                      h3: ({ children }) => (
-                        <h3 className="text-xl font-medium text-emerald-600 mt-6 mb-3 pl-4 border-l-2 border-emerald-300">
-                          🔹 {children}
-                        </h3>
-                      ),
-                      
-                      ul: ({ children }) => (
-                        <ul className="ml-6 mb-4 space-y-2 list-disc">{children}</ul>
-                      ),
-                      
-                      ol: ({ children }) => (
-                        <ol className="ml-6 mb-4 space-y-2 list-decimal">{children}</ol>
-                      ),
-                      
-                      li: ({ children }) => (
-                        <li className="leading-relaxed pl-2">{children}</li>
-                      ),
-
-                      // Handle strong text with special formatting for key terms
-                      strong: ({ children }) => {
-                        const text = children?.toString() || '';
-                        if (text.includes('Materials:') || text.includes('MTSS:') || text.includes('Assessment:')) {
-                          return (
-                            <div className="implementation-detail bg-gray-50 border border-gray-200 rounded p-3 my-3">
-                              <strong className="text-gray-800 font-semibold block mb-1">{children}</strong>
-                            </div>
-                          );
-                        }
-                        return <strong className="font-semibold text-gray-900">{children}</strong>;
-                      },
-                    }}
-                  >
-                    {lessonPlan}
-                  </ReactMarkdown>
-                </div>
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg">
+            <div className="flex items-start">
+              <div className="ml-0">
+                <h3 className="text-sm font-medium text-emerald-800">🧠 Smart AI Assistant</h3>
+                <p className="mt-1 text-sm text-emerald-700">
+                  Our AI understands natural language and collaborative planning! Feel free to use descriptive phrases, 
+                  leave fields blank for smart suggestions, or specify exact requirements. Perfect for team planning sessions.
+                </p>
               </div>
             </div>
-          )}
+          </div>
+          
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="unitTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                Unit Title
+              </label>
+              <input
+                type="text"
+                id="unitTitle"
+                value={unitTitle}
+                onChange={(e) => setUnitTitle(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="e.g., 'Building Communities' or 'Environmental Science Connections'"
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                💡 <strong>Tip:</strong> Use academic language for best results. Collaborative teams can describe interdisciplinary connections naturally.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="gradeLevel" className="block text-sm font-medium text-gray-700 mb-2">
+                Grade Level
+              </label>
+              <select
+                id="gradeLevel"
+                value={gradeLevel}
+                onChange={(e) => setGradeLevel(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                required
+              >
+                <option value="">Select Grade Level</option>
+                <option value="K">Kindergarten</option>
+                <option value="1">1st Grade</option>
+                <option value="2">2nd Grade</option>
+                <option value="3">3rd Grade</option>
+                <option value="4">4th Grade</option>
+                <option value="5">5th Grade</option>
+                <option value="6">6th Grade</option>
+                <option value="7">7th Grade</option>
+                <option value="8">8th Grade</option>
+                <option value="9">9th Grade</option>
+                <option value="10">10th Grade</option>
+                <option value="11">11th Grade</option>
+                <option value="12">12th Grade</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="subjects" className="block text-sm font-medium text-gray-700 mb-2">
+                Subjects <span className="text-emerald-600 font-medium">(Select Multiple for Interdisciplinary Units)</span>
+              </label>
+              <select
+                id="subjects"
+                multiple
+                value={subjects}
+                onChange={(e) => setSubjects(Array.from(e.target.selectedOptions, option => option.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 h-32"
+                required
+              >
+                <option value="English Language Arts">English Language Arts</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="Social Studies">Social Studies</option>
+                <option value="Art">Art</option>
+                <option value="Music">Music</option>
+                <option value="Physical Education">Physical Education</option>
+                <option value="Health">Health</option>
+                <option value="World Languages">World Languages</option>
+                <option value="Career and Technical Education">Career and Technical Education</option>
+                <option value="Special Education">Special Education</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                🤝 <strong>Collaborative Planning:</strong> Hold Ctrl (PC) or Cmd (Mac) and click to select multiple subjects. 
+                Popular combinations: ELA + Social Studies, Science + Math, STEAM Bundle (Science + Art + Math)
+                {subjects.length > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium">
+                    {subjects.length} subject{subjects.length !== 1 ? 's' : ''} selected
+                  </span>
+                )}
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="standards" className="block text-sm font-medium text-gray-700 mb-2">
+                Standards & Learning Objectives
+              </label>
+              <textarea
+                id="standards"
+                value={standards}
+                onChange={(e) => setStandards(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="e.g., 'CCSS.ELA-LITERACY.RST.11-12.7, NGSS.HS-LS2-7' or 'Relevant Georgia ELA and Social Studies standards' or leave blank for AI to suggest appropriate standards"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                🧠 <strong>Smart AI:</strong> You can specify exact standards, describe general areas ("Common Core ELA for grade 8"), or leave blank for AI recommendations. Perfect for collaborative planning across subjects!
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="focus" className="block text-sm font-medium text-gray-700 mb-2">
+                Learning Focus & Approach
+              </label>
+              <textarea
+                id="focus"
+                value={focus}
+                onChange={(e) => setFocus(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="e.g., 'Project-based learning with community connections' or 'STEAM integration focusing on environmental justice' or 'Trauma-informed approach with social-emotional learning'"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                🎯 <strong>Examples:</strong> PBL, STEAM integration, Local history connections, Social justice themes, Trauma-informed practices, Special education accommodations, etc.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="days" className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Days
+              </label>
+              <select
+                id="days"
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                required
+              >
+                <option value="">Select Number of Days</option>
+                <option value="1">1 Day</option>
+                <option value="2">2 Days</option>
+                <option value="3">3 Days</option>
+                <option value="4">4 Days</option>
+                <option value="5">5 Days</option>
+                <option value="6">6 Days</option>
+                <option value="7">7 Days</option>
+                <option value="8">8 Days</option>
+                <option value="9">9 Days</option>
+                <option value="10">10 Days</option>
+              </select>
+            </div>
+
+            <button
+              onClick={generateLessonPlan}
+              disabled={isLoading}
+              className="w-full bg-emerald-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Creating Your Lesson Plan...</span>
+                </>
+              ) : (
+                <>
+                  <span>🌱 Generate Rootwork Lesson Plan</span>
+                </>
+              )}
+            </button>
+
+            {isLoading && (
+              <div className="mt-6 p-6 bg-emerald-50 rounded-lg border border-emerald-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+                  <h3 className="text-lg font-medium text-emerald-800">
+                    Creating trauma-informed, interdisciplinary content just for you
+                  </h3>
+                </div>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-emerald-700 mb-2">
+                    <span>{generationStatus}</span>
+                    <span>{Math.round(progress)}% complete</span>
+                  </div>
+                  <div className="w-full bg-emerald-200 rounded-full h-2">
+                    <div 
+                      className="bg-emerald-600 h-2 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-emerald-600">
+                  This comprehensive lesson plan will include detailed implementation guidance, resource materials, 
+                  and assessment tools ready for your classroom.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </main>
+
+        {lessonPlan && (
+          <div className="mt-8 bg-white rounded-xl shadow-lg p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Generated Lesson Plan</h2>
+              <button
+                onClick={downloadLessonPlan}
+                disabled={isDownloading}
+                className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isDownloading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Preparing Download...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📄 Download as HTML</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <div 
+              className="prose prose-lg max-w-none"
+              dangerouslySetInnerHTML={{ __html: lessonPlan.replace(/\n/g, '<br>') }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
