@@ -21,6 +21,8 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [lessonPlan, setLessonPlan] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [generationStatus, setGenerationStatus] = useState('');
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(0);
 
   // Helpers
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -43,6 +45,7 @@ export default function HomePage() {
 
     try {
       setIsLoading(true);
+      setGenerationStatus('Preparing your download...');
       
       // Create HTML content for PDF
       const htmlContent = `
@@ -166,6 +169,7 @@ export default function HomePage() {
       setError(`Download failed: ${err?.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
+      setGenerationStatus('');
     }
   };
 
@@ -191,11 +195,37 @@ export default function HomePage() {
 
     try {
       setIsLoading(true);
+      setGenerationStatus('Initializing lesson plan generation...');
+      setEstimatedTimeRemaining(parseInt(duration, 10) * 60); // Estimate 60 seconds per day
+
+      // Progress simulation with encouraging messages
+      const progressMessages = [
+        'Analyzing your standards and objectives...',
+        'Integrating trauma-informed pedagogical approaches...',
+        'Crafting interdisciplinary connections...',
+        'Designing engaging student activities...',
+        'Creating teacher implementation guidance...',
+        'Developing assessment strategies...',
+        'Generating resource materials and handouts...',
+        'Finalizing your comprehensive lesson plan...'
+      ];
+
+      let currentMessage = 0;
+      const progressInterval = setInterval(() => {
+        if (currentMessage < progressMessages.length - 1) {
+          setGenerationStatus(progressMessages[currentMessage]);
+          currentMessage++;
+        }
+        setEstimatedTimeRemaining(prev => Math.max(0, prev - 15));
+      }, 15000); // Update every 15 seconds
+
       const res = await fetch('/api/generatePlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload), // Send the structured data, not a text prompt
       });
+
+      clearInterval(progressInterval);
 
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
@@ -225,10 +255,13 @@ export default function HomePage() {
 
       setLessonPlan(markdown);
       setTab('results');
+      setGenerationStatus('');
     } catch (err: any) {
       setError(err?.message || 'Failed to generate lesson plan.');
     } finally {
       setIsLoading(false);
+      setGenerationStatus('');
+      setEstimatedTimeRemaining(0);
     }
   };
 
@@ -261,6 +294,51 @@ export default function HomePage() {
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6 md:p-8">
           {tab === 'generator' && (
             <form onSubmit={handleGeneratePlan}>
+              {isLoading && (
+                <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mr-3"></div>
+                    <div className="text-emerald-800 font-semibold text-lg">
+                      Generating Your Comprehensive Lesson Plan
+                    </div>
+                  </div>
+                  
+                  <div className="text-center mb-4">
+                    <div className="text-emerald-700 text-base mb-2">
+                      {generationStatus || 'Preparing your lesson plan...'}
+                    </div>
+                    <div className="text-emerald-600 text-sm">
+                      {estimatedTimeRemaining > 0 ? (
+                        `Estimated time remaining: ${Math.ceil(estimatedTimeRemaining / 60)} minute${Math.ceil(estimatedTimeRemaining / 60) !== 1 ? 's' : ''}`
+                      ) : (
+                        'Almost ready...'
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-100 rounded-full h-2 mb-4">
+                    <div 
+                      className="bg-emerald-600 h-2 rounded-full transition-all duration-500 ease-out"
+                      style={{ 
+                        width: estimatedTimeRemaining > 0 ? 
+                          `${Math.max(10, 100 - (estimatedTimeRemaining / (parseInt(duration, 10) * 60)) * 100)}%` : 
+                          '95%' 
+                      }}
+                    ></div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-emerald-600 text-sm font-medium mb-2">
+                      🌱 Creating trauma-informed, interdisciplinary content just for you
+                    </div>
+                    <div className="text-emerald-500 text-xs">
+                      This comprehensive lesson plan will include detailed implementation guidance,
+                      resource materials, and assessment tools ready for your classroom.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
                   {error}
@@ -379,9 +457,16 @@ export default function HomePage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 text-lg font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition disabled:opacity-60"
+                className="w-full py-3 text-lg font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Generating…' : 'Generate Comprehensive Lesson Plan'}
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Generating Lesson Plan...
+                  </span>
+                ) : (
+                  'Generate Comprehensive Lesson Plan'
+                )}
               </button>
             </form>
           )}
@@ -402,11 +487,18 @@ export default function HomePage() {
                     New Plan
                   </button>
                   <button
-                    className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-500 font-semibold transition"
+                    className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-500 font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
                     onClick={handleDownloadPDF}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Preparing Download...' : 'Download PDF/DOC'}
+                    {isLoading ? (
+                      <span className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Preparing Download...
+                      </span>
+                    ) : (
+                      'Download PDF/DOC'
+                    )}
                   </button>
                 </div>
               </div>
