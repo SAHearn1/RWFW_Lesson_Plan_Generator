@@ -1,9 +1,9 @@
 // FILE PATH: src/app/api/generatePlan/route.ts
-// This version has the corrected import path for your master prompt.
+// This version has the corrected quality-check logic.
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { masterPrompt } from '../../../masterPrompt'; // THIS LINE IS NOW CORRECTED
+import { masterPrompt } from '../../../masterPrompt';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Validation
     if (!body.gradeLevel || body.gradeLevel === 'Select Grade') {
       return NextResponse.json({ error: 'Please select a valid grade level.' }, { status: 400 });
     }
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Application not configured correctly.' }, { status: 500 });
     }
 
-    // Create a simple user prompt from the form data
     const userPrompt = `
       Please generate a lesson plan with the following specifications:
       - Grade Level: ${body.gradeLevel}
@@ -42,7 +40,7 @@ export async function POST(req: NextRequest) {
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 6000, 
       temperature: 0.3,
-      system: masterPrompt, // Use your original master prompt as the system prompt
+      system: masterPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     });
 
@@ -52,9 +50,12 @@ export async function POST(req: NextRequest) {
       throw new Error('The AI returned an empty response.');
     }
 
-    // --- Quality Validation Logic ---
     const daysRequested = parseInt(String(body.days || 3), 10);
-    const dayHeadersCount = (lessonPlan.match(/# DAY \d+:/gi) || []).length;
+    
+    // --- THIS IS THE CORRECTED LINE ---
+    // It now correctly counts "DAY X:" with or without a "#"
+    const dayHeadersCount = (lessonPlan.match(/DAY \d+:/gi) || []).length;
+    
     const teacherNotesCount = (lessonPlan.match(/\[Teacher Note:/gi) || []).length;
     const studentNotesCount = (lessonPlan.match(/\[Student Note:/gi) || []).length;
     
