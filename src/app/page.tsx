@@ -90,7 +90,7 @@ export default function HomePage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
       
-      const response = await fetch('/api/generate-lesson-plan', {
+      const response = await fetch('/api/generatePlan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,52 +182,108 @@ export default function HomePage() {
 
     setIsDownloading(true);
     try {
-      const response = await fetch('/api/download-lesson-plan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: lessonPlan,
-          unitTitle,
-          gradeLevel,
-          subjects,
-          days,
-        }),
-      });
+      // Create HTML content for download (matching your working implementation)
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${unitTitle || 'Rootwork Lesson Plan'}</title>
+    <style>
+        body { 
+            font-family: 'Times New Roman', serif; 
+            margin: 1in; 
+            line-height: 1.6; 
+            font-size: 12pt;
+        }
+        h1 { 
+            color: #2c5f2d; 
+            border-bottom: 2px solid #2c5f2d; 
+            page-break-before: avoid;
+        }
+        h2 { 
+            color: #4a7c59; 
+            margin-top: 1.5em; 
+            page-break-after: avoid;
+        }
+        h3 { 
+            color: #5a8a6a; 
+            margin-top: 1.2em;
+            page-break-after: avoid;
+        }
+        .header-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .teacher-note { 
+            background-color: #e8f5e8; 
+            padding: 8px 12px; 
+            margin: 8px 0; 
+            border-left: 4px solid #2c5f2d; 
+            font-style: italic;
+            page-break-inside: avoid;
+        }
+        .student-note { 
+            background-color: #e3f2fd; 
+            padding: 8px 12px; 
+            margin: 8px 0; 
+            border-left: 4px solid #1976d2; 
+            font-weight: bold;
+            page-break-inside: avoid;
+        }
+        @media print {
+            body { margin: 0.5in; font-size: 11pt; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-info">
+        <h1>🌱 ${unitTitle || 'Rootwork Lesson Plan'}</h1>
+        <p><strong>Rootwork Framework: Trauma-Informed STEAM Lesson Plan</strong></p>
+        <p><strong>Grade Level:</strong> ${gradeLevel}</p>
+        <p><strong>Subject(s):</strong> ${subjects.join(', ')}</p>
+        <p><strong>Duration:</strong> ${days} days</p>
+        ${standards ? `<p><strong>Standards:</strong> ${standards}</p>` : ''}
+        ${focus ? `<p><strong>Focus:</strong> ${focus}</p>` : ''}
+    </div>
+    
+    <div class="lesson-content">
+        ${lessonPlan.split('\n').map(line => {
+          let htmlLine = line
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\[Teacher Note: (.*?)\]/g, '<div class="teacher-note"><strong>Teacher Note:</strong> $1</div>')
+            .replace(/\[Student Note: (.*?)\]/g, '<div class="student-note"><strong>Student Note:</strong> $1</div>');
+          
+          if (htmlLine.trim() && !htmlLine.includes('<h') && !htmlLine.includes('<div')) {
+            htmlLine = `<p>${htmlLine}</p>`;
+          }
+          
+          return htmlLine;
+        }).join('')}
+    </div>
+</body>
+</html>`;
 
-      if (!response.ok) {
-        throw new Error('Failed to generate download');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Create and download the file
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.style.display = 'none';
       a.href = url;
-      a.download = `${unitTitle.replace(/[^a-zA-Z0-9]/g, '_')}_${gradeLevel}_${days}Day_RootworkFramework.html`;
-      document.body.appendChild(a);
+      a.download = `${(unitTitle || 'rootwork-lesson-plan').replace(/[^a-zA-Z0-9]/g, '_')}_RootworkFramework.html`;
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
     } catch (error) {
       console.error('Error downloading lesson plan:', error);
-      
-      // Enhanced download error handling
-      const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
-      let downloadErrorMessage = '';
-      
-      if (errorMessage.includes('network') || errorMessage.includes('connection')) {
-        downloadErrorMessage = "Network issue detected. Please check your connection and try downloading again.";
-      } else if (errorMessage.includes('timeout')) {
-        downloadErrorMessage = "Download is taking longer than expected. Please try again - your lesson plan is ready!";
-      } else if (errorMessage.includes('server') || errorMessage.includes('500')) {
-        downloadErrorMessage = "Server busy. Please wait a moment and try downloading again.";
-      } else {
-        downloadErrorMessage = "Download failed. Please try again or copy the content manually.";
-      }
-      
-      alert(`📄 Download Error: ${downloadErrorMessage}`);
+      alert('Download failed. Please try again.');
     } finally {
       setIsDownloading(false);
     }
