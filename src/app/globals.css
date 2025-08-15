@@ -26,8 +26,21 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-/* Removed prose styling since @tailwindcss/typography plugin was removed */
-/* If you need text styling, you can add custom CSS here instead */
+/* FILE PATH: src/styles/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for the lesson plan notes */
+@layer components {
+  .teacher-note {
+    @apply bg-emerald-50 border-l-4 border-emerald-600 p-4 my-4 italic text-emerald-900;
+  }
+  .student-note {
+    @apply bg-sky-50 border-l-4 border-sky-600 p-4 my-4 font-semibold text-sky-900;
+  }
+}
 
 .markdown-content {
   line-height: 1.6;
