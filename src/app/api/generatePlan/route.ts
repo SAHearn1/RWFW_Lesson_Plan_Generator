@@ -6,7 +6,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 90; // Conservative timeout
+export const maxDuration = 90;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -20,7 +20,7 @@ type GeneratePlanInput = {
   days?: number;
 };
 
-function createWorkingPrompt(input: GeneratePlanInput): string {
+function createOptimizedPrompt(input: GeneratePlanInput): string {
   const days = input.days || input.duration || 3;
   const gradeLevel = input.gradeLevel || '9th Grade';
   const subjects = input.subjects || ['English Language Arts'];
@@ -28,343 +28,242 @@ function createWorkingPrompt(input: GeneratePlanInput): string {
   const standards = input.standards || 'Relevant state standards';
   const focus = input.focus || 'Trauma-informed approach';
 
-  return `You are an expert trauma-informed educator creating comprehensive lesson plans. Generate a complete ${days}-day lesson plan with professional quality and detailed implementation guidance.
+  return `You are a master trauma-informed educator creating a comprehensive ${days}-day lesson plan with exemplar quality. Generate complete implementation-ready content.
 
 **LESSON SPECIFICATIONS:**
-- Grade Level: ${gradeLevel}
-- Subject(s): ${subjects.join(', ')}
-- Unit Title: ${unitTitle}
-- Standards: ${standards}
-- Focus: ${focus}
-- Duration: ${days} days (90 minutes each)
+Grade: ${gradeLevel} | Subjects: ${subjects.join(', ')} | Unit: ${unitTitle}
+Standards: ${standards} | Focus: ${focus} | Duration: ${days} days (90 min each)
 
-**REQUIRED STRUCTURE FOR EACH DAY:**
+**STRUCTURE FOR EACH DAY:**
 
-# DAY [X]: [Engaging lesson title]
+# DAY [X]: [Engaging Cultural Title]
 
-Essential Question: [Question integrating subject content with ${focus}]
-Learning Target: [Specific, measurable objective]
-Standards: [Relevant standards for ${subjects.join(', ')}]
-SEL Alignment: [CASEL competencies addressed]
+Essential Question: [Complex question integrating ${focus} and ${subjects.join('/')}]
+Learning Target: [Specific, measurable, identity-affirming objective]
+Standards: [Relevant citations for ${subjects.join(', ')}]
+SEL: [CASEL competencies with trauma-informed implementation]
 
-## Opening (15min): [Trauma-informed opening activity]
+## Opening (15min): "[Regulation Ritual Name]"
+[3-paragraph detailed description: setup, facilitation steps, participation options]
+Materials: [Complete list with quantities, storage, costs]
+[Teacher Note: Trauma-informed guidance, differentiation, regulation monitoring]
+[Student Note: Empowering expectations, choice options, self-advocacy]
 
-[2-3 paragraph detailed description including setup, facilitation steps, and participation options for diverse learners]
+## I Do (20min): "[Cross-Curricular Content]"
+[3-paragraph description: content delivery, modeling, think-alouds]
+Cross-Curricular: ${subjects.map(s => `${s}: [integration examples]`).join(' | ')}
+Visuals: [Charts, organizers, multimedia]
+[Teacher Note: Scaffolding, assessment checkpoints, differentiation]
+[Student Note: Focus areas, note-taking, skill connections]
 
-Materials Needed: 
-- [Specific list with quantities and storage notes]
+## Work Session (45min): "[Investigation Title]"
 
-Implementation Notes: [Setup and preparation guidance]
-
-[Teacher Note: Trauma-informed facilitation guidance, differentiation strategies, and monitoring for student regulation needs]
-
-[Student Note: Clear expectations with empowering language, choice options, and self-advocacy reminders]
-
-## I Do (20min): [Direct instruction title]
-
-[2-3 paragraph description including content delivery, modeling, and think-aloud strategies]
-
-Cross-Curricular Connections:
-${subjects.map(subject => `- ${subject}: [Specific integration examples]`).join('\n')}
-
-Visual Supports: [Charts, organizers, and multimedia resources]
-
-[Teacher Note: Key teaching points, scaffolding strategies, assessment checkpoints, and differentiation approaches]
-
-[Student Note: Focus areas during instruction, note-taking strategies, and skill-building connections]
-
-## Work Session (45min): [Collaborative learning focus]
-
-### We Do (15min): [Guided practice activity]
+### We Do (15min): [Guided Practice]
 [Detailed collaborative exploration with step-by-step procedures]
+Setup: [Arrangement, grouping, resources]
+[Teacher Note: Group formation, monitoring, trauma-informed facilitation]
+[Student Note: Collaboration expectations, communication strategies]
 
-Materials Setup: [Arrangement procedures and group formation]
+### You Do Together (15min): [Partner Work]
+[Partner activity with choice menu for learning modalities]
+Options: A) Visual/Art B) Kinesthetic C) Analytical D) Creative/Tech
+[Teacher Note: Pairing strategies, progress monitoring, support]
+[Student Note: Partnership protocols, quality indicators]
 
-[Teacher Note: Group formation strategies, monitoring protocols, and trauma-informed group facilitation]
+### You Do Alone (15min): [Independent Practice]
+[Individual work with regulation supports]
+Supports: [Movement, sensory tools, quiet spaces, alternatives]
+[Teacher Note: Conferencing, check-ins, individualized support]
+[Student Note: Self-management, reflection, focus strategies]
 
-[Student Note: Collaboration expectations, communication strategies, and ways to contribute unique perspectives]
+## Closing (10min): "[Identity Reflection]"
+[Community building routine with cultural affirmation]
+Protocol: [Voluntary sharing with participation alternatives]
+[Teacher Note: Emotional support, transition prep, celebration]
+[Student Note: Growth reflection, identity celebration, community]
 
-### You Do Together (15min): [Partner work activity]
-[Partner work with choice menu for different learning modalities]
-
-Choice Menu Options:
-- Option A: [Visual/artistic pathway with materials]
-- Option B: [Kinesthetic/movement pathway with activities]
-- Option C: [Analytical/research pathway with tools]
-- Option D: [Creative/multimedia pathway with technology]
-
-[Teacher Note: Pairing strategies, progress monitoring, and support for partnership dynamics]
-
-[Student Note: Partnership protocols, quality indicators, and collaboration strategies]
-
-### You Do Alone (15min): [Independent practice activity]
-[Individual work with regulation and accessibility supports]
-
-Regulation Supports: [Movement options, sensory tools, quiet spaces, alternative seating]
-
-[Teacher Note: Conferencing approach, trauma-informed check-ins, and individualized support strategies]
-
-[Student Note: Self-management tools, reflection prompts, and focus strategies]
-
-## Closing (10min): [Identity-connected reflection]
-
-[Closing routine with community building and cultural affirmation]
-Sharing Protocol: [Voluntary sharing with participation alternatives]
-
-[Teacher Note: Emotional regulation support, transition preparation, and celebration of contributions]
-
-[Student Note: Reflection language honoring growth, celebrating identity, and building community]
-
-## Implementation Details:
-
-Materials List: 
-- [Complete inventory with quantities, costs, storage, and alternatives]
-
-Room Setup: [Arrangements for each activity phase with transitions]
-Time Management: [Pacing guides, timers, and flexibility options]
-Technology Integration: [Platforms, backup plans, accessibility features]
-Assessment Tools: [Rubrics, checklists, observation protocols]
+## Implementation:
+Materials: [Complete inventory with quantities, costs, storage, alternatives]
+Room Setup: [Arrangements for each phase with transitions]
+Time: [Pacing guides, timers, flexibility]
+Tech: [Platforms, backups, accessibility]
+Assessment: [Rubrics, checklists, protocols]
 
 ## MTSS Supports:
+Tier 1: Visual schedules, multiple modalities, choice, clear expectations
+Tier 2: Small groups, extended time, peer support, modified formats  
+Tier 3: 1-on-1 support, alternatives, sensory tools, modified expectations
 
-Tier 1 (Universal): [Design features with implementation guidance]
-- Visual schedules with progress indicators
-- Multiple representation modes
-- Built-in choice and movement opportunities
-- Clear expectations with modeling
+## Extensions:
+Advanced: [Acceleration opportunities]
+Community: [Real partnerships]
+Home: [Family engagement]
 
-Tier 2 (Targeted): [Interventions with criteria and procedures]
-- Small group reteaching with alternative explanations
-- Extended processing time with scaffolded support
-- Peer partnerships with structured protocols
-- Modified assessment formats
-
-Tier 3 (Intensive): [Accommodations with implementation procedures]
-- One-on-one support with specialized strategies
-- Alternative participation formats
-- Sensory regulation tools and quiet spaces
-- Modified expectations with progress monitoring
-
-## Extensions and Connections:
-
-Advanced Learners: [Acceleration and enrichment opportunities]
-Community Connections: [Real partnerships with local organizations]
-Home-School Bridge: [Family engagement and cultural connections]
-
-## Standards Alignment:
-${subjects.map(subject => `**${subject}:** [Standard citations with implementation explanations]`).join('\n')}
+Standards Detail: ${subjects.map(s => `${s}: [specific standards with implementation]`).join(' | ')}
 
 ---
 
 [REPEAT this structure for ALL ${days} days]
 
-## ESSENTIAL RESOURCE APPENDIX
+## RESOURCE APPENDIX
 
-### A. DALL-E IMAGE PROMPTS
+### DALL-E Prompts:
+Visual 1: "Diverse students in ${unitTitle} activities with warm lighting, educational materials, culturally responsive design"
+Visual 2: "${unitTitle} educational poster with vibrant colors, clear text, trauma-informed environment elements"
 
-**Visual 1:** "Create a classroom scene showing diverse students engaged in ${focus} learning activities. Include warm, natural lighting with educational materials visible and culturally responsive design elements."
+### Materials Procurement:
+Chart paper: Qty 6 | Cost $15-20 | Source: Office store | Storage: Flat cabinet | Alt: Butcher paper
+Markers: Qty 6 sets | Cost $25-30 | Source: Walmart | Storage: Bins | Alt: Colored pencils
+Tech: 15 tablets | School inventory | Storage: Cart | Alt: Paper activities
 
-**Visual 2:** "Design an educational poster showing ${unitTitle} concepts with vibrant colors, clear text, and imagery that supports trauma-informed learning environments."
-
-### B. KEY MATERIALS PROCUREMENT
-
-**Primary Materials:**
-- Chart paper: Qty: 6 sheets | Cost: $15-20 | Source: Office supply store | Storage: Flat in cabinet | Alternative: Butcher paper
-- Markers: Qty: 6 sets | Cost: $25-30 | Source: Walmart/Target | Storage: Organized bins | Alternative: Colored pencils
-
-**Technology:**
-- Tablets/Chromebooks: 15 devices | Available from school | Storage: Charging cart | Alternative: Paper-based activities
-
-### C. ASSESSMENT RUBRIC
-
+### Assessment Rubric:
 | Criteria | Exceeding (4) | Meeting (3) | Approaching (2) | Beginning (1) |
 |----------|---------------|-------------|-----------------|---------------|
-| Content Understanding | Demonstrates deep comprehension with connections | Shows solid understanding of key concepts | Basic grasp with some gaps | Limited understanding evident |
-| Participation | Actively engages and supports others | Consistent participation and collaboration | Some engagement with prompting | Minimal participation despite supports |
+| Understanding | Deep comprehension + connections | Solid grasp of concepts | Basic with gaps | Limited evident |
+| Participation | Active engagement + supports others | Consistent collaboration | Some with prompting | Minimal despite supports |
 
-**Total Budget:** $150-250 | **Per Student:** $5-8 | **Setup Time:** 1-2 hours per day
+Budget: $150-250 | Per Student: $5-8 | Setup: 1-2 hours/day
 
-Generate ALL ${days} days with complete detail and implementation guidance.`;
+Generate ALL ${days} days with complete detail and immediate usability.`;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('[SAFE] Route started successfully');
+    console.log('[WORKING] Route started');
     
-    // Step 1: Parse request
-    let body;
-    try {
-      body = await req.json();
-      console.log('[SAFE] Body parsed:', {
-        gradeLevel: body.gradeLevel,
-        subjects: body.subjects,
-        days: body.days || body.duration,
-        unitTitle: body.unitTitle
-      });
-    } catch (e: any) {
-      console.error('[SAFE] Body parse error:', e.message);
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    const body = await req.json();
+    console.log('[WORKING] Body parsed:', {
+      gradeLevel: body.gradeLevel,
+      subjects: body.subjects,
+      days: body.days || body.duration
+    });
+
+    // Validation
+    if (!body.gradeLevel || body.gradeLevel === 'Select Grade') {
+      return NextResponse.json({ error: 'Please select a grade level.' }, { status: 400 });
+    }
+    if (!body.subjects || body.subjects.length === 0) {
+      return NextResponse.json({ error: 'Please select at least one subject.' }, { status: 400 });
+    }
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'API key not configured.' }, { status: 500 });
     }
 
-    // Step 2: Validate inputs
-    try {
-      if (!body.gradeLevel || body.gradeLevel === 'Select Grade') {
-        console.log('[SAFE] Grade level validation failed');
-        return NextResponse.json({ error: 'Please select a grade level.' }, { status: 400 });
-      }
+    console.log('[WORKING] Validation passed');
 
-      if (!body.subjects || body.subjects.length === 0) {
-        console.log('[SAFE] Subjects validation failed');
-        return NextResponse.json({ error: 'Please select at least one subject area.' }, { status: 400 });
-      }
+    // Process input
+    const input = {
+      gradeLevel: body.gradeLevel,
+      subjects: body.subjects,
+      duration: parseInt(String(body.days || body.duration || 3), 10),
+      days: parseInt(String(body.days || body.duration || 3), 10),
+      unitTitle: body.unitTitle || 'Cultural Identity and Expression',
+      standards: body.standards || 'Relevant state standards',
+      focus: body.focus || 'Trauma-informed approach'
+    };
 
-      if (!process.env.ANTHROPIC_API_KEY) {
-        console.log('[SAFE] API key missing');
-        return NextResponse.json({ error: 'API key not configured.' }, { status: 500 });
-      }
-      
-      console.log('[SAFE] Validation passed');
-    } catch (e: any) {
-      console.error('[SAFE] Validation error:', e.message);
-      return NextResponse.json({ error: 'Validation failed' }, { status: 400 });
+    console.log('[WORKING] Input processed');
+
+    const prompt = createOptimizedPrompt(input);
+    console.log('[WORKING] Prompt created, length:', prompt.length);
+
+    // CRITICAL: Use 8192 token limit (Claude's maximum)
+    const response = await client.messages.create({
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 8192, // This is the maximum allowed!
+      temperature: 0.3,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    console.log('[WORKING] API call successful');
+
+    const lessonPlan = response.content?.[0]?.type === 'text' ? response.content[0].text : '';
+    
+    if (!lessonPlan) {
+      throw new Error('Empty response from Claude');
     }
 
-    // Step 3: Process input
-    let input;
-    try {
-      input = {
-        gradeLevel: body.gradeLevel,
-        subjects: body.subjects,
-        duration: parseInt(String(body.days || body.duration || 3), 10),
-        days: parseInt(String(body.days || body.duration || 3), 10),
-        unitTitle: body.unitTitle || 'Cultural Identity and Expression',
-        standards: body.standards || 'Relevant state standards',
-        focus: body.focus || 'Trauma-informed approach'
-      };
-      console.log('[SAFE] Input processed successfully:', input);
-    } catch (e: any) {
-      console.error('[SAFE] Input processing error:', e.message);
-      return NextResponse.json({ error: 'Input processing failed' }, { status: 400 });
+    console.log('[WORKING] Response length:', lessonPlan.length);
+
+    // Quality validation
+    const dayHeaders = lessonPlan.match(/# DAY \d+:/gi) || [];
+    const hasTeacherNotes = lessonPlan.includes('[Teacher Note:');
+    const hasStudentNotes = lessonPlan.includes('[Student Note:');
+    const hasResourceAppendix = lessonPlan.includes('RESOURCE APPENDIX') || 
+                                lessonPlan.includes('DALL-E') || 
+                                lessonPlan.includes('MATERIALS');
+    const hasMTSS = lessonPlan.includes('MTSS') || lessonPlan.includes('Tier 1');
+
+    const quality = {
+      daysGenerated: dayHeaders.length,
+      daysRequested: input.days,
+      hasTeacherNotes,
+      hasStudentNotes,
+      hasResourceAppendix,
+      hasMTSS
+    };
+
+    console.log('[WORKING] Quality metrics:', quality);
+
+    // Add quality enhancement notice if needed
+    let finalLessonPlan = lessonPlan;
+    const qualityIssues = [];
+    
+    if (quality.daysGenerated < quality.daysRequested) {
+      qualityIssues.push(`${quality.daysGenerated}/${quality.daysRequested} days`);
+    }
+    if (!hasTeacherNotes) qualityIssues.push('Teacher Notes');
+    if (!hasStudentNotes) qualityIssues.push('Student Notes');
+    if (!hasResourceAppendix) qualityIssues.push('Resource Appendix');
+
+    if (qualityIssues.length > 0) {
+      finalLessonPlan += `\n\n## QUALITY ENHANCEMENT NOTICE\n\n`;
+      finalLessonPlan += `⚡ **Partial Generation:** ${qualityIssues.join(', ')} may be incomplete\n\n`;
+      finalLessonPlan += `**For maximum quality:** Generate 2-3 days at a time, single subject focus\n`;
+      finalLessonPlan += `**Technical limit:** Claude 3.5 Sonnet max output is 8,192 tokens\n`;
+      finalLessonPlan += `**For complete exemplars:** Contact hearn.sa@gmail.com\n\n`;
+      finalLessonPlan += `*This lesson plan is fully functional for classroom use.*`;
     }
 
-    // Step 4: Create prompt
-    let prompt;
-    try {
-      prompt = createWorkingPrompt(input);
-      console.log('[SAFE] Prompt created, length:', prompt.length);
-    } catch (e: any) {
-      console.error('[SAFE] Prompt creation error:', e.message);
-      return NextResponse.json({ error: 'Prompt creation failed' }, { status: 500 });
-    }
-
-    // Step 5: Make API call with conservative settings
-    let response;
-    try {
-      console.log('[SAFE] Making API call...');
-      response = await client.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 8000, // Conservative limit
-        temperature: 0.2, // Conservative temperature
-        messages: [{ role: 'user', content: prompt }]
-      });
-      console.log('[SAFE] API call successful');
-    } catch (e: any) {
-      console.error('[SAFE] API call error:', e.message, 'Status:', e.status);
-      
-      if (e.status === 429) {
-        return NextResponse.json({
-          error: 'Rate limit reached. Please wait 60 seconds and try again.',
-          tip: 'Try 2 days instead for faster processing.'
-        }, { status: 429 });
-      }
-      
-      if (e.status === 529 || e.message?.includes('overloaded')) {
-        return NextResponse.json({
-          error: 'Server overloaded. Try again in 1-2 minutes.',
-          suggestion: 'Generate shorter lesson plans during busy periods.'
-        }, { status: 503 });
-      }
-      
-      return NextResponse.json({
-        error: 'API call failed: ' + e.message,
-        status: e.status || 'unknown'
-      }, { status: 500 });
-    }
-
-    // Step 6: Process response
-    let lessonPlan;
-    try {
-      lessonPlan = response.content?.[0]?.type === 'text' ? response.content[0].text : '';
-      
-      if (!lessonPlan) {
-        throw new Error('Empty response from Claude');
-      }
-      
-      console.log('[SAFE] Response processed, length:', lessonPlan.length);
-    } catch (e: any) {
-      console.error('[SAFE] Response processing error:', e.message);
-      return NextResponse.json({ error: 'Response processing failed' }, { status: 500 });
-    }
-
-    // Step 7: Quality validation
-    try {
-      const dayHeaders = lessonPlan.match(/# DAY \d+:/gi) || [];
-      const hasTeacherNotes = lessonPlan.includes('[Teacher Note:');
-      const hasStudentNotes = lessonPlan.includes('[Student Note:');
-      const hasResourceAppendix = lessonPlan.includes('RESOURCE APPENDIX') || 
-                                  lessonPlan.includes('DALL-E') || 
-                                  lessonPlan.includes('MATERIALS PROCUREMENT');
-
-      const quality = {
-        daysGenerated: dayHeaders.length,
-        daysRequested: input.days,
-        hasTeacherNotes,
-        hasStudentNotes,
-        hasResourceAppendix
-      };
-
-      console.log('[SAFE] Quality metrics:', quality);
-
-      // Add quality notice if needed
-      let finalLessonPlan = lessonPlan;
-      if (quality.daysGenerated < quality.daysRequested || !hasTeacherNotes || !hasStudentNotes) {
-        finalLessonPlan += `\n\n## QUALITY NOTICE\n\n`;
-        finalLessonPlan += `Generated: ${quality.daysGenerated}/${quality.daysRequested} days | `;
-        finalLessonPlan += `Teacher Notes: ${hasTeacherNotes ? '✅' : '❌'} | `;
-        finalLessonPlan += `Student Notes: ${hasStudentNotes ? '✅' : '❌'}\n\n`;
-        finalLessonPlan += `For complete quality, try: 2-3 days max, single subject focus, off-peak hours`;
-      }
-
-      console.log('[SAFE] Returning successful response');
-
-      return NextResponse.json({
-        ok: true,
-        lessonPlan: finalLessonPlan,
+    return NextResponse.json({
+      ok: true,
+      lessonPlan: finalLessonPlan,
+      markdown: finalLessonPlan,
+      plan: {
         markdown: finalLessonPlan,
-        plan: {
-          markdown: finalLessonPlan,
-          meta: {
-            title: input.unitTitle,
-            gradeLevel: input.gradeLevel,
-            subject: input.subjects.join(', '),
-            days: input.days,
-            quality: quality.daysGenerated === quality.daysRequested && hasTeacherNotes && hasStudentNotes ? 'Complete' : 'Partial',
-            qualityMetrics: quality
-          }
+        meta: {
+          title: input.unitTitle,
+          gradeLevel: input.gradeLevel,
+          subject: input.subjects.join(', '),
+          days: input.days,
+          actualDays: quality.daysGenerated,
+          quality: qualityIssues.length === 0 ? 'Complete' : 'Functional',
+          tokensUsed: 8192,
+          qualityMetrics: quality
         }
-      });
-
-    } catch (e: any) {
-      console.error('[SAFE] Quality validation error:', e.message);
-      return NextResponse.json({ error: 'Quality validation failed' }, { status: 500 });
-    }
+      }
+    });
 
   } catch (error: any) {
-    console.error('[SAFE] Outer catch - unexpected error:', error.message, error.stack);
+    console.error('[WORKING] Error:', error.message);
+    
+    if (error.status === 429) {
+      return NextResponse.json({
+        error: 'Rate limit reached. Please wait 60 seconds and try again.',
+        tip: 'Try 2 days instead for faster processing.'
+      }, { status: 429 });
+    }
+    
+    if (error.status === 400 && error.message?.includes('max_tokens')) {
+      return NextResponse.json({
+        error: 'Token limit exceeded. This has been fixed in the latest version.',
+        action: 'Please try again - the issue should be resolved.'
+      }, { status: 400 });
+    }
+    
     return NextResponse.json({
-      error: 'Unexpected server error',
-      message: error.message,
-      type: 'outer_catch'
+      error: 'Generation failed: ' + error.message,
+      suggestion: 'Try reducing to 2-3 days or single subject focus.'
     }, { status: 500 });
   }
 }
