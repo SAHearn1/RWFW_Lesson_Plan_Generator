@@ -1,5 +1,5 @@
 // FILE PATH: src/app/api/generatePlan/route.ts
-// This version uses the top-tier Opus 4.1 model and maximizes Vercel Pro plan limits.
+// This version includes a resilient fallback system for the AI models.
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
@@ -8,20 +8,24 @@ import { masterPrompt } from '../../../masterPrompt';
 // Vercel Pro Plan Configuration
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // Set timeout to 5 minutes (300 seconds)
+export const maxDuration = 300; // 5-minute timeout
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+// List of models to try, in order of preference.
+const MODELS_IN_ORDER_OF_PREFERENCE = [
+    'claude-opus-4-1-20250805',    // Primary: The best and newest model
+    'claude-3-opus-20240229',      // Fallback 1: Previous top-tier model
+    'claude-3-5-sonnet-20240620',  // Fallback 2: The newest, fastest model
+    'claude-3-sonnet-20240229'      // Fallback 3: A highly reliable and widely available model
+];
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Validation
-    if (!body.gradeLevel || body.gradeLevel === 'Select Grade') {
-      return NextResponse.json({ error: 'Please select a valid grade level.' }, { status: 400 });
-    }
-    if (!body.subjects || body.subjects.length === 0) {
-      return NextResponse.json({ error: 'Please select at least one subject.' }, { status: 400 });
+    if (!body.gradeLevel || body.gradeLevel === 'Select Grade' || !body.subjects || body.subjects.length === 0) {
+      return NextResponse.json({ error: 'Please ensure all required fields are selected.' }, { status: 400 });
     }
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error("CRITICAL: ANTHROPIC_API_KEY is not configured.");
@@ -38,18 +42,38 @@ export async function POST(req: NextRequest) {
       - Additional Focus Areas: ${body.focus || 'None specified.'}
     `;
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-1-20250805', // Using the top-tier model
-      max_tokens: 8192, // Maximize the output tokens
-      temperature: 0.3,
-      system: masterPrompt,
-      messages: [{ role: 'user', content: userPrompt }]
-    });
+    let lessonPlan = '';
+    let lastError: any = null;
 
-    const lessonPlan = response.content?.[0]?.type === 'text' ? response.content[0].text : '';
-    
+    // --- NEW: FALLBACK LOGIC ---
+    for (const model of MODELS_IN_ORDER_OF_PREFERENCE) {
+      try {
+        console.log(`[API] Attempting generation with model: ${model}`);
+        
+        const response = await client.messages.create({
+          model: model,
+          max_tokens: 8192,
+          temperature: 0.3,
+          system: masterPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        });
+        
+        const generatedText = response.content?.[0]?.type === 'text' ? response.content[0].text : '';
+        
+        if (generatedText) {
+          console.log(`[API] Successfully generated with model: ${model}`);
+          lessonPlan = generatedText;
+          break; // Exit the loop on success
+        }
+      } catch (error) {
+        lastError = error;
+        console.warn(`[API] Model ${model} failed. Trying next model. Error:`, error.message);
+      }
+    }
+
     if (!lessonPlan) {
-      throw new Error('The AI returned an empty response.');
+      console.error('[API] All models failed. Last error:', lastError);
+      throw lastError || new Error('All available AI models failed to generate a response.');
     }
 
     // --- Quality Validation Logic ---
@@ -80,7 +104,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ lessonPlan: finalLessonPlan });
 
   } catch (error: any) {
-    console.error('[API_ERROR]', error);
+    console.error('[API_ERROR] Final catch block:', error);
     let errorMessage = 'An unexpected error occurred during generation.';
     if (error.status === 429) {
       errorMessage = 'The generator is currently experiencing high demand. Please wait 60 seconds and try again.';
