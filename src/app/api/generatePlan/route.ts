@@ -1,13 +1,14 @@
 // FILE PATH: src/app/api/generatePlan/route.ts
-// This version has the corrected quality-check logic.
+// This version uses the top-tier Opus 4.1 model and maximizes Vercel Pro plan limits.
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { masterPrompt } from '../../../masterPrompt';
 
+// Vercel Pro Plan Configuration
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 90;
+export const maxDuration = 300; // Set timeout to 5 minutes (300 seconds)
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    // Validation
     if (!body.gradeLevel || body.gradeLevel === 'Select Grade') {
       return NextResponse.json({ error: 'Please select a valid grade level.' }, { status: 400 });
     }
@@ -37,8 +39,8 @@ export async function POST(req: NextRequest) {
     `;
 
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 6000, 
+      model: 'claude-opus-4-1-20250805', // Using the top-tier model
+      max_tokens: 8192, // Maximize the output tokens
       temperature: 0.3,
       system: masterPrompt,
       messages: [{ role: 'user', content: userPrompt }]
@@ -50,12 +52,9 @@ export async function POST(req: NextRequest) {
       throw new Error('The AI returned an empty response.');
     }
 
+    // --- Quality Validation Logic ---
     const daysRequested = parseInt(String(body.days || 3), 10);
-    
-    // --- THIS IS THE CORRECTED LINE ---
-    // It now correctly counts "DAY X:" with or without a "#"
     const dayHeadersCount = (lessonPlan.match(/DAY \d+:/gi) || []).length;
-    
     const teacherNotesCount = (lessonPlan.match(/\[Teacher Note:/gi) || []).length;
     const studentNotesCount = (lessonPlan.match(/\[Student Note:/gi) || []).length;
     
@@ -63,7 +62,6 @@ export async function POST(req: NextRequest) {
     if (dayHeadersCount < daysRequested) {
       qualityIssues.push(`only ${dayHeadersCount} of ${daysRequested} days were generated`);
     }
-    // A high-quality day has at least 5 sections with notes.
     if (teacherNotesCount < dayHeadersCount * 5) {
       qualityIssues.push('is missing some Teacher Notes');
     }
