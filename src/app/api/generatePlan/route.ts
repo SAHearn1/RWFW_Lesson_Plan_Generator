@@ -1,5 +1,5 @@
 // FILE PATH: src/app/api/generatePlan/route.ts
-// This version includes a resilient fallback system for the AI models.
+// This version includes type-safety checks to satisfy the compiler.
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
@@ -14,13 +14,16 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // List of models to try, in order of preference.
 const MODELS_IN_ORDER_OF_PREFERENCE = [
-    'claude-opus-4-1-20250805',    // Primary: The best and newest model
-    'claude-3-opus-20240229',      // Fallback 1: Previous top-tier model
-    'claude-3-5-sonnet-20240620',  // Fallback 2: The newest, fastest model
-    'claude-3-sonnet-20240229'      // Fallback 3: A highly reliable and widely available model
+    'claude-opus-4-1-20250805',
+    'claude-3-opus-20240229',
+    'claude-3-5-sonnet-20240620',
+    'claude-3-sonnet-20240229'
 ];
 
 export async function POST(req: NextRequest) {
+  let lessonPlan = '';
+  let lastError: unknown = null;
+
   try {
     const body = await req.json();
 
@@ -41,11 +44,8 @@ export async function POST(req: NextRequest) {
       - Standards: ${body.standards || 'Align with relevant national or state standards.'}
       - Additional Focus Areas: ${body.focus || 'None specified.'}
     `;
-
-    let lessonPlan = '';
-    let lastError: any = null;
-
-    // --- NEW: FALLBACK LOGIC ---
+    
+    // --- Fallback Logic ---
     for (const model of MODELS_IN_ORDER_OF_PREFERENCE) {
       try {
         console.log(`[API] Attempting generation with model: ${model}`);
@@ -67,7 +67,12 @@ export async function POST(req: NextRequest) {
         }
       } catch (error) {
         lastError = error;
-        console.warn(`[API] Model ${model} failed. Trying next model. Error:`, error.message);
+        // --- THIS IS THE CORRECTED, TYPE-SAFE BLOCK ---
+        if (error instanceof Error) {
+            console.warn(`[API] Model ${model} failed. Trying next model. Error:`, error.message);
+        } else {
+            console.warn(`[API] Model ${model} failed with an unknown error. Trying next model.`);
+        }
       }
     }
 
@@ -103,14 +108,18 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ lessonPlan: finalLessonPlan });
 
-  } catch (error: any) {
+  } catch (error) {
+    // --- THIS IS THE CORRECTED, TYPE-SAFE FINAL CATCH BLOCK ---
     console.error('[API_ERROR] Final catch block:', error);
     let errorMessage = 'An unexpected error occurred during generation.';
-    if (error.status === 429) {
-      errorMessage = 'The generator is currently experiencing high demand. Please wait 60 seconds and try again.';
-    } else if (error.message) {
-      errorMessage = `Generation failed: ${error.message}`;
+    
+    // Check if it's an API error from the SDK, which has a status property
+    if (error && typeof error === 'object' && 'status' in error && error.status === 429) {
+        errorMessage = 'The generator is currently experiencing high demand. Please wait 60 seconds and try again.';
+    } else if (error instanceof Error) {
+        errorMessage = `Generation failed: ${error.message}`;
     }
+
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
