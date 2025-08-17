@@ -1,15 +1,11 @@
-/ ============================================
-// FILE: src/app/layout.tsx
-// Root Layout with Garden to Growth Theming
-// ============================================
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Lesson Plan Generator - Root Work Framework',
+  title: 'Root Work Framework - Lesson Plan Generator',
   description: 'AI-powered lesson planning with equity-first, trauma-informed design',
 }
 
@@ -19,11 +15,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="font-body bg-background text-foreground antialiased">
+    <html lang="en">
+      <body className={inter.className}>
         {children}
       </body>
     </html>
   )
 }
-
