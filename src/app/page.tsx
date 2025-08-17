@@ -105,10 +105,10 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-8 sm:py-12 max-w-4xl">
         <header className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800">
-            Rootwork Lesson Plan Generator
+            Root Work Framework
           </h1>
           <p className="mt-2 text-lg text-gray-600">
-            Powered by the Rootwork Framework for Healing-Centered Education
+            Lesson Plan Generator
           </p>
         </header>
 
