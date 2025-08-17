@@ -1,6 +1,3 @@
-// FILE: src/components/ui/button.tsx
-// Garden to Growth Button Component
-// ============================================
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -11,13 +8,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-growth-green-600 text-white hover:bg-growth-green-700 shadow-sm",
+        default: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
         destructive: "bg-red-500 text-white hover:bg-red-600",
-        outline: "border border-growth-green-300 bg-transparent hover:bg-growth-green-50 hover:text-growth-green-900",
-        secondary: "bg-earth-brown-100 text-earth-brown-900 hover:bg-earth-brown-200",
-        ghost: "hover:bg-growth-green-50 hover:text-growth-green-900",
-        link: "text-growth-green-600 underline-offset-4 hover:underline",
-        bloom: "bg-bloom-accent-500 text-white hover:bg-bloom-accent-600 shadow-sm",
+        outline: "border border-emerald-300 bg-transparent hover:bg-emerald-50 hover:text-emerald-900",
+        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+        ghost: "hover:bg-emerald-50 hover:text-emerald-900",
+        link: "text-emerald-600 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -54,14 +50,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button"
 
 export { Button, buttonVariants }
-
-// ============================================
-// FILE: src/lib/utils.ts
-// Utility Functions
-// ============================================
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
