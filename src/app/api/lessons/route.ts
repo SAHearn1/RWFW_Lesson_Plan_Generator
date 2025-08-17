@@ -3,7 +3,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
-// We will need to create this file to hold your master prompt
 import { masterPrompt } from '@/constants/prompts'; 
 
 // Vercel-specific configuration for serverless functions
@@ -39,11 +38,17 @@ export async function POST(req: NextRequest) {
       - Additional Focus Areas: ${body.focus || 'None specified.'}
     `;
 
-    // --- 3. Call the Anthropic API ---
+    // --- 3. Call the Anthropic API with Upgraded Parameters ---
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20240620', // Or your preferred model
-      max_tokens: 8192, // Increased token limit for multi-day plans
-      temperature: 0.3,
+      // --- UPGRADED MODEL ---
+      // Using the latest and most powerful model available as of August 2025.
+      model: 'claude-opus-4-1-20250805', 
+      
+      // --- MAXIMIZED TOKEN LIMIT ---
+      // Leveraging the full 32,000 token output capacity of the Opus 4.1 model
+      // to ensure the most detailed and complete response possible.
+      max_tokens: 32000, 
+      temperature: 0.3, // Lower temperature for more consistent, high-quality output
       system: masterPrompt, // Your secret, high-level instructions
       messages: [{ role: 'user', content: userPrompt }] // The user's specific request
     });
