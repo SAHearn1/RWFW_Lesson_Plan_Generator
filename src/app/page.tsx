@@ -10,7 +10,6 @@ export default function HomePage() {
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
   const [days, setDays] = useState('3');
-  // ADDED: State for the new narrative fields
   const [standards, setStandards] = useState('');
   const [focus, setFocus] = useState('');
 
@@ -65,8 +64,10 @@ export default function HomePage() {
   };
   
   // --- Helper to render Markdown with special formatting for notes ---
-  const renderMarkdown = (markdown: string) => {
-    if (!markdown) return null;
+  const renderMarkdown = (markdown: string): string => {
+    // --- THIS IS THE FIX ---
+    // Always return a string, even if it's empty.
+    if (!markdown) return ''; 
     
     const teacherNoteHtml = '<div class="teacher-note"><p class="font-bold text-emerald-800">Teacher Note:</p><p>$1</p></div>';
     const studentNoteHtml = '<div class="student-note"><p class="font-bold text-sky-800">Student Note:</p><p>$1</p></div>';
@@ -81,12 +82,12 @@ export default function HomePage() {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
     // Process paragraphs
-    return html.split('\n').map((line, index) => {
+    return html.split('\n').map((line) => {
         const trimmedLine = line.trim();
         if (trimmedLine.startsWith('<') || trimmedLine === '') {
-            return `<div key=${index}>${line}</div>`; // It's already HTML or an empty line
+            return line; // It's already HTML or an empty line
         }
-        return `<p key=${index} class="my-3">${line}</p>`;
+        return `<p class="my-3">${line}</p>`;
     }).join('');
   };
 
