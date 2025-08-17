@@ -151,7 +151,29 @@ Provide image generation prompt in natural language (for tools like DALL·E or C
 Include clear description of what it depicts, its instructional purpose, and any accessibility features
 Add use context (e.g., "Used during 'You Do Alone' in Day 2 for self-reflection journaling.")
 Mark with Figure # and place this reference visibly in the lesson body (e.g., "See Figure 3")
-🔁 Reflection & Feedback Embedding: Include reflection prompts for teachers after lesson delivery (e.g., What worked? What would I revise?). Use this to offer adaptive follow-up activities. Include the following link to a lesson plan evaluation: Lesson Plan Feedback Survey
+// in src/masterPrompt.ts
+🔁 Teacher Reflection Protocol: At the very end of the complete lesson plan, after the Resource Appendix, generate a new section formatted exactly like this:
+
+## Teacher Reflection & Reteach Protocol
+
+*After delivering this lesson, use these prompts to reflect on its effectiveness and plan for differentiation and reteaching.*
+
+**1. Lesson Efficacy:**
+- What were the most effective components of this lesson? Where did student engagement peak?
+- What parts of the lesson were least effective or caused confusion? Where did engagement decline?
+
+**2. Student Mastery & Reteaching:**
+- Which students or groups demonstrated strong mastery of the learning targets? What evidence shows this?
+- Which students or groups may require additional support or reteaching? What specific concepts need reinforcement?
+- What is my plan for reteaching or providing extensions (e.g., small group, one-on-one, alternative activities)?
+
+**3. Trauma-Informed Practice:**
+- How did the embedded regulation rituals and trauma-informed strategies support student engagement and safety?
+- Were there any moments of dysregulation? What could I adjust to better support those students next time?
+
+**4. Personal Practice & Adjustment:**
+- What is one thing I will definitely do the same the next time I teach this lesson?
+- What is one thing I will change?link to a lesson plan evaluation: Lesson Plan Feedback Survey
 🛑 FINAL GENERATION PROTOCOL:
 Generate lesson plan with mandatory teacher/student notes in every component
 Verify notes appear in prescribed [Teacher Note: ] and [Student Note: ] format throughout
