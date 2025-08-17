@@ -1,27 +1,22 @@
-import React from 'react';
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "@/styles/globals.css";
 
-import './globals.css';
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Root Work Framework',
-  description:
-    'Healing-centered, trauma-informed, culturally responsive lesson design using the Root Work Framework.',
+  title: "Rootwork Framework Lesson Plan Generator",
+  description: "Healing-Centered Lesson Design",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <head>
-        {/* Load Plus Jakarta Sans at runtime so builds don't hit Google Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-screen bg-slate-50 antialiased font-sans">{children}</body>
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
