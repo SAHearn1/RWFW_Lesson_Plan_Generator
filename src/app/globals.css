@@ -1,29 +1,73 @@
+// ============================================
+// FILE: src/app/globals.css
+// Garden to Growth Design System
+// ============================================
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Brand tokens (optional helper classes) */
-@layer utilities {
-  .bg-brand-gradient {
-    @apply bg-gradient-to-br from-brand-700 via-brand-600 to-purple-700;
+@layer base {
+  :root {
+    /* Garden to Growth Color Variables */
+    --background: 120 50% 98%;           /* Light green background */
+    --foreground: 120 10% 10%;           /* Dark earth text */
+    --card: 120 50% 100%;                /* Pure white cards */
+    --card-foreground: 120 10% 15%;      /* Slightly lighter text on cards */
+    --popover: 120 50% 100%;             /* White popovers */
+    --popover-foreground: 120 10% 10%;   /* Dark text on popovers */
+    --primary: 142 76% 36%;              /* Growth green primary */
+    --primary-foreground: 120 50% 98%;   /* Light text on primary */
+    --secondary: 25 5% 64%;              /* Earth brown secondary */
+    --secondary-foreground: 120 50% 98%; /* Light text on secondary */
+    --muted: 120 30% 96%;                /* Muted backgrounds */
+    --muted-foreground: 120 5% 40%;      /* Muted text */
+    --accent: 24 70% 50%;                /* Bloom orange accent */
+    --accent-foreground: 120 50% 98%;    /* Light text on accent */
+    --destructive: 0 62% 50%;            /* Error red */
+    --destructive-foreground: 0 0% 98%;  /* White text on error */
+    --border: 120 30% 91%;               /* Subtle borders */
+    --input: 120 30% 94%;                /* Input backgrounds */
+    --ring: 142 76% 36%;                 /* Focus rings */
+    --radius: 0.5rem;                    /* Border radius */
+  }
+
+  .dark {
+    --background: 120 10% 7%;
+    --foreground: 120 5% 90%;
+    --card: 120 10% 10%;
+    --card-foreground: 120 5% 85%;
+    --popover: 120 10% 10%;
+    --popover-foreground: 120 5% 90%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 120 50% 98%;
+    --secondary: 25 5% 20%;
+    --secondary-foreground: 120 5% 85%;
+    --muted: 120 10% 15%;
+    --muted-foreground: 120 5% 60%;
+    --accent: 24 70% 50%;
+    --accent-foreground: 120 50% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 120 10% 20%;
+    --input: 120 10% 15%;
+    --ring: 142 76% 36%;
   }
 }
 
-/* Design primitives used across the app */
-@layer components {
-  .card { @apply bg-white rounded-2xl shadow-sm ring-1 ring-slate-200; }
-  .btn  { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold transition; }
-  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-500 shadow-brand; }
-  .btn-ghost   { @apply btn bg-white ring-1 ring-slate-200 hover:ring-slate-300; }
-  .badge       { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium; }
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-/* Page resets */
-html, body {
-  @apply h-full bg-slate-50 text-slate-800;
+/* Root Work Framework inspired typography */
+.root-work-heading {
+  @apply font-heading font-semibold text-growth-green-700;
 }
 
-/* Prose styling for Markdown output */
-.prose-brand {
-  @apply prose prose-slate max-w-none;
+.garden-growth-card {
+  @apply bg-white border border-growth-green-200 rounded-lg p-canopy shadow-sm;
 }
