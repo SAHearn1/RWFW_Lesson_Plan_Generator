@@ -1,27 +1,29 @@
-import React from 'react';
-import type { Metadata } from 'next';
+/ ============================================
+// FILE: src/app/layout.tsx
+// Root Layout with Garden to Growth Theming
+// ============================================
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
 
-import './globals.css';
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'Root Work Framework',
-  description:
-    'Healing-centered, trauma-informed, culturally responsive lesson design using the Root Work Framework.',
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" className="scroll-smooth">
-      <head>
-        {/* Load Plus Jakarta Sans at runtime so builds don't hit Google Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-screen bg-slate-50 antialiased font-sans">{children}</body>
-    </html>
-  );
+  title: 'Lesson Plan Generator - Root Work Framework',
+  description: 'AI-powered lesson planning with equity-first, trauma-informed design',
 }
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" className={inter.variable}>
+      <body className="font-body bg-background text-foreground antialiased">
+        {children}
+      </body>
+    </html>
+  )
+}
+
