@@ -17,6 +17,8 @@ export default function GeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedLesson, setGeneratedLesson] = useState('')
   const [error, setError] = useState('')
+  const [generationProgress, setGenerationProgress] = useState(0)
+  const [generationStage, setGenerationStage] = useState('')
 
   const subjectOptions = [
     { value: 'mathematics', label: 'Mathematics' },
@@ -35,9 +37,31 @@ export default function GeneratePage() {
   const handleSubmit = async () => {
     setIsGenerating(true)
     setError('')
+    setGenerationProgress(0)
+    setGenerationStage('Initializing Root Work Framework...')
+    
+    // Simulate progress stages
+    const progressStages = [
+      { progress: 15, stage: 'Analyzing equity considerations...' },
+      { progress: 30, stage: 'Integrating trauma-informed practices...' },
+      { progress: 45, stage: 'Building strength-based activities...' },
+      { progress: 60, stage: 'Creating community connections...' },
+      { progress: 75, stage: 'Structuring 4E instructional model...' },
+      { progress: 90, stage: 'Finalizing comprehensive lesson plan...' },
+      { progress: 100, stage: 'Root Work lesson plan complete!' }
+    ]
+    
+    let currentStage = 0
+    const progressInterval = setInterval(() => {
+      if (currentStage < progressStages.length) {
+        setGenerationProgress(progressStages[currentStage].progress)
+        setGenerationStage(progressStages[currentStage].stage)
+        currentStage++
+      }
+    }, 800)
     
     try {
-      // Call the correct API endpoint
+      // Call the correct API endpoint with enhanced prompting for intelligent completion
       const response = await fetch('/api/generate-lesson', {
         method: 'POST',
         headers: {
@@ -47,17 +71,19 @@ export default function GeneratePage() {
           messages: [
             { 
               role: "user", 
-              content: `Create a comprehensive ${formData.duration}-day lesson plan that integrates Root Work Framework principles (equity-centered, trauma-informed, strength-based, community-connected) with the 4E instructional model structure. Use the following specifications:
+              content: `Create a comprehensive ${formData.duration}-day lesson plan that integrates Root Work Framework principles (equity-centered, trauma-informed, strength-based, community-connected) with the 4E instructional model structure.
+
+**INTELLIGENT AUTO-COMPLETION:** For any missing or incomplete information in the requirements below, use your educational expertise to intelligently fill in appropriate, high-quality content that aligns with Root Work Framework principles and the specified grade level.
 
 **LESSON REQUIREMENTS:**
 - Subject(s): ${formData.subjects.join(', ')}
 - Grade Level: ${formData.gradeLevel}
-- Topic: ${formData.topic || 'Based on objectives provided'}
+- Topic: ${formData.topic || '[AI: Please select an engaging, grade-appropriate topic for these subjects]'}
 - Duration: ${formData.duration} day(s)
-- Standards: ${formData.standards || 'Appropriate grade-level standards'}
-- Learning Objectives: ${formData.objectives}
-- Special Considerations: ${formData.specialNeeds.join(', ') || 'Universal design principles'}
-- Technology Integration: ${formData.technology || 'Age-appropriate educational technology'}
+- Standards: ${formData.standards || '[AI: Please identify and cite relevant national/state standards]'}
+- Learning Objectives: ${formData.objectives || '[AI: Please create measurable, student-centered learning objectives]'}
+- Special Considerations: ${formData.specialNeeds.join(', ') || '[AI: Please include universal design principles and general accommodations]'}
+- Technology Integration: ${formData.technology || '[AI: Please suggest age-appropriate educational technology tools]'}
 
 **HYBRID FRAMEWORK STRUCTURE:**
 Create lesson plans that blend Root Work Framework principles with the 4E instructional model:
@@ -87,7 +113,15 @@ Create lesson plans that blend Root Work Framework principles with the 4E instru
    - Preview connections to next lesson
 
 **OUTPUT REQUIREMENTS:**
-Generate a professional lesson plan in HTML format with:
+Generate a professional lesson plan in clean, well-formatted HTML with proper CSS styling:
+
+<div style="font-family: Inter, sans-serif; max-width: 100%; margin: 0 auto; background: white;">
+<header style="background: linear-gradient(135deg, #082A19 0%, #3B523A 100%); color: white; padding: 24px; border-radius: 8px; margin-bottom: 24px;">
+  <h1 style="margin: 0; font-family: Merriweather, serif; font-size: 28px;">Root Work Framework Lesson Plan</h1>
+  <p style="margin: 8px 0 0 0; color: #F2F4CA; font-size: 16px;">Equity-Centered • Trauma-Informed • Strength-Based • Community-Connected</p>
+</header>
+
+Then include all sections with proper formatting...
 
 1. **Lesson Header Information:**
    - Course, week, teacher information placeholders
@@ -142,9 +176,10 @@ Generate a professional lesson plan in HTML format with:
    - Service learning possibilities
 
 **FORMATTING REQUIREMENTS:**
-- Use proper HTML structure with clear headers and organization
+- Use proper HTML structure with inline CSS for clean presentation
 - Include actual working hyperlinks to educational resources
 - Maintain professional formatting with specific time allocations
+- Use consistent color scheme: #082A19 (dark green), #D4C862 (gold), #F2F4CA (light cream)
 - Emphasize both 4E structure AND Root Work principles throughout
 - Provide detailed, actionable descriptions for immediate implementation
 - Ensure all content is culturally responsive and trauma-informed
@@ -155,6 +190,10 @@ Generate comprehensive content that meets district template requirements while m
         }),
       })
 
+      clearInterval(progressInterval)
+      setGenerationProgress(100)
+      setGenerationStage('Root Work lesson plan complete!')
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to generate lesson')
@@ -163,9 +202,90 @@ Generate comprehensive content that meets district template requirements while m
       const data = await response.json()
       setGeneratedLesson(data.lesson)
     } catch (err) {
+      clearInterval(progressInterval)
       setError(err instanceof Error ? err.message : 'Error generating lesson. Please try again.')
     } finally {
-      setIsGenerating(false)
+      setTimeout(() => setIsGenerating(false), 1000) // Keep progress visible briefly
+    }
+  }
+
+  const handleSave = () => {
+    if (!generatedLesson) return
+    
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
+    const filename = `Root_Work_Lesson_Plan_${timestamp}.html`
+    
+    const blob = new Blob([generatedLesson], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPDF = () => {
+    if (!generatedLesson) return
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Root Work Lesson Plan</title>
+          <style>
+            body { 
+              font-family: Inter, sans-serif; 
+              margin: 20px; 
+              line-height: 1.6; 
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          ${generatedLesson}
+        </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.focus()
+      printWindow.print()
+    }
+  }
+
+  const handleShare = async () => {
+    if (!generatedLesson) return
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Root Work Framework Lesson Plan',
+          text: 'Check out this equity-centered lesson plan created with Root Work Framework principles',
+          url: window.location.href
+        })
+      } catch (error) {
+        // Fallback to clipboard
+        handleCopyToClipboard()
+      }
+    } else {
+      handleCopyToClipboard()
+    }
+  }
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedLesson)
+      alert('Lesson plan copied to clipboard!')
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+      alert('Unable to copy. Please manually select and copy the lesson plan.')
     }
   }
 
@@ -526,6 +646,52 @@ Generate comprehensive content that meets district template requirements while m
                   </div>
                 </div>
 
+                {/* Generation Progress Bar */}
+                {isGenerating && (
+                  <div className="border rounded-lg p-6 mb-6" style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}>
+                    <h4 className="font-semibold mb-4 flex items-center" style={{ color: '#082A19' }}>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 mr-3" style={{ borderColor: '#082A19' }}></div>
+                      Creating Your Root Work Lesson Plan
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium" style={{ color: '#082A19' }}>{generationStage}</span>
+                        <span className="text-sm font-bold" style={{ color: '#082A19' }}>{generationProgress}%</span>
+                      </div>
+                      
+                      <div className="w-full bg-white rounded-full h-3 border" style={{ borderColor: '#3B523A' }}>
+                        <div 
+                          className="h-3 rounded-full transition-all duration-500 ease-out"
+                          style={{ 
+                            width: `${generationProgress}%`,
+                            background: 'linear-gradient(90deg, #082A19 0%, #3B523A 50%, #D4C862 100%)'
+                          }}
+                        ></div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-xs mt-4" style={{ color: '#082A19' }}>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          <span>Equity-Centered Design</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          <span>Trauma-Informed Practices</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          <span>Strength-Based Approach</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          <span>Community Connections</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <button 
                   onClick={handleSubmit}
                   disabled={isGenerating || formData.subjects.length === 0 || !formData.gradeLevel || !formData.objectives}
@@ -600,15 +766,27 @@ Generate comprehensive content that meets district template requirements while m
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Generated Lesson Plan</h3>
               <div className="flex space-x-3">
-                <button className="text-white px-4 py-2 rounded-md transition-colors flex items-center space-x-2" style={{ backgroundColor: '#082A19' }}>
+                <button 
+                  onClick={handleSave}
+                  className="text-white px-4 py-2 rounded-md transition-colors flex items-center space-x-2 hover:opacity-90" 
+                  style={{ backgroundColor: '#082A19' }}
+                >
                   <Save className="w-4 h-4" />
                   <span>Save</span>
                 </button>
-                <button className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" style={{ borderColor: '#3B523A' }}>
+                <button 
+                  onClick={handleExportPDF}
+                  className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" 
+                  style={{ borderColor: '#3B523A' }}
+                >
                   <Download className="w-4 h-4" />
                   <span>Export PDF</span>
                 </button>
-                <button className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" style={{ borderColor: '#3B523A' }}>
+                <button 
+                  onClick={handleShare}
+                  className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" 
+                  style={{ borderColor: '#3B523A' }}
+                >
                   <Share className="w-4 h-4" />
                   <span>Share</span>
                 </button>
