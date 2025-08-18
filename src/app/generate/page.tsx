@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, Users, Shield, CheckCircle, AlertCircle, Clock, Download, Share, Save } from 'lucide-react'
+import { BookOpen, Users, Shield, CheckCircle, AlertCircle, Clock, Download, Share, Save, X } from 'lucide-react'
 
 export default function GeneratePage() {
   const [formData, setFormData] = useState({
-    subject: '',
+    subjects: [] as string[],
     gradeLevel: '',
     objectives: '',
     duration: '60',
@@ -14,6 +14,20 @@ export default function GeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedLesson, setGeneratedLesson] = useState('')
   const [error, setError] = useState('')
+
+  const subjectOptions = [
+    { value: 'mathematics', label: 'Mathematics' },
+    { value: 'english', label: 'English Language Arts' },
+    { value: 'science', label: 'Science' },
+    { value: 'social-studies', label: 'Social Studies' },
+    { value: 'steam', label: 'STEAM Integration' },
+    { value: 'special-education', label: 'Special Education' },
+    { value: 'social-emotional-learning', label: 'Social-Emotional Learning' },
+    { value: 'arts', label: 'Arts' },
+    { value: 'physical-education', label: 'Physical Education' },
+    { value: 'world-languages', label: 'World Languages' },
+    { value: 'career-technical', label: 'Career & Technical Education' }
+  ]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +56,22 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const toggleSubject = (subject: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subjects: prev.subjects.includes(subject)
+        ? prev.subjects.filter(s => s !== subject)
+        : [...prev.subjects, subject]
+    }))
+  }
+
+  const removeSubject = (subject: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subjects: prev.subjects.filter(s => s !== subject)
+    }))
   }
 
   const toggleSpecialNeed = (need: string) => {
@@ -135,48 +165,85 @@ export default function GeneratePage() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Lesson Plan Generator</h3>
                 <span className="bg-emerald-100 text-emerald-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  AI Powered by Root Work Framework
+                  AI Powered by Claude 4
                 </span>
               </div>
 
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Subject Area
-                    </label>
-                    <select 
-                      value={formData.subject}
-                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    >
-                      <option value="">Select Subject</option>
-                      <option value="mathematics">Mathematics</option>
-                      <option value="english">English Language Arts</option>
-                      <option value="science">Science</option>
-                      <option value="social-studies">Social Studies</option>
-                      <option value="steam">STEAM Integration</option>
-                      <option value="special-education">Special Education</option>
-                      <option value="social-emotional-learning">Social-Emotional Learning</option>
-                    </select>
-                  </div>
+                {/* Subject Selection */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Subject Areas (Select one or more for interdisciplinary lessons)
+                  </label>
+                  
+                  {/* Selected Subjects Display */}
+                  {formData.subjects.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2">
+                        {formData.subjects.map((subject) => {
+                          const subjectLabel = subjectOptions.find(opt => opt.value === subject)?.label || subject
+                          return (
+                            <span
+                              key={subject}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800"
+                            >
+                              {subjectLabel}
+                              <button
+                                onClick={() => removeSubject(subject)}
+                                className="ml-2 hover:bg-emerald-200 rounded-full p-0.5"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Grade Level
-                    </label>
-                    <select 
-                      value={formData.gradeLevel}
-                      onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    >
-                      <option value="">Select Grade</option>
-                      <option value="prek-2">PreK-2 (Early Elementary)</option>
-                      <option value="3-5">3-5 (Late Elementary)</option>
-                      <option value="6-8">6-8 (Middle School)</option>
-                      <option value="9-12">9-12 (High School)</option>
-                    </select>
+                  {/* Subject Selection Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {subjectOptions.map((option) => (
+                      <div
+                        key={option.value}
+                        onClick={() => toggleSubject(option.value)}
+                        className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                          formData.subjects.includes(option.value)
+                            ? 'bg-emerald-50 border-2 border-emerald-200'
+                            : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                          formData.subjects.includes(option.value)
+                            ? 'bg-emerald-600 border-emerald-600'
+                            : 'border-gray-300'
+                        }`}>
+                          {formData.subjects.includes(option.value) && (
+                            <CheckCircle className="w-3 h-3 text-white" />
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-700">{option.label}</span>
+                      </div>
+                    ))}
                   </div>
+                </div>
+
+                {/* Grade Level */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Grade Level
+                  </label>
+                  <select 
+                    value={formData.gradeLevel}
+                    onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  >
+                    <option value="">Select Grade</option>
+                    <option value="prek-2">PreK-2 (Early Elementary)</option>
+                    <option value="3-5">3-5 (Late Elementary)</option>
+                    <option value="6-8">6-8 (Middle School)</option>
+                    <option value="9-12">9-12 (High School)</option>
+                  </select>
                 </div>
 
                 <div>
@@ -188,7 +255,7 @@ export default function GeneratePage() {
                     onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" 
                     rows={5} 
-                    placeholder="Describe what you want students to learn. Use natural language - for example: 'I want my 4th graders to understand fractions by connecting them to real-world situations like cooking and sharing. They should be able to compare fractions and explain their thinking using both visual models and mathematical language. This lesson should be engaging for students who struggle with math anxiety and connect to their cultural backgrounds.'"
+                    placeholder="Describe what you want students to learn using natural language. For example: 'I want my 4th graders to understand fractions by connecting them to real-world situations like cooking and sharing. They should be able to compare fractions and explain their thinking using both visual models and mathematical language. This lesson should be engaging for students who struggle with math anxiety and connect to their cultural backgrounds.'"
                   />
                 </div>
 
@@ -284,7 +351,7 @@ export default function GeneratePage() {
 
                 <button 
                   onClick={handleSubmit}
-                  disabled={isGenerating || !formData.subject || !formData.gradeLevel || !formData.objectives}
+                  disabled={isGenerating || formData.subjects.length === 0 || !formData.gradeLevel || !formData.objectives}
                   className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-4 px-6 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {isGenerating ? (
@@ -293,7 +360,7 @@ export default function GeneratePage() {
                       <span>Generating with AI...</span>
                     </>
                   ) : (
-                    <span>Generate Lesson Plan with Root Work Framework</span>
+                    <span>Generate {formData.subjects.length > 1 ? 'Interdisciplinary' : ''} Lesson Plan</span>
                   )}
                 </button>
               </div>
@@ -326,19 +393,19 @@ export default function GeneratePage() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">Be specific about your learning goals and student context</span>
+                  <span className="text-gray-700">Select multiple subjects for interdisciplinary lessons</span>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">Mention any cultural considerations or student interests</span>
+                  <span className="text-gray-700">Be specific about learning goals and student context</span>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">The AI will automatically integrate compliance requirements</span>
+                  <span className="text-gray-700">Mention cultural considerations or student interests</span>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">Generated lessons include differentiation strategies</span>
+                  <span className="text-gray-700">AI automatically integrates compliance requirements</span>
                 </div>
               </div>
             </div>
