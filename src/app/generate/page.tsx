@@ -37,15 +37,13 @@ export default function GeneratePage() {
     setError('')
     
     try {
-      // Enhanced API call with comprehensive prompting
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
+      // Call the local API route instead of Anthropic directly
+      const response = await fetch('/api/generate-lesson', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4000,
           messages: [
             { 
               role: "user", 
@@ -154,19 +152,20 @@ Generate a professional lesson plan in HTML format with:
 Generate comprehensive content that meets district template requirements while maintaining Root Work Framework integrity for equitable, community-centered learning experiences.`
             }
           ]
-        })
-      });
+        }),
+      })
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate lesson')
       }
 
-      const data = await response.json();
-      setGeneratedLesson(data.content[0].text);
+      const data = await response.json()
+      setGeneratedLesson(data.lesson)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error generating lesson. Please try again.');
+      setError(err instanceof Error ? err.message : 'Error generating lesson. Please try again.')
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
   }
 
