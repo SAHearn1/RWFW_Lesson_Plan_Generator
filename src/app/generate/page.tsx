@@ -358,8 +358,7 @@ Generate comprehensive content that meets district template requirements while m
                   <select 
                     value={formData.gradeLevel}
                     onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
-                    style={{ focusRingColor: '#3B523A', focusBorderColor: '#3B523A' }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
                   >
                     <option value="">Select Grade</option>
                     <option value="prek-2">PreK-2 (Early Elementary)</option>
@@ -378,7 +377,7 @@ Generate comprehensive content that meets district template requirements while m
                     type="text"
                     value={formData.topic}
                     onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
                     placeholder="e.g., Fractions, Photosynthesis, Civil Rights Movement"
                   />
                 </div>
@@ -392,7 +391,7 @@ Generate comprehensive content that meets district template requirements while m
                   <select 
                     value={formData.duration}
                     onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
                   >
                     <option value="1">1 Day</option>
                     <option value="2">2 Days</option>
@@ -414,7 +413,7 @@ Generate comprehensive content that meets district template requirements while m
                     type="text"
                     value={formData.standards}
                     onChange={(e) => setFormData(prev => ({ ...prev, standards: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
                     placeholder="e.g., CCSS.MATH.3.NF.A.1, NGSS.5-PS1-1"
                   />
                 </div>
@@ -426,7 +425,7 @@ Generate comprehensive content that meets district template requirements while m
                   <textarea 
                     value={formData.objectives}
                     onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors" 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600" 
                     rows={5} 
                     placeholder="Describe what students will learn and be able to do. Example: 'Students will understand fractions by connecting them to real-world situations like cooking and sharing. They will compare fractions and explain their thinking using both visual models and mathematical language. This lesson will engage students who face math anxiety and connect to their cultural backgrounds.'"
                   />
@@ -441,7 +440,7 @@ Generate comprehensive content that meets district template requirements while m
                     type="text"
                     value={formData.technology}
                     onChange={(e) => setFormData(prev => ({ ...prev, technology: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
                     placeholder="iPads, Chromebooks, interactive whiteboard, online tools"
                   />
                 </div>
