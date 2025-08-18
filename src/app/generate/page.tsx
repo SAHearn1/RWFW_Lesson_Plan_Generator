@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, Users, Shield, CheckCircle, AlertCircle, Clock, Download, Share, Save, X } from 'lucide-react'
+import { BookOpen, Users, Shield, CheckCircle, AlertCircle, Clock, Download, Share, Save, X, Calendar, Target } from 'lucide-react'
 
 export default function GeneratePage() {
   const [formData, setFormData] = useState({
     subjects: [] as string[],
     gradeLevel: '',
+    topic: '',
     objectives: '',
-    duration: '60',
-    specialNeeds: [] as string[]
+    duration: '1', // Changed to days instead of minutes
+    standards: '',
+    specialNeeds: [] as string[],
+    technology: ''
   })
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedLesson, setGeneratedLesson] = useState('')
@@ -29,32 +32,109 @@ export default function GeneratePage() {
     { value: 'career-technical', label: 'Career & Technical Education' }
   ]
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     setIsGenerating(true)
     setError('')
     
     try {
-      const response = await fetch('/api/generate-lesson', {
-        method: 'POST',
+      // Enhanced API call with comprehensive prompting
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
-      })
-      
-      const data = await response.json()
-      
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          messages: [
+            { 
+              role: "user", 
+              content: `Create a comprehensive ${formData.duration}-day lesson plan using the Root Work Framework (equity-centered, trauma-informed, strength-based, community-connected) with the following specifications:
+
+**LESSON REQUIREMENTS:**
+- Subject(s): ${formData.subjects.join(', ')}
+- Grade Level: ${formData.gradeLevel}
+- Topic: ${formData.topic || 'Based on objectives provided'}
+- Duration: ${formData.duration} day(s)
+- Standards: ${formData.standards || 'Appropriate grade-level standards'}
+- Learning Objectives: ${formData.objectives}
+- Special Considerations: ${formData.specialNeeds.join(', ') || 'Universal design principles'}
+- Technology Integration: ${formData.technology || 'Age-appropriate educational technology'}
+
+**ROOT WORK FRAMEWORK INTEGRATION:**
+- Equity First: Ensure all activities are accessible and culturally responsive
+- Trauma-Informed: Create safe, predictable learning environments
+- Strength-Based: Build on student assets and community knowledge
+- Community-Connected: Include authentic connections to student lives and communities
+
+**OUTPUT REQUIREMENTS:**
+Generate a professional, comprehensive lesson plan in HTML format with:
+
+1. **Framework Overview** with:
+   - Root Work Framework alignment explanation
+   - Clear learning objectives with equity considerations
+   - Essential questions that connect to student experiences
+   - Key vocabulary with cultural context
+   - Assessment strategies that honor diverse ways of knowing
+
+2. **Daily Breakdown** (for each day):
+   - Community Circle/Opening (relationship building)
+   - Direct instruction with cultural connections (15-20 min)
+   - Collaborative learning activities (20-25 min)
+   - Individual reflection and choice (10-15 min)
+   - Closing circle and community sharing (5-10 min)
+
+3. **Resources & Materials** with ACTUAL working links:
+   - Educational websites (Khan Academy, Crash Course, PBS Learning Media)
+   - Video resources (YouTube educational channels, documentaries)
+   - Interactive tools and simulations
+   - Culturally relevant books and media
+   - Community resource connections
+   - Assessment rubrics and tools
+
+4. **Equity-Centered Differentiation** for:
+   - English Language Learners (with language supports)
+   - Students with disabilities (UDL principles)
+   - Gifted and talented students (extension activities)
+   - Trauma-informed accommodations
+   - Culturally and linguistically diverse learners
+
+5. **Assessment & Reflection**:
+   - Multiple ways to demonstrate learning
+   - Student self-reflection opportunities
+   - Community sharing and celebration
+   - Ongoing formative assessment strategies
+
+6. **Community Extensions**:
+   - Family engagement opportunities
+   - Community expert connections
+   - Real-world application projects
+   - Service learning possibilities
+
+**FORMATTING REQUIREMENTS:**
+- Use proper HTML structure with headers, lists, and formatting
+- Include actual working hyperlinks to educational resources
+- Make it visually organized and professional
+- Include specific time allocations for each day
+- Provide detailed descriptions that honor Root Work principles
+- Emphasize student voice, choice, and agency throughout
+
+Generate comprehensive, culturally responsive content that teachers can immediately implement to create equitable learning experiences.`
+            }
+          ]
+        })
+      });
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate lesson')
+        throw new Error(`API request failed: ${response.status}`);
       }
-      
-      setGeneratedLesson(data.lesson)
-    } catch (error) {
-      console.error('Generation error:', error)
-      setError(error instanceof Error ? error.message : 'Error generating lesson. Please try again.')
+
+      const data = await response.json();
+      setGeneratedLesson(data.content[0].text);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error generating lesson. Please try again.');
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
   }
 
@@ -246,6 +326,56 @@ export default function GeneratePage() {
                   </select>
                 </div>
 
+                {/* NEW: Topic Field */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Lesson Topic/Unit
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.topic}
+                    onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    placeholder="e.g., Fractions, Photosynthesis, Civil Rights Movement"
+                  />
+                </div>
+
+                {/* ENHANCED: Duration in Days */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Lesson Duration (Days)
+                  </label>
+                  <select 
+                    value={formData.duration}
+                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  >
+                    <option value="1">1 Day</option>
+                    <option value="2">2 Days</option>
+                    <option value="3">3 Days</option>
+                    <option value="4">4 Days</option>
+                    <option value="5">5 Days (1 Week)</option>
+                    <option value="10">10 Days (2 Weeks)</option>
+                    <option value="15">15 Days (3 Weeks)</option>
+                    <option value="20">20 Days (4 Weeks)</option>
+                  </select>
+                </div>
+
+                {/* NEW: Standards Field */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Academic Standards
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.standards}
+                    onChange={(e) => setFormData(prev => ({ ...prev, standards: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    placeholder="e.g., CCSS.MATH.3.NF.A.1, NGSS.5-PS1-1"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Learning Objectives & Natural Language Description
@@ -259,21 +389,18 @@ export default function GeneratePage() {
                   />
                 </div>
 
+                {/* NEW: Technology Integration */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Lesson Duration
+                    Technology Integration
                   </label>
-                  <select 
-                    value={formData.duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                  <input
+                    type="text"
+                    value={formData.technology}
+                    onChange={(e) => setFormData(prev => ({ ...prev, technology: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  >
-                    <option value="30">30 minutes</option>
-                    <option value="45">45 minutes</option>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                    <option value="120">2 hours (block schedule)</option>
-                  </select>
+                    placeholder="iPads, Chromebooks, interactive whiteboard, online tools"
+                  />
                 </div>
 
                 <div>
@@ -387,7 +514,7 @@ export default function GeneratePage() {
               </div>
             </div>
 
-            {/* Quick Tips */}
+            {/* Enhanced Pro Tips */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Pro Tips</h3>
               <div className="space-y-3 text-sm">
@@ -397,7 +524,11 @@ export default function GeneratePage() {
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">Be specific about learning goals and student context</span>
+                  <span className="text-gray-700">Multi-day plans include detailed daily breakdowns</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-emerald-600 mt-1">•</span>
+                  <span className="text-gray-700">AI generates actual working resource links</span>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
@@ -405,14 +536,14 @@ export default function GeneratePage() {
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">AI automatically integrates compliance requirements</span>
+                  <span className="text-gray-700">Includes assessment rubrics and differentiation</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Generated Lesson Display */}
+        {/* Enhanced Generated Lesson Display */}
         {generatedLesson && (
           <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -424,7 +555,7 @@ export default function GeneratePage() {
                 </button>
                 <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2">
                   <Download className="w-4 h-4" />
-                  <span>Export</span>
+                  <span>Export PDF</span>
                 </button>
                 <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2">
                   <Share className="w-4 h-4" />
@@ -433,12 +564,12 @@ export default function GeneratePage() {
               </div>
             </div>
             
+            {/* FIXED: Proper HTML rendering instead of plain text */}
             <div className="prose max-w-none">
-              <div className="bg-gray-50 p-6 rounded-lg border">
-                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
-                  {generatedLesson}
-                </pre>
-              </div>
+              <div 
+                className="bg-gray-50 p-6 rounded-lg border overflow-auto max-h-96"
+                dangerouslySetInnerHTML={{ __html: generatedLesson }}
+              />
             </div>
           </div>
         )}
