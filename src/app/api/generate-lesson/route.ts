@@ -5,6 +5,13 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+// Model fallback chain - try newer models first
+const MODEL_FALLBACKS = [
+  'claude-3-5-sonnet-20241022', // Latest Claude 3.5 Sonnet
+  'claude-3-sonnet-20240229',   // Fallback Claude 3 Sonnet
+  'claude-3-haiku-20240307'     // Final fallback Claude 3 Haiku
+]
+
 // Inline prompts to avoid import issues
 const ROOT_WORK_SYSTEM_PROMPT = `You are an expert educator guided by the Root Work Framework. You create lesson plans that are equity-first, trauma-informed, strength-based, and community-connected.
 
@@ -25,7 +32,7 @@ LESSON STRUCTURE REQUIREMENTS:
 Always include specific strategies for diverse learners including ELL, students with disabilities, and different cultural backgrounds.`
 
 function buildLessonPrompt(
-  subject: string,
+  subjects: string[],
   gradeLevel: string,
   objectives: string,
   duration: number,
@@ -35,11 +42,15 @@ function buildLessonPrompt(
     ? `\n\nSPECIAL CONSIDERATIONS: This lesson must specifically address: ${specialNeeds.join(', ')}`
     : ''
 
+  const subjectText = subjects.length > 1 
+    ? `SUBJECTS (Interdisciplinary): ${subjects.join(', ')}`
+    : `SUBJECT: ${subjects[0]}`
+
   return `${ROOT_WORK_SYSTEM_PROMPT}
 
 CREATE A COMPREHENSIVE LESSON PLAN:
 
-SUBJECT: ${subject}
+${subjectText}
 GRADE LEVEL: ${gradeLevel}
 DURATION: ${duration} minutes
 LEARNING OBJECTIVES: ${objectives}${specialNeedsText}
@@ -49,6 +60,7 @@ FORMAT YOUR RESPONSE AS A DETAILED LESSON PLAN INCLUDING:
 1. LESSON OVERVIEW
    - Clear learning objectives aligned to standards
    - Root Work Framework integration summary
+   ${subjects.length > 1 ? '- Interdisciplinary connections and integration strategies' : ''}
 
 2. MATERIALS AND PREPARATION
    - Required materials with culturally relevant options
@@ -82,15 +94,46 @@ FORMAT YOUR RESPONSE AS A DETAILED LESSON PLAN INCLUDING:
 Make this practical, actionable, and immediately usable by a teacher. Include specific examples and concrete strategies rather than general statements.`
 }
 
+async function generateWithFallback(prompt: string): Promise<any> {
+  for (const model of MODEL_FALLBACKS) {
+    try {
+      const message = await anthropic.messages.create({
+        model: model,
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
+      
+      return {
+        content: message.content[0].type === 'text' ? message.content[0].text : 'Unable to generate lesson content',
+        model: model,
+        usage: message.usage
+      }
+    } catch (error) {
+      console.log(`Model ${model} failed, trying next fallback...`, error)
+      continue
+    }
+  }
+  
+  throw new Error('All AI models failed to generate content')
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { subject, gradeLevel, objectives, duration, specialNeeds } = body
+    const { subject, subjects, gradeLevel, objectives, duration, specialNeeds } = body
+
+    // Handle both single subject (legacy) and multiple subjects
+    const subjectList = subjects && subjects.length > 0 ? subjects : (subject ? [subject] : [])
 
     // Validate required fields
-    if (!subject || !gradeLevel || !objectives) {
+    if (subjectList.length === 0 || !gradeLevel || !objectives) {
       return NextResponse.json(
-        { error: 'Missing required fields: subject, gradeLevel, and objectives are required' },
+        { error: 'Missing required fields: subjects, gradeLevel, and objectives are required' },
         { status: 400 }
       )
     }
@@ -105,40 +148,28 @@ export async function POST(request: NextRequest) {
 
     // Build the Root Work Framework prompt
     const prompt = buildLessonPrompt(
-      subject,
+      subjectList,
       gradeLevel,
       objectives,
       parseInt(duration) || 60,
       specialNeeds || []
     )
 
-    // Generate lesson with Anthropic Claude
-    const message = await anthropic.messages.create({
-      model: 'claude-3-sonnet-20240229',
-      max_tokens: 4000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    })
-
-    const lessonContent = message.content[0].type === 'text' 
-      ? message.content[0].text 
-      : 'Unable to generate lesson content'
+    // Generate lesson with fallback models
+    const result = await generateWithFallback(prompt)
 
     return NextResponse.json({
       success: true,
-      lesson: lessonContent,
+      lesson: result.content,
       metadata: {
         rootWorkCompliant: true,
         generatedAt: new Date().toISOString(),
         framework: 'Root Work Framework - Equity First, Trauma Informed, Strength Based, Community Connected',
+        subjects: subjectList,
         specialConsiderations: specialNeeds,
-        model: 'claude-3-sonnet-20240229',
-        prompt_tokens: message.usage?.input_tokens,
-        completion_tokens: message.usage?.output_tokens
+        model: result.model,
+        prompt_tokens: result.usage?.input_tokens,
+        completion_tokens: result.usage?.output_tokens
       }
     })
   } catch (error) {
@@ -164,6 +195,7 @@ export async function GET() {
     status: 'ready',
     message: 'Root Work Framework AI lesson generation service',
     hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+    models: MODEL_FALLBACKS,
     framework: 'Equity-centered, trauma-informed lesson planning'
   })
 }
