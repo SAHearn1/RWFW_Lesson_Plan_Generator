@@ -164,42 +164,42 @@ Generate comprehensive, culturally responsive content that teachers can immediat
   }
 
   const growthStages = [
-    { name: 'Seed', color: 'bg-emerald-100 text-emerald-800', description: 'Planting curiosity' },
-    { name: 'Sprout', color: 'bg-emerald-200 text-emerald-900', description: 'Understanding emerges' },
-    { name: 'Bloom', color: 'bg-orange-200 text-orange-900', description: 'Creative expression' },
-    { name: 'Harvest', color: 'bg-orange-300 text-orange-900', description: 'Sharing knowledge' }
+    { name: 'Seed', color: 'bg-yellow-100 text-yellow-800', description: 'Planting curiosity' },
+    { name: 'Sprout', color: 'bg-green-100 text-green-800', description: 'Understanding emerges' },
+    { name: 'Bloom', color: 'bg-amber-100 text-amber-800', description: 'Creative expression' },
+    { name: 'Harvest', color: 'bg-orange-200 text-orange-900', description: 'Sharing knowledge' }
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
       {/* Professional Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="border-b border-gray-200 shadow-sm" style={{ backgroundColor: '#082A19' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
+                  <BookOpen className="w-5 h-5" style={{ color: '#082A19' }} />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Root Work Platform</h1>
-                  <p className="text-xs text-gray-500">Equity-Centered Learning Design</p>
+                  <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Platform</h1>
+                  <p className="text-xs" style={{ color: '#D4C862' }}>Equity-Centered Learning Design</p>
                 </div>
               </div>
             </div>
             
             <nav className="hidden md:flex space-x-8">
-              <a href="/" className="text-gray-600 hover:text-gray-900 font-medium">Dashboard</a>
-              <a href="/generate" className="text-emerald-700 border-b-2 border-emerald-600 px-3 py-2 text-sm font-medium">Generate</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">My Lessons</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">Frameworks</a>
+              <a href="/" className="text-gray-300 hover:text-white font-medium transition-colors">Dashboard</a>
+              <a href="/generate" className="border-b-2 px-3 py-2 text-sm font-medium text-white" style={{ borderColor: '#D4C862' }}>Generate</a>
+              <a href="#" className="text-gray-300 hover:text-white font-medium transition-colors">My Lessons</a>
+              <a href="#" className="text-gray-300 hover:text-white font-medium transition-colors">Frameworks</a>
             </nav>
             
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600">
+              <button className="p-2 text-gray-300 hover:text-white transition-colors">
                 <Users className="w-5 h-5" />
               </button>
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium" style={{ backgroundColor: '#D4C862', color: '#082A19' }}>
                 U
               </div>
             </div>
@@ -209,29 +209,29 @@ Generate comprehensive, culturally responsive content that teachers can immediat
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Root Work Framework Banner */}
-        <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-700 rounded-xl p-6 mb-8 text-white">
+        <div className="rounded-xl p-6 mb-8 text-white" style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 50%, #082A19 100%)' }}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold mb-2">AI-Powered Lesson Generation</h2>
-              <p className="text-emerald-100 mb-4">Create comprehensive, equity-centered lesson plans with Root Work Framework integration</p>
+              <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Comprehensive Lesson Generation</h2>
+              <p className="mb-4" style={{ color: '#F2F4CA' }}>Create equity-centered lesson plans with Root Work Framework integration</p>
               <div className="flex flex-wrap gap-3">
-                <span className="bg-emerald-600/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border border-emerald-400/30">
+                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
                   Equity First
                 </span>
-                <span className="bg-emerald-600/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border border-emerald-400/30">
+                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
                   Trauma Informed
                 </span>
-                <span className="bg-emerald-600/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border border-emerald-400/30">
+                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
                   Strength Based
                 </span>
-                <span className="bg-emerald-600/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border border-emerald-400/30">
+                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
                   Community Connected
                 </span>
               </div>
             </div>
             <div className="hidden lg:block">
-              <div className="w-24 h-24 bg-emerald-500/30 rounded-full flex items-center justify-center border-2 border-emerald-400/50">
-                <Shield className="w-12 h-12 text-emerald-200" />
+              <div className="w-24 h-24 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)' }}>
+                <Shield className="w-12 h-12" style={{ color: '#D4C862' }} />
               </div>
             </div>
           </div>
@@ -243,16 +243,16 @@ Generate comprehensive, culturally responsive content that teachers can immediat
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Lesson Plan Generator</h3>
-                <span className="bg-emerald-100 text-emerald-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  AI Powered by Claude 4
+                <h3 className="text-xl font-bold" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Lesson Plan Generator</h3>
+                <span className="text-xs font-medium px-2.5 py-0.5 rounded-full" style={{ backgroundColor: '#D4C862', color: '#082A19' }}>
+                  Root Work Powered
                 </span>
               </div>
 
               <div className="space-y-6">
                 {/* Subject Selection */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  <label className="block text-sm font-semibold mb-3" style={{ color: '#2B2B2B' }}>
                     Subject Areas (Select one or more for interdisciplinary lessons)
                   </label>
                   
@@ -265,12 +265,13 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                           return (
                             <span
                               key={subject}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                              style={{ backgroundColor: '#F2F4CA', color: '#082A19' }}
                             >
                               {subjectLabel}
                               <button
                                 onClick={() => removeSubject(subject)}
-                                className="ml-2 hover:bg-emerald-200 rounded-full p-0.5"
+                                className="ml-2 hover:bg-stone-200 rounded-full p-0.5 transition-colors"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -289,20 +290,29 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                         onClick={() => toggleSubject(option.value)}
                         className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-colors ${
                           formData.subjects.includes(option.value)
-                            ? 'bg-emerald-50 border-2 border-emerald-200'
+                            ? 'border-2'
                             : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
                         }`}
+                        style={formData.subjects.includes(option.value) ? 
+                          { backgroundColor: '#F2F4CA', borderColor: '#3B523A' } : 
+                          {}
+                        }
                       >
                         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
                           formData.subjects.includes(option.value)
-                            ? 'bg-emerald-600 border-emerald-600'
+                            ? ''
                             : 'border-gray-300'
-                        }`}>
+                        }`}
+                        style={formData.subjects.includes(option.value) ? 
+                          { backgroundColor: '#082A19', borderColor: '#082A19' } : 
+                          {}
+                        }
+                        >
                           {formData.subjects.includes(option.value) && (
                             <CheckCircle className="w-3 h-3 text-white" />
                           )}
                         </div>
-                        <span className="text-sm text-gray-700">{option.label}</span>
+                        <span className="text-sm" style={{ color: '#2B2B2B' }}>{option.label}</span>
                       </div>
                     ))}
                   </div>
@@ -310,13 +320,14 @@ Generate comprehensive, culturally responsive content that teachers can immediat
 
                 {/* Grade Level */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Grade Level
                   </label>
                   <select 
                     value={formData.gradeLevel}
                     onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
+                    style={{ focusRingColor: '#3B523A', focusBorderColor: '#3B523A' }}
                   >
                     <option value="">Select Grade</option>
                     <option value="prek-2">PreK-2 (Early Elementary)</option>
@@ -326,30 +337,30 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                   </select>
                 </div>
 
-                {/* NEW: Topic Field */}
+                {/* Topic Field */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Lesson Topic/Unit
                   </label>
                   <input
                     type="text"
                     value={formData.topic}
                     onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
                     placeholder="e.g., Fractions, Photosynthesis, Civil Rights Movement"
                   />
                 </div>
 
-                {/* ENHANCED: Duration in Days */}
+                {/* Duration in Days */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
+                  <label className="block text-sm font-semibold mb-2 flex items-center" style={{ color: '#2B2B2B' }}>
+                    <Calendar className="w-4 h-4 mr-2" style={{ color: '#3B523A' }} />
                     Lesson Duration (Days)
                   </label>
                   <select 
                     value={formData.duration}
                     onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
                   >
                     <option value="1">1 Day</option>
                     <option value="2">2 Days</option>
@@ -362,50 +373,50 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                   </select>
                 </div>
 
-                {/* NEW: Standards Field */}
+                {/* Standards Field */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Academic Standards
                   </label>
                   <input
                     type="text"
                     value={formData.standards}
                     onChange={(e) => setFormData(prev => ({ ...prev, standards: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
                     placeholder="e.g., CCSS.MATH.3.NF.A.1, NGSS.5-PS1-1"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Learning Objectives & Natural Language Description
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
+                    Learning Objectives & Goals
                   </label>
                   <textarea 
                     value={formData.objectives}
                     onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors" 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors" 
                     rows={5} 
-                    placeholder="Describe what you want students to learn using natural language. For example: 'I want my 4th graders to understand fractions by connecting them to real-world situations like cooking and sharing. They should be able to compare fractions and explain their thinking using both visual models and mathematical language. This lesson should be engaging for students who struggle with math anxiety and connect to their cultural backgrounds.'"
+                    placeholder="Describe what students will learn and be able to do. Example: 'Students will understand fractions by connecting them to real-world situations like cooking and sharing. They will compare fractions and explain their thinking using both visual models and mathematical language. This lesson will engage students who face math anxiety and connect to their cultural backgrounds.'"
                   />
                 </div>
 
-                {/* NEW: Technology Integration */}
+                {/* Technology Integration */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Technology Integration
                   </label>
                   <input
                     type="text"
                     value={formData.technology}
                     onChange={(e) => setFormData(prev => ({ ...prev, technology: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors"
                     placeholder="iPads, Chromebooks, interactive whiteboard, online tools"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    Specialized Support & Accommodations
+                  <label className="block text-sm font-semibold mb-3" style={{ color: '#2B2B2B' }}>
+                    Learning Support & Accommodations
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
@@ -421,20 +432,29 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                         onClick={() => toggleSpecialNeed(need)}
                         className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-colors ${
                           formData.specialNeeds.includes(need)
-                            ? 'bg-emerald-50 border-2 border-emerald-200'
+                            ? 'border-2'
                             : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
                         }`}
+                        style={formData.specialNeeds.includes(need) ? 
+                          { backgroundColor: '#F2F4CA', borderColor: '#3B523A' } : 
+                          {}
+                        }
                       >
                         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
                           formData.specialNeeds.includes(need)
-                            ? 'bg-emerald-600 border-emerald-600'
+                            ? ''
                             : 'border-gray-300'
-                        }`}>
+                        }`}
+                        style={formData.specialNeeds.includes(need) ? 
+                          { backgroundColor: '#082A19', borderColor: '#082A19' } : 
+                          {}
+                        }
+                        >
                           {formData.specialNeeds.includes(need) && (
                             <CheckCircle className="w-3 h-3 text-white" />
                           )}
                         </div>
-                        <span className="text-sm text-gray-700">{need}</span>
+                        <span className="text-sm" style={{ color: '#2B2B2B' }}>{need}</span>
                       </div>
                     ))}
                   </div>
@@ -451,25 +471,25 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                 )}
 
                 {/* Root Work Framework Validation */}
-                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-emerald-900 mb-3 flex items-center">
+                <div className="border rounded-lg p-4" style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}>
+                  <h4 className="font-semibold mb-3 flex items-center" style={{ color: '#082A19' }}>
                     <CheckCircle className="w-5 h-5 mr-2" />
                     Root Work Framework Integration
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center text-emerald-700">
+                    <div className="flex items-center" style={{ color: '#082A19' }}>
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Equity considerations active
                     </div>
-                    <div className="flex items-center text-emerald-700">
+                    <div className="flex items-center" style={{ color: '#082A19' }}>
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Trauma-informed design enabled
                     </div>
-                    <div className="flex items-center text-emerald-700">
+                    <div className="flex items-center" style={{ color: '#082A19' }}>
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Strength-based approach integrated
                     </div>
-                    <div className="flex items-center text-emerald-700">
+                    <div className="flex items-center" style={{ color: '#082A19' }}>
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Community connections embedded
                     </div>
@@ -479,12 +499,13 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                 <button 
                   onClick={handleSubmit}
                   disabled={isGenerating || formData.subjects.length === 0 || !formData.gradeLevel || !formData.objectives}
-                  className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-4 px-6 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  className="w-full text-white py-4 px-6 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  style={{ background: isGenerating ? '#6B7280' : 'linear-gradient(135deg, #082A19 0%, #3B523A 100%)' }}
                 >
                   {isGenerating ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Generating with AI...</span>
+                      <span>Creating your lesson plan...</span>
                     </>
                   ) : (
                     <span>Generate {formData.subjects.length > 1 ? 'Interdisciplinary' : ''} Lesson Plan</span>
@@ -498,7 +519,7 @@ Generate comprehensive, culturally responsive content that teachers can immediat
           <div className="space-y-6">
             {/* Garden to Growth Journey */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Garden to Growth Journey</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Garden to Growth Journey</h3>
               <div className="space-y-4">
                 {growthStages.map((stage, index) => (
                   <div key={stage.name} className="flex items-center space-x-3">
@@ -506,7 +527,7 @@ Generate comprehensive, culturally responsive content that teachers can immediat
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{stage.name}</p>
+                      <p className="font-semibold" style={{ color: '#2B2B2B' }}>{stage.name}</p>
                       <p className="text-sm text-gray-600">{stage.description}</p>
                     </div>
                   </div>
@@ -516,26 +537,26 @@ Generate comprehensive, culturally responsive content that teachers can immediat
 
             {/* Enhanced Pro Tips */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Pro Tips</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Pro Tips</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start space-x-2">
-                  <span className="text-emerald-600 mt-1">•</span>
+                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
                   <span className="text-gray-700">Select multiple subjects for interdisciplinary lessons</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="text-emerald-600 mt-1">•</span>
+                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
                   <span className="text-gray-700">Multi-day plans include detailed daily breakdowns</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">AI generates actual working resource links</span>
+                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
+                  <span className="text-gray-700">Generated plans include working resource links</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="text-emerald-600 mt-1">•</span>
-                  <span className="text-gray-700">Mention cultural considerations or student interests</span>
+                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
+                  <span className="text-gray-700">Include cultural considerations and student interests</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="text-emerald-600 mt-1">•</span>
+                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
                   <span className="text-gray-700">Includes assessment rubrics and differentiation</span>
                 </div>
               </div>
@@ -547,17 +568,17 @@ Generate comprehensive, culturally responsive content that teachers can immediat
         {generatedLesson && (
           <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Generated Lesson Plan</h3>
+              <h3 className="text-xl font-bold" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Generated Lesson Plan</h3>
               <div className="flex space-x-3">
-                <button className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors flex items-center space-x-2">
+                <button className="text-white px-4 py-2 rounded-md transition-colors flex items-center space-x-2" style={{ backgroundColor: '#082A19' }}>
                   <Save className="w-4 h-4" />
                   <span>Save</span>
                 </button>
-                <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                <button className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" style={{ borderColor: '#3B523A' }}>
                   <Download className="w-4 h-4" />
                   <span>Export PDF</span>
                 </button>
-                <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                <button className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" style={{ borderColor: '#3B523A' }}>
                   <Share className="w-4 h-4" />
                   <span>Share</span>
                 </button>
@@ -567,7 +588,8 @@ Generate comprehensive, culturally responsive content that teachers can immediat
             {/* FIXED: Proper HTML rendering instead of plain text */}
             <div className="prose max-w-none">
               <div 
-                className="bg-gray-50 p-6 rounded-lg border overflow-auto max-h-96"
+                className="p-6 rounded-lg border overflow-auto max-h-96"
+                style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}
                 dangerouslySetInnerHTML={{ __html: generatedLesson }}
               />
             </div>
