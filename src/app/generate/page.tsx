@@ -49,7 +49,7 @@ export default function GeneratePage() {
           messages: [
             { 
               role: "user", 
-              content: `Create a comprehensive ${formData.duration}-day lesson plan using the Root Work Framework (equity-centered, trauma-informed, strength-based, community-connected) with the following specifications:
+              content: `Create a comprehensive ${formData.duration}-day lesson plan that integrates Root Work Framework principles (equity-centered, trauma-informed, strength-based, community-connected) with the 4E instructional model structure. Use the following specifications:
 
 **LESSON REQUIREMENTS:**
 - Subject(s): ${formData.subjects.join(', ')}
@@ -61,65 +61,97 @@ export default function GeneratePage() {
 - Special Considerations: ${formData.specialNeeds.join(', ') || 'Universal design principles'}
 - Technology Integration: ${formData.technology || 'Age-appropriate educational technology'}
 
-**ROOT WORK FRAMEWORK INTEGRATION:**
-- Equity First: Ensure all activities are accessible and culturally responsive
-- Trauma-Informed: Create safe, predictable learning environments
-- Strength-Based: Build on student assets and community knowledge
-- Community-Connected: Include authentic connections to student lives and communities
+**HYBRID FRAMEWORK STRUCTURE:**
+Create lesson plans that blend Root Work Framework principles with the 4E instructional model:
+
+1. **ENGAGE** (10-15 minutes) - Root Work Community Circle/Opening:
+   - Relationship building and community connection
+   - Cultural asset activation and prior knowledge connection
+   - Hook/activator that honors student experiences
+   - Trauma-informed safe space establishment
+
+2. **EXPLORE** (15-20 minutes) - Root Work Strength-Based Direct Instruction:
+   - Teacher modeling with cultural responsiveness
+   - Direct instruction that builds on community knowledge
+   - Mini-lesson with equity considerations
+   - Explicit Bloom's Taxonomy level identification
+
+3. **APPLY** (25-40 minutes) - Root Work Collaborative & Individual Practice:
+   - "We do" collaborative practice with peer support
+   - "You do" independent practice with choice and voice
+   - Student-centered activities that honor diverse learning styles
+   - Multiple ways to demonstrate understanding
+
+4. **REFLECT** (5-10 minutes) - Root Work Community Sharing & Closure:
+   - Check for understanding through community dialogue
+   - Student self-reflection and goal setting
+   - Celebration of learning and cultural contributions
+   - Preview connections to next lesson
 
 **OUTPUT REQUIREMENTS:**
-Generate a professional, comprehensive lesson plan in HTML format with:
+Generate a professional lesson plan in HTML format with:
 
-1. **Framework Overview** with:
-   - Root Work Framework alignment explanation
-   - Clear learning objectives with equity considerations
+1. **Lesson Header Information:**
+   - Course, week, teacher information placeholders
+   - Deconstructed standards with specific citations
+   - "I Can" learning targets (student-facing statements)
    - Essential questions that connect to student experiences
-   - Key vocabulary with cultural context
-   - Assessment strategies that honor diverse ways of knowing
+   - Literacy skills integration with specific strategies
 
-2. **Daily Breakdown** (for each day):
-   - Community Circle/Opening (relationship building)
-   - Direct instruction with cultural connections (15-20 min)
-   - Collaborative learning activities (20-25 min)
-   - Individual reflection and choice (10-15 min)
-   - Closing circle and community sharing (5-10 min)
+2. **Daily 4E Structure** (for each day):
+   - ENGAGE: Community circle with cultural connections (10-15 min)
+   - EXPLORE: Strength-based direct instruction (15-20 min) 
+   - APPLY: Collaborative and independent practice with choice (25-40 min)
+   - REFLECT: Community sharing and reflection (5-10 min)
+   - Bloom's Taxonomy levels explicitly identified for each phase
+   - Differentiation strategies embedded throughout
 
-3. **Resources & Materials** with ACTUAL working links:
+3. **Comprehensive Accommodations:**
+   - 504 Plan accommodations with specific strategies
+   - Gifted and Talented extensions with higher-order thinking
+   - SPED accommodations with UDL principles
+   - ELL supports with language scaffolding
+   - Trauma-informed modifications
+
+4. **Co-Teaching Integration:**
+   - Recommended co-teaching model (if applicable)
+   - Role definitions for general and special education teachers
+   - Collaborative strategies that support all learners
+
+5. **Resources & Materials** with ACTUAL working links:
    - Educational websites (Khan Academy, Crash Course, PBS Learning Media)
-   - Video resources (YouTube educational channels, documentaries)
-   - Interactive tools and simulations
-   - Culturally relevant books and media
-   - Community resource connections
+   - Video resources (YouTube educational channels)
+   - Interactive tools and culturally relevant materials
    - Assessment rubrics and tools
+   - Community resource connections
 
-4. **Equity-Centered Differentiation** for:
-   - English Language Learners (with language supports)
-   - Students with disabilities (UDL principles)
-   - Gifted and talented students (extension activities)
-   - Trauma-informed accommodations
-   - Culturally and linguistically diverse learners
+6. **Assessment Strategy:**
+   - Formative assessment throughout each phase
+   - Summative assessment options with multiple modalities
+   - Student self-assessment opportunities
+   - Progress monitoring tools
 
-5. **Assessment & Reflection**:
-   - Multiple ways to demonstrate learning
-   - Student self-reflection opportunities
-   - Community sharing and celebration
-   - Ongoing formative assessment strategies
+7. **Reteaching Plan:**
+   - Specific strategies for students who don't master objectives
+   - Alternative approaches honoring different learning styles
+   - Additional scaffolding and support options
+   - Community and family engagement for reinforcement
 
-6. **Community Extensions**:
+8. **Community Extensions:**
    - Family engagement opportunities
    - Community expert connections
    - Real-world application projects
    - Service learning possibilities
 
 **FORMATTING REQUIREMENTS:**
-- Use proper HTML structure with headers, lists, and formatting
+- Use proper HTML structure with clear headers and organization
 - Include actual working hyperlinks to educational resources
-- Make it visually organized and professional
-- Include specific time allocations for each day
-- Provide detailed descriptions that honor Root Work principles
-- Emphasize student voice, choice, and agency throughout
+- Maintain professional formatting with specific time allocations
+- Emphasize both 4E structure AND Root Work principles throughout
+- Provide detailed, actionable descriptions for immediate implementation
+- Ensure all content is culturally responsive and trauma-informed
 
-Generate comprehensive, culturally responsive content that teachers can immediately implement to create equitable learning experiences.`
+Generate comprehensive content that meets district template requirements while maintaining Root Work Framework integrity for equitable, community-centered learning experiences.`
             }
           ]
         })
