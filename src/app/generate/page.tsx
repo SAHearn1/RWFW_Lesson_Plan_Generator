@@ -37,7 +37,7 @@ export default function GeneratePage() {
     setError('')
     
     try {
-      // Call the local API route instead of Anthropic directly
+      // Call the correct API endpoint
       const response = await fetch('/api/generate-lesson', {
         method: 'POST',
         headers: {
