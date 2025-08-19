@@ -211,4 +211,221 @@ function buildPrompt(data: LessonRequest): string {
   const baseMinutes = minutesFromDuration(data.duration) ?? 90;
 
   return `
-You are an expert RWFW (Root Work Framework) lesson designer. Produce a trauma-informed, STEAM-aligne
+You are an expert RWFW (Root Work Framework) lesson designer. Produce a trauma-informed, STEAM-aligned lesson that complies with the JSON contract below. Return **ONLY** a valid JSON object—no prose, no markdown fences.
+
+CONTEXT
+Subject: ${data.subject}
+Grade Level: ${data.gradeLevel}
+Topic: ${data.topic}
+Duration: ${data.duration} (≈ ${baseMinutes} minutes)
+Learning Objectives (teacher-provided): ${data.learningObjectives ?? "N/A"}
+Special Considerations: ${data.specialNeeds ?? "N/A"}
+Available Resources: ${data.availableResources ?? "N/A"}
+
+REQUIREMENTS
+- Integrate: “I Can” targets tagged with Webb’s DOK (1–4); 5 Rs schedule with five blocks that sum to ~${baseMinutes} minutes; Literacy skills + resource links; Bloom’s alignment; Co-teaching model; Reteaching (same-day pivot + next-day) + Spiral ideas; MTSS Tiers 1–3; Therapeutic Rootwork context; GRR Lesson Flow steps with **both tokens**: "[Teacher Note: ...]" and "[Student Note: ...]" in every step.
+- No fabricated links. If a real link is unknown, use the literal text: "[Insert link here]".
+- Language: professional, strengths-based, healing-centered, copy-ready for teachers.
+
+JSON CONTRACT (return exactly this shape and keys):
+{
+  "title": string,
+  "overview": string,
+  "materials": string[],
+  "iCanTargets": [{"text": string, "dok": 1|2|3|4}],
+  "fiveRsSchedule": [{"label": string, "minutes": number, "purpose": string}],  // exactly 5 items, minutes sum ≈ ${baseMinutes}
+  "literacySkillsAndResources": {"skills": string[], "resources": string[]},
+  "bloomsAlignment": [{"task": string, "bloom": "Remember"|"Understand"|"Apply"|"Analyze"|"Evaluate"|"Create", "rationale": string}],
+  "coTeachingIntegration": {"model": string, "roles": string[], "grouping": string},
+  "reteachingAndSpiral": {"sameDayQuickPivot": string, "nextDayPlan": string, "spiralIdeas": string[]},
+  "mtssSupports": {"tier1": string[], "tier2": string[], "tier3": string[], "progressMonitoring": string[]},
+  "therapeuticRootworkContext": {"rationale": string, "regulationCue": string, "restorativePractice": string, "communityAssets": string[]},
+  "lessonFlowGRR": [{"phase": "I Do"|"We Do"|"You Do", "step": string, "details": string, "teacherNote": string, "studentNote": string}],
+  "assessmentAndEvidence": {"formativeChecks": string[], "rubric": [{"criterion": string, "developing": string, "proficient": string, "advanced": string}], "exitTicket": string},
+  "objectives": string[],
+  "timeline": [{"time": string, "activity": string, "description": string}],
+  "differentiation": string,
+  "extensions": string
+}
+`;
+}
+
+/** -------- Handler -------- */
+
+export async function POST(request: NextRequest) {
+  try {
+    const data: LessonRequest = await request.json();
+
+    // Basic validation
+    const missing: string[] = [];
+    if (!data.subject?.trim()) missing.push("subject");
+    if (!data.gradeLevel?.trim()) missing.push("gradeLevel");
+    if (!data.topic?.trim()) missing.push("topic");
+    if (!data.duration?.trim()) missing.push("duration");
+    if (missing.length) {
+      return NextResponse.json({ error: `Missing required fields: ${missing.join(", ")}` }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      return NextResponse.json({ error: "API configuration error (missing ANTHROPIC_API_KEY)" }, { status: 500 });
+    }
+
+    const models = modelOrder();
+    if (!models.length) {
+      return NextResponse.json(
+        { error: "Missing CLAUDE_MODEL_ORDER env (comma-separated highest→lowest)." },
+        { status: 500 }
+      );
+    }
+
+    const prompt = buildPrompt(data);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort("timeout"), REQUEST_TIMEOUT_MS);
+
+    let lastErr: unknown;
+    let draftJson: string | null = null;
+
+    for (const model of models) {
+      try {
+        const raw = await callAnthropic(model, prompt, ctrl.signal);
+        draftJson = raw;
+        break; // success
+      } catch (e) {
+        lastErr = e;
+        // try next model
+      }
+    }
+
+    clearTimeout(timer);
+
+    if (!draftJson) {
+      throw lastErr ?? new Error("All models failed");
+    }
+
+    // Parse and validate
+    const plan = safeParse<LessonPlan>(draftJson);
+    if (!plan) {
+      throw new Error("JSON parsing failed");
+    }
+
+    const durationMinutes = minutesFromDuration(data.duration);
+    const issues = [
+      ...hasFiveRs(plan.fiveRsSchedule, durationMinutes),
+      ...hasNotes(plan.lessonFlowGRR),
+      ...hasKeySections(plan),
+    ];
+
+    if (issues.length) {
+      throw new Error(`Validation errors: ${issues.join(" | ")}`);
+    }
+
+    return NextResponse.json({ lessonPlan: plan, success: true });
+  } catch (error: any) {
+    // Robust fallback using your legacy simpler schema (kept from your version, slightly tuned)
+    const fallback: LessonPlan = {
+      title: `Root Work Framework: ${error?.message ? "Fallback – " : ""}${new Date().toLocaleDateString()}`,
+      overview:
+        "This fallback plan preserves RWFW intent (healing-centered, culturally responsive, biophilic) and provides a workable structure while the generator recovers.",
+      materials: [
+        "Student journals / STEAM journals",
+        "Flexible seating / circle space",
+        "Chart paper, markers, sticky notes",
+        "Culturally relevant texts or visuals",
+        "Regulation tools (breathing cards, timers)",
+        "Technology for multimodal expression",
+      ],
+      iCanTargets: [
+        { text: "I can connect today’s topic to my community and lived experience.", dok: 2 },
+        { text: "I can analyze key ideas using evidence.", dok: 3 },
+        { text: "I can create a product that demonstrates my understanding.", dok: 4 },
+      ],
+      fiveRsSchedule: [
+        { label: "Relationships/Regulate", minutes: 10, purpose: "Open in community; calm body/brain; norms." },
+        { label: "Readiness & Relevance", minutes: 15, purpose: "Activate prior knowledge; local/community hook." },
+        { label: "Rigor", minutes: 30, purpose: "Direct instruction + guided practice with supports." },
+        { label: "Release", minutes: 25, purpose: "Independent/product work with choice and conferencing." },
+        { label: "Reflection/Restorative", minutes: 10, purpose: "Exit ticket; circle close; set intentions." },
+      ],
+      literacySkillsAndResources: {
+        skills: ["Cite textual evidence", "Academic discussion moves", "Purposeful note-taking"],
+        resources: ["[Insert link here]", "[Insert link here]"],
+      },
+      bloomsAlignment: [
+        { task: "Activate prior knowledge with local hook", bloom: "Understand", rationale: "Connect concepts." },
+        { task: "Analyze anchor text excerpt", bloom: "Analyze", rationale: "Break down structure and meaning." },
+        { task: "Create response product", bloom: "Create", rationale: "Synthesize understanding in a new form." },
+      ],
+      coTeachingIntegration: {
+        model: "One Teach / One Assist",
+        roles: ["Lead instruction", "Regulation & targeted support", "Station oversight"],
+        grouping: "Flexible small groups rotating during Release.",
+      },
+      reteachingAndSpiral: {
+        sameDayQuickPivot: "Re-model with a simpler exemplar; use sentence frames and dual-coding sketch.",
+        nextDayPlan: "Small-group clinic on evidence selection and commentary.",
+        spiralIdeas: ["Revisit evidence/commentary weekly via warmups.", "Mini-debates for speaking/listening."],
+      },
+      mtssSupports: {
+        tier1: ["UDL options", "Think-alouds", "Checks for understanding every 8–10 min"],
+        tier2: ["Small-group prompts", "Graphic organizers", "Teacher conferencing"],
+        tier3: ["Reduced item sets", "Alternative product options", "1:1 scaffolded scripting"],
+        progressMonitoring: ["Exit ticket rubric", "Anecdotal notes", "Quick probes in small groups"],
+      },
+      therapeuticRootworkContext: {
+        rationale: "Learning happens when students feel seen, safe, and connected.",
+        regulationCue: "Box breathing + grounding prompt at transitions.",
+        restorativePractice: "Closing circle appreciations and commitments.",
+        communityAssets: ["Savannah local histories", "Gullah-Geechee culture", "Neighborhood experts"],
+      },
+      lessonFlowGRR: [
+        {
+          phase: "I Do",
+          step: "Model annotation of anchor text",
+          details: "Think-aloud; show evidence selection and commentary.",
+          teacherNote: "[Teacher Note: Explicitly name the skill; keep pace calm.]",
+          studentNote: "[Student Note: Watch/listen; jot 2 takeaways in journal.]",
+        },
+        {
+          phase: "We Do",
+          step: "Jointly annotate a short passage",
+          details: "Students suggest evidence; teacher records and questions.",
+          teacherNote: "[Teacher Note: Use equity sticks; validate multiple ways of knowing.]",
+          studentNote: "[Student Note: Offer an idea; listen for connections to peers.]",
+        },
+        {
+          phase: "You Do",
+          step: "Create a short product (paragraph/sketchnote/audio)",
+          details: "Students choose modality to show understanding.",
+          teacherNote: "[Teacher Note: Confer 1–1; adjust scaffolds by need.]",
+          studentNote: "[Student Note: Use the success criteria to guide your work.]",
+        },
+      ],
+      assessmentAndEvidence: {
+        formativeChecks: ["Cold-call + no-opt-out", "Annotated sample collection", "Exit ticket"],
+        rubric: [
+          { criterion: "Evidence use", developing: "Vague/partial", proficient: "Clear/relevant", advanced: "Insightful/multiple" },
+          { criterion: "Reasoning", developing: "List-like", proficient: "Explains connections", advanced: "Insight synthesizes ideas" },
+          { criterion: "Clarity", developing: "Some errors", proficient: "Generally clear", advanced: "Polished/precise" },
+        ],
+        exitTicket: "One sentence: What new understanding will you carry into tomorrow?",
+      },
+      objectives: [
+        "Build community and psychological safety",
+        "Analyze text with evidence",
+        "Communicate understanding via choice product",
+      ],
+      timeline: [
+        { time: "0–10", activity: "Relationships/Regulate", description: "Opening ritual and norms." },
+        { time: "10–25", activity: "Readiness & Relevance", description: "Local/community hook." },
+        { time: "25–55", activity: "Rigor → Release", description: "I Do / We Do / You Do sequence." },
+        { time: "55–60", activity: "Reflection/Restorative", description: "Exit + circle close." },
+      ],
+      differentiation:
+        "UDL options, language scaffolds, visuals, movement breaks; MTSS tiers applied as needed.",
+      extensions:
+        "Community interview; local artifact analysis; share-out to families or another class.",
+    };
+
+    return NextResponse.json({ lessonPlan: fallback, success: false, error: error?.message ?? "Generator failed" }, { status: 200 });
+  }
+}
