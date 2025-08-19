@@ -40,13 +40,37 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate required fields
-    if (!data.subject || !data.gradeLevel || !data.topic || !data.duration || !data.learningObjectives) {
+    // Log the received data for debugging
+    console.log('Received lesson request data:', JSON.stringify(data, null, 2));
+
+    // Validate only essential fields with better error messages
+    const missingFields = [];
+    if (!data.subject?.trim()) missingFields.push('subject');
+    if (!data.gradeLevel?.trim()) missingFields.push('gradeLevel');  
+    if (!data.topic?.trim()) missingFields.push('topic');
+    if (!data.duration?.trim()) missingFields.push('duration');
+
+    if (missingFields.length > 0) {
+      console.log('Validation failed. Missing fields:', missingFields);
       return NextResponse.json({ 
-        error: 'Missing required fields',
+        error: `Missing required fields: ${missingFields.join(', ')}`,
+        missingFields: missingFields,
         success: false 
       }, { status: 400 });
     }
+
+    // Provide defaults for optional fields and clean data
+    const cleanData = {
+      subject: data.subject.trim(),
+      gradeLevel: data.gradeLevel.trim(),
+      topic: data.topic.trim(),
+      duration: data.duration.trim(),
+      learningObjectives: data.learningObjectives?.trim() || `Students will learn about ${data.topic.trim()}`,
+      specialNeeds: data.specialNeeds?.trim() || '',
+      availableResources: data.availableResources?.trim() || ''
+    };
+
+    console.log('Cleaned data for processing:', cleanData);
 
     // Create the prompt for Claude
     const prompt = `
@@ -63,13 +87,13 @@ FOUNDATIONAL PRINCIPLES:
 - Living Learning Labs (LLLs) approach
 
 LESSON REQUIREMENTS:
-Subject: ${data.subject}
-Grade Level: ${data.gradeLevel}
-Topic: ${data.topic}
-Duration: ${data.duration}
-Learning Objectives: ${data.learningObjectives}
-Special Considerations: ${data.specialNeeds || 'None specified'}
-Available Resources: ${data.availableResources || 'Standard classroom resources'}
+Subject: ${cleanData.subject}
+Grade Level: ${cleanData.gradeLevel}
+Topic: ${cleanData.topic}
+Duration: ${cleanData.duration}
+Learning Objectives: ${cleanData.learningObjectives}
+Special Considerations: ${cleanData.specialNeeds || 'None specified'}
+Available Resources: ${cleanData.availableResources || 'Standard classroom resources'}
 
 Generate a comprehensive lesson plan that embeds Root Work Framework principles in JSON format:
 
