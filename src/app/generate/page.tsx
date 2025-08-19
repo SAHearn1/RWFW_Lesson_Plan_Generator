@@ -1,22 +1,68 @@
-// src/app/generate/page.tsx
+// File: src/app/generate/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { Calendar, Clock, Users, Target, BookOpen, Download, Copy, Check, FileText } from 'lucide-react';
+import {
+  Calendar, Clock, Users, Target, BookOpen, Download, Copy, Check, FileText,
+  ListChecks, Brain, GraduationCap, Layers, Sandwich
+} from 'lucide-react';
 
-interface LessonPlan {
+/** ---- Types aligned with the upgraded API contract ---- */
+type Dok = 1 | 2 | 3 | 4;
+
+type FiveRsBlock = { label: string; minutes: number; purpose: string };
+
+type LessonFlowStep = {
+  phase: 'I Do' | 'We Do' | 'You Do';
+  step: string;
+  details: string;
+  teacherNote: string; // contains [Teacher Note:]
+  studentNote: string; // contains [Student Note:]
+};
+
+type LessonPlan = {
   title: string;
   overview: string;
-  objectives: string[];
   materials: string[];
-  timeline: Array<{
-    time: string;
-    activity: string;
-    description: string;
+
+  iCanTargets: Array<{ text: string; dok: Dok }>;
+  fiveRsSchedule: FiveRsBlock[];
+  literacySkillsAndResources: { skills: string[]; resources: string[] };
+  bloomsAlignment: Array<{
+    task: string;
+    bloom: 'Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create';
+    rationale: string;
   }>;
-  assessment: string;
-  differentiation: string;
-  extensions: string;
+  coTeachingIntegration: { model: string; roles: string[]; grouping: string };
+  reteachingAndSpiral: { sameDayQuickPivot: string; nextDayPlan: string; spiralIdeas: string[] };
+  mtssSupports: { tier1: string[]; tier2: string[]; tier3: string[]; progressMonitoring: string[] };
+  therapeuticRootworkContext: {
+    rationale: string;
+    regulationCue: string;
+    restorativePractice: string;
+    communityAssets: string[];
+  };
+  lessonFlowGRR: LessonFlowStep[];
+  assessmentAndEvidence: {
+    formativeChecks: string[];
+    rubric: Array<{ criterion: string; developing: string; proficient: string; advanced: string }>;
+    exitTicket: string;
+  };
+
+  /** legacy fields kept for compatibility with older plans */
+  objectives?: string[];
+  timeline?: Array<{ time: string; activity: string; description: string }>;
+  assessment?: string;
+  differentiation?: string;
+  extensions?: string;
+};
+
+/** ---- Simple helpers ---- */
+function sectionTitle(cls = '') {
+  return `font-semibold text-[#082A19] mb-2 ${cls}`;
+}
+function liKey(prefix: string, i: number) {
+  return `${prefix}-${i}`;
 }
 
 export default function GeneratePage() {
@@ -27,40 +73,39 @@ export default function GeneratePage() {
     duration: '',
     learningObjectives: '',
     specialNeeds: '',
-    availableResources: ''
+    availableResources: '',
   });
-  
+
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [usedFallback, setUsedFallback] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
     setError('');
+    setUsedFallback(false);
 
-    // Only validate the most essential fields
-    const missingFields = [];
-    if (!formData.subject?.trim()) missingFields.push('Subject Area');
-    if (!formData.gradeLevel?.trim()) missingFields.push('Grade Level');
-    if (!formData.topic?.trim()) missingFields.push('Lesson Topic');
-    if (!formData.duration?.trim()) missingFields.push('Duration');
-
-    if (missingFields.length > 0) {
-      setError(`Please fill in these required fields: ${missingFields.join(', ')}`);
+    // Minimal required validation (keep UX snappy)
+    const missing: string[] = [];
+    if (!formData.subject?.trim()) missing.push('Subject Area');
+    if (!formData.gradeLevel?.trim()) missing.push('Grade Level');
+    if (!formData.topic?.trim()) missing.push('Lesson Topic');
+    if (!formData.duration?.trim()) missing.push('Duration');
+    if (missing.length) {
+      setError(`Please fill in: ${missing.join(', ')}`);
       setIsGenerating(false);
       return;
     }
 
-    // Create a clean payload with defaults
     const payload = {
       subject: formData.subject.trim(),
       gradeLevel: formData.gradeLevel.trim(),
@@ -68,240 +113,285 @@ export default function GeneratePage() {
       duration: formData.duration.trim(),
       learningObjectives: formData.learningObjectives?.trim() || '',
       specialNeeds: formData.specialNeeds?.trim() || '',
-      availableResources: formData.availableResources?.trim() || ''
+      availableResources: formData.availableResources?.trim() || '',
     };
 
-    console.log('Submitting payload:', payload);
-
     try {
-      const response = await fetch('/api/generate-lesson', {
+      const res = await fetch('/api/generate-lesson', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      console.log('Response status:', response.status);
-      
-      const responseData = await response.json();
-      console.log('Response data:', responseData);
+      const data = await res.json();
 
-      if (!response.ok) {
-        throw new Error(responseData.error || `Server error: ${response.status}`);
+      if (!data?.lessonPlan) {
+        throw new Error(data?.error || 'No lesson plan returned');
       }
-
-      if (responseData.lessonPlan) {
-        setLessonPlan(responseData.lessonPlan);
-        if (responseData.fallback) {
-          setError('Generated using backup system - lesson plan created successfully!');
-        }
-      } else {
-        throw new Error('No lesson plan received from server');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(`Failed to generate lesson plan: ${errorMessage}`);
-      console.error('Form submission error:', err);
+      setLessonPlan(data.lessonPlan);
+      setUsedFallback(Boolean(data?.success === false));
+    } catch (err: any) {
+      setError(`Failed to generate lesson plan: ${err?.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }
   };
 
+  /** ---- Exporters ---- */
+  const formatLessonPlanText = (plan: LessonPlan) => {
+    const lines: string[] = [];
+
+    lines.push(`ROOT WORK FRAMEWORK LESSON PLAN: ${plan.title}`);
+    lines.push('');
+    lines.push('OVERVIEW:');
+    lines.push(plan.overview);
+    lines.push('');
+
+    lines.push('I CAN TARGETS (with DOK):');
+    plan.iCanTargets?.forEach((t, i) => lines.push(`${i + 1}. ${t.text} (DOK ${t.dok})`));
+    lines.push('');
+
+    lines.push('5 Rs SCHEDULE:');
+    plan.fiveRsSchedule?.forEach((b, i) => lines.push(`${i + 1}. ${b.label} — ${b.minutes} min :: ${b.purpose}`));
+    lines.push('');
+
+    lines.push('LITERACY SKILLS:');
+    plan.literacySkillsAndResources?.skills?.forEach(s => lines.push(`• ${s}`));
+    lines.push('RESOURCES:');
+    plan.literacySkillsAndResources?.resources?.forEach(r => lines.push(`• ${r}`));
+    lines.push('');
+
+    lines.push("BLOOM'S ALIGNMENT:");
+    plan.bloomsAlignment?.forEach((b, i) => lines.push(
+      `${i + 1}. ${b.task} — ${b.bloom}\n   ${b.rationale}`
+    ));
+    lines.push('');
+
+    lines.push('CO-TEACHING INTEGRATION:');
+    lines.push(`Model: ${plan.coTeachingIntegration?.model}`);
+    lines.push(`Grouping: ${plan.coTeachingIntegration?.grouping}`);
+    lines.push('Roles:');
+    plan.coTeachingIntegration?.roles?.forEach(r => lines.push(`• ${r}`));
+    lines.push('');
+
+    lines.push('RETEACHING & SPIRAL:');
+    lines.push(`Same-Day Quick Pivot: ${plan.reteachingAndSpiral?.sameDayQuickPivot}`);
+    lines.push(`Next-Day Plan: ${plan.reteachingAndSpiral?.nextDayPlan}`);
+    lines.push('Spiral Ideas:');
+    plan.reteachingAndSpiral?.spiralIdeas?.forEach(s => lines.push(`• ${s}`));
+    lines.push('');
+
+    lines.push('MTSS SUPPORTS:');
+    lines.push('Tier 1:'); plan.mtssSupports?.tier1?.forEach(s => lines.push(`• ${s}`));
+    lines.push('Tier 2:'); plan.mtssSupports?.tier2?.forEach(s => lines.push(`• ${s}`));
+    lines.push('Tier 3:'); plan.mtssSupports?.tier3?.forEach(s => lines.push(`• ${s}`));
+    lines.push('Progress Monitoring:'); plan.mtssSupports?.progressMonitoring?.forEach(s => lines.push(`• ${s}`));
+    lines.push('');
+
+    lines.push('THERAPEUTIC ROOTWORK CONTEXT:');
+    lines.push(`Rationale: ${plan.therapeuticRootworkContext?.rationale}`);
+    lines.push(`Regulation Cue: ${plan.therapeuticRootworkContext?.regulationCue}`);
+    lines.push(`Restorative Practice: ${plan.therapeuticRootworkContext?.restorativePractice}`);
+    lines.push('Community Assets:');
+    plan.therapeuticRootworkContext?.communityAssets?.forEach(a => lines.push(`• ${a}`));
+    lines.push('');
+
+    lines.push('LESSON FLOW (GRR):');
+    plan.lessonFlowGRR?.forEach((s, i) => {
+      lines.push(`${i + 1}. ${s.phase} — ${s.step}`);
+      lines.push(`   ${s.details}`);
+      lines.push(`   ${s.teacherNote}`);
+      lines.push(`   ${s.studentNote}`);
+    });
+    lines.push('');
+
+    lines.push('ASSESSMENT & EVIDENCE:');
+    lines.push('Formative Checks:');
+    plan.assessmentAndEvidence?.formativeChecks?.forEach(f => lines.push(`• ${f}`));
+    lines.push('Rubric:');
+    plan.assessmentAndEvidence?.rubric?.forEach(r =>
+      lines.push(`• ${r.criterion} — Dev: ${r.developing} | Prof: ${r.proficient} | Adv: ${r.advanced}`)
+    );
+    lines.push(`Exit Ticket: ${plan.assessmentAndEvidence?.exitTicket}`);
+    lines.push('');
+
+    // Legacy sections if present
+    if (plan.objectives?.length) {
+      lines.push('LEGACY: LEARNING OBJECTIVES');
+      plan.objectives.forEach((o, i) => lines.push(`${i + 1}. ${o}`));
+      lines.push('');
+    }
+    if (plan.timeline?.length) {
+      lines.push('LEGACY: TIMELINE');
+      plan.timeline.forEach(t => lines.push(`${t.time} — ${t.activity}\n   ${t.description}`));
+      lines.push('');
+    }
+    if (plan.assessment) {
+      lines.push('LEGACY: ASSESSMENT');
+      lines.push(plan.assessment);
+      lines.push('');
+    }
+    if (plan.differentiation) {
+      lines.push('LEGACY: DIFFERENTIATION');
+      lines.push(plan.differentiation);
+      lines.push('');
+    }
+    if (plan.extensions) {
+      lines.push('LEGACY: EXTENSIONS');
+      lines.push(plan.extensions);
+      lines.push('');
+    }
+
+    lines.push('Generated by Root Work Framework — healing-centered, biophilic practice.');
+    return lines.join('\n');
+  };
+
   const copyToClipboard = () => {
     if (!lessonPlan) return;
-    
-    const text = formatLessonPlanText(lessonPlan);
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(formatLessonPlanText(lessonPlan));
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   const downloadLessonPlan = () => {
     if (!lessonPlan) return;
-    
     const text = formatLessonPlanText(lessonPlan);
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${lessonPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_lesson_plan.txt`;
+    a.download = `${lessonPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rwfw_lesson_plan.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const downloadAsPDF = () => {
+  const downloadAsHTML = () => {
     if (!lessonPlan) return;
-    
-    // Create a comprehensive HTML structure for PDF generation
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Root Work Framework - ${lessonPlan.title}</title>
-      <style>
-        body { 
-          font-family: 'Inter', Arial, sans-serif; 
-          line-height: 1.6; 
-          color: #2B2B2B; 
-          max-width: 800px; 
-          margin: 0 auto; 
-          padding: 40px 20px;
-        }
-        .header { 
-          text-align: center; 
-          border-bottom: 3px solid #D4C862; 
-          padding-bottom: 20px; 
-          margin-bottom: 30px;
-        }
-        .header h1 { 
-          color: #082A19; 
-          font-family: 'Merriweather', serif; 
-          font-size: 28px; 
-          margin: 0;
-        }
-        .header p { 
-          color: #3B523A; 
-          font-style: italic; 
-          margin: 5px 0 0 0;
-        }
-        .section { 
-          margin: 25px 0; 
-        }
-        .section h2 { 
-          color: #082A19; 
-          font-size: 20px; 
-          border-left: 4px solid #D4C862; 
-          padding-left: 15px;
-          margin-bottom: 15px;
-        }
-        .section h3 { 
-          color: #3B523A; 
-          font-size: 18px; 
-          margin-bottom: 10px;
-        }
-        ul, ol { 
-          padding-left: 25px; 
-        }
-        li { 
-          margin: 8px 0; 
-        }
-        .timeline-item { 
-          border-left: 3px solid #D4C862; 
-          padding-left: 15px; 
-          margin: 15px 0;
-        }
-        .timeline-time { 
-          font-weight: bold; 
-          color: #082A19;
-        }
-        .timeline-desc { 
-          color: #3B523A; 
-          margin-top: 5px;
-        }
-        .footer { 
-          text-align: center; 
-          margin-top: 40px; 
-          padding-top: 20px; 
-          border-top: 2px solid #F2F4CA; 
-          color: #3B523A; 
-          font-style: italic;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>Root Work Framework</h1>
-        <p>Healing-Centered, Biophilic Lesson Plan</p>
-      </div>
-      
-      <div class="section">
-        <h2>${lessonPlan.title}</h2>
-        <p>${lessonPlan.overview}</p>
-      </div>
+    const plan = lessonPlan;
+    const h = (s: string) => (s || '').replace(/\n/g, '<br/>');
 
-      <div class="section">
-        <h3>Learning Objectives</h3>
-        <ul>
-          ${lessonPlan.objectives.map(obj => `<li>${obj}</li>`).join('')}
-        </ul>
-      </div>
+    const html = `
+<!doctype html><html><head>
+<meta charset="utf-8" />
+<title>RWFW — ${plan.title}</title>
+<style>
+  body { font-family: 'Inter', system-ui, Arial; color:#2B2B2B; max-width:900px; margin:0 auto; padding:40px 24px; }
+  h1,h2,h3 { color:#082A19; font-family:'Merriweather', Georgia, serif; }
+  h1 { border-bottom:3px solid #D4C862; padding-bottom:10px; }
+  .chip { display:inline-block; padding:4px 8px; border:1px solid #3B523A; border-radius:8px; margin:2px 6px 2px 0; }
+  .muted { color:#3B523A; }
+  .box { border-left:4px solid #D4C862; padding-left:12px; margin:10px 0; }
+  ul { margin:0; padding-left:20px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { border:1px solid #EEE; padding:8px; text-align:left; }
+  th { background:#F6F7E6; }
+</style>
+</head><body>
+  <header>
+    <h1>Root Work Framework — Lesson Plan</h1>
+    <p class="muted">Healing-centered, biophilic practice</p>
+  </header>
 
-      <div class="section">
-        <h3>Materials Needed</h3>
-        <ul>
-          ${lessonPlan.materials.map(material => `<li>${material}</li>`).join('')}
-        </ul>
-      </div>
+  <section>
+    <h2>${plan.title}</h2>
+    <p>${h(plan.overview)}</p>
+  </section>
 
-      <div class="section">
-        <h3>Lesson Timeline</h3>
-        ${lessonPlan.timeline.map(item => `
-          <div class="timeline-item">
-            <div class="timeline-time">${item.time} - ${item.activity}</div>
-            <div class="timeline-desc">${item.description}</div>
-          </div>
-        `).join('')}
-      </div>
+  <section>
+    <h3>I Can Targets (with DOK)</h3>
+    <ul>${plan.iCanTargets.map(t => `<li>${h(t.text)} <span class="chip">DOK ${t.dok}</span></li>`).join('')}</ul>
+  </section>
 
-      <div class="section">
-        <h3>Assessment Strategies</h3>
-        <p>${lessonPlan.assessment}</p>
-      </div>
+  <section>
+    <h3>5 Rs Schedule</h3>
+    <ul>${plan.fiveRsSchedule.map(b => `<li><strong>${h(b.label)}</strong> — ${b.minutes} min<br/><span class="muted">${h(b.purpose)}</span></li>`).join('')}</ul>
+  </section>
 
-      <div class="section">
-        <h3>Differentiation & Accommodations</h3>
-        <p>${lessonPlan.differentiation}</p>
-      </div>
+  <section>
+    <h3>Literacy Skills & Resources</h3>
+    <p><strong>Skills:</strong></p>
+    <ul>${plan.literacySkillsAndResources.skills.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Resources:</strong></p>
+    <ul>${plan.literacySkillsAndResources.resources.map(r => `<li>${h(r)}</li>`).join('')}</ul>
+  </section>
 
-      <div class="section">
-        <h3>Extension Activities</h3>
-        <p>${lessonPlan.extensions}</p>
-      </div>
+  <section>
+    <h3>Bloom's Alignment</h3>
+    <table>
+      <thead><tr><th>Task</th><th>Level</th><th>Rationale</th></tr></thead>
+      <tbody>
+        ${plan.bloomsAlignment.map(b => `<tr><td>${h(b.task)}</td><td>${b.bloom}</td><td>${h(b.rationale)}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  </section>
 
-      <div class="footer">
-        <p>Generated by Root Work Framework Lesson Plan Generator</p>
-        <p>Weaving academic rigor with healing-centered, biophilic practice</p>
-      </div>
-    </body>
-    </html>`;
+  <section>
+    <h3>Co-Teaching Integration</h3>
+    <p><strong>Model:</strong> ${h(plan.coTeachingIntegration.model)}<br/>
+       <strong>Grouping:</strong> ${h(plan.coTeachingIntegration.grouping)}</p>
+    <ul>${plan.coTeachingIntegration.roles.map(r => `<li>${h(r)}</li>`).join('')}</ul>
+  </section>
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
+  <section>
+    <h3>Reteaching & Spiral Review</h3>
+    <div class="box"><strong>Same-Day Quick Pivot:</strong> ${h(plan.reteachingAndSpiral.sameDayQuickPivot)}</div>
+    <div class="box"><strong>Next-Day Plan:</strong> ${h(plan.reteachingAndSpiral.nextDayPlan)}</div>
+    <p><strong>Spiral Ideas:</strong></p>
+    <ul>${plan.reteachingAndSpiral.spiralIdeas.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+  </section>
+
+  <section>
+    <h3>MTSS (Tier 1–3) & Monitoring</h3>
+    <p><strong>Tier 1:</strong></p><ul>${plan.mtssSupports.tier1.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Tier 2:</strong></p><ul>${plan.mtssSupports.tier2.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Tier 3:</strong></p><ul>${plan.mtssSupports.tier3.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Progress Monitoring:</strong></p><ul>${plan.mtssSupports.progressMonitoring.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+  </section>
+
+  <section>
+    <h3>Therapeutic Rootwork Context</h3>
+    <div class="box"><strong>Rationale:</strong> ${h(plan.therapeuticRootworkContext.rationale)}</div>
+    <div class="box"><strong>Regulation Cue:</strong> ${h(plan.therapeuticRootworkContext.regulationCue)}</div>
+    <div class="box"><strong>Restorative Practice:</strong> ${h(plan.therapeuticRootworkContext.restorativePractice)}</div>
+    <p><strong>Community Assets:</strong></p>
+    <ul>${plan.therapeuticRootworkContext.communityAssets.map(a => `<li>${h(a)}</li>`).join('')}</ul>
+  </section>
+
+  <section>
+    <h3>Lesson Flow — GRR</h3>
+    ${plan.lessonFlowGRR.map(s => `
+      <div class="box">
+        <strong>${s.phase}:</strong> ${h(s.step)}<br/>
+        ${h(s.details)}<br/>
+        ${h(s.teacherNote)}<br/>
+        ${h(s.studentNote)}
+      </div>
+    `).join('')}
+  </section>
+
+  <section>
+    <h3>Assessment & Evidence</h3>
+    <p><strong>Formative Checks:</strong></p>
+    <ul>${plan.assessmentAndEvidence.formativeChecks.map(f => `<li>${h(f)}</li>`).join('')}</ul>
+    <p><strong>Rubric:</strong></p>
+    <table>
+      <thead><tr><th>Criterion</th><th>Developing</th><th>Proficient</th><th>Advanced</th></tr></thead>
+      <tbody>
+        ${plan.assessmentAndEvidence.rubric.map(r => `<tr><td>${h(r.criterion)}</td><td>${h(r.developing)}</td><td>${h(r.proficient)}</td><td>${h(r.advanced)}</td></tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="box"><strong>Exit Ticket:</strong> ${h(plan.assessmentAndEvidence.exitTicket)}</div>
+  </section>
+</body></html>
+    `.trim();
+
+    const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${lessonPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_RWF_lesson_plan.html`;
+    a.download = `${plan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rwfw_lesson_plan.html`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const formatLessonPlanText = (plan: LessonPlan) => {
-    return `
-ROOT WORK FRAMEWORK LESSON PLAN: ${plan.title}
-
-OVERVIEW:
-${plan.overview}
-
-LEARNING OBJECTIVES:
-${plan.objectives.map((obj, i) => `${i + 1}. ${obj}`).join('\n')}
-
-MATERIALS NEEDED:
-${plan.materials.map(material => `• ${material}`).join('\n')}
-
-LESSON TIMELINE:
-${plan.timeline.map(item => `${item.time} - ${item.activity}\n   ${item.description}`).join('\n\n')}
-
-ASSESSMENT STRATEGIES:
-${plan.assessment}
-
-DIFFERENTIATION & ACCOMMODATIONS:
-${plan.differentiation}
-
-EXTENSION ACTIVITIES:
-${plan.extensions}
-
-Generated by Root Work Framework
-Weaving academic rigor with healing-centered, biophilic practice
-`.trim();
   };
 
   return (
@@ -315,280 +405,16 @@ Weaving academic rigor with healing-centered, biophilic practice
                 <BookOpen className="h-6 w-6 text-[#D4C862]" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Framework</h1>
+                <h1 className="text-xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Root Work Framework
+                </h1>
                 <p className="text-sm text-[#3B523A]" style={{ fontFamily: 'Inter, sans-serif' }}>Lesson Plan Generator</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <a
-                href="/generate"
-                className="bg-[#082A19] text-[#D4C862] px-4 py-2 rounded-lg hover:bg-[#001C10] transition-colors border border-[#D4C862]"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
-                Generate Lesson
-              </a>
-              <a
-                href="/"
-                className="text-[#082A19] hover:text-[#3B523A] font-medium"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
-                Back to Home
-              </a>
-              {/* Root Work Framework Logo - Brand Compliant */}
-              <div className="w-12 h-12 rounded-full border-2 p-1 flex-shrink-0" style={{ backgroundColor: '#082A19', borderColor: '#D4C862' }}>
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  {/* Background Circle - Evergreen */}
-                  <circle cx="50" cy="50" r="48" fill="#082A19" stroke="#D4C862" strokeWidth="2"/>
-                  
-                  {/* Central Plant */}
-                  <g transform="translate(50,50)">
-                    {/* Plant stem - Gold Leaf */}
-                    <path d="M0,-15 L0,15" stroke="#D4C862" strokeWidth="3" fill="none"/>
-                    {/* Central leaves - Leaf color */}
-                    <path d="M-8,-5 Q-12,-8 -8,-12 Q-4,-8 0,-5" fill="#3B523A"/>
-                    <path d="M8,-5 Q12,-8 8,-12 Q4,-8 0,-5" fill="#3B523A"/>
-                    <path d="M-6,5 Q-10,2 -6,-2 Q-2,2 0,5" fill="#3B523A"/>
-                    <path d="M6,5 Q10,2 6,-2 Q2,2 0,5" fill="#3B523A"/>
-                    
-                    {/* Radiating lines - Gold Leaf */}
-                    <g stroke="#D4C862" strokeWidth="1.5">
-                      <path d="M-12,0 L-8,0"/>
-                      <path d="M8,0 L12,0"/>
-                      <path d="M0,-12 L0,-8"/>
-                      <path d="M0,8 L0,12"/>
-                      <path d="M-8,-8 L-6,-6"/>
-                      <path d="M8,-8 L6,-6"/>
-                      <path d="M-8,8 L-6,6"/>
-                      <path d="M8,8 L6,6"/>
-                    </g>
-                  </g>
-                  
-                  {/* Scales of Justice - Upper Left - Gold Leaf */}
-                  <g transform="translate(25,25) scale(0.7)">
-                    <path d="M0,-8 L0,8" stroke="#D4C862" strokeWidth="2"/>
-                    <path d="M-8,0 L8,0" stroke="#D4C862" strokeWidth="1.5"/>
-                    <ellipse cx="-6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
-                    <ellipse cx="6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
-                  </g>
-                  
-                  {/* Book - Upper Right - Gold Leaf */}
-                  <g transform="translate(75,25) scale(0.7)">
-                    <rect x="-6" y="-4" width="12" height="8" fill="none" stroke="#D4C862" strokeWidth="2"/>
-                    <path d="M-6,-4 L6,-4 L6,4 L-6,4 Z" fill="none" stroke="#D4C862" strokeWidth="1"/>
-                    <path d="M0,-4 L0,4" stroke="#D4C862" strokeWidth="1.5"/>
-                    <path d="M-3,-1 L3,-1" stroke="#D4C862" strokeWidth="1"/>
-                    <path d="M-3,1 L3,1" stroke="#D4C862" strokeWidth="1"/>
-                  </g>
-                  
-                  {/* Brain - Lower Left - Gold Leaf */}
-                  <g transform="translate(25,75) scale(0.7)">
-                    <path d="M-6,-4 Q-8,-6 -4,-6 Q0,-8 4,-6 Q8,-6 6,-4 Q8,-2 6,0 Q8,2 6,4 Q4,6 0,4 Q-4,6 -6,4 Q-8,2 -6,0 Q-8,-2 -6,-4" 
-                          fill="none" stroke="#D4C862" strokeWidth="2"/>
-                    <path d="M-2,-2 Q0,-4 2,-2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
-                    <path d="M-2,2 Q0,0 2,2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
-                  </g>
-                  
-                  {/* Science Flask - Lower Right - Gold Leaf */}
-                  <g transform="translate(75,75) scale(0.7)">
-                    <path d="M-2,-6 L-2,-2 L-6,4 L6,4 L2,-2 L2,-6" fill="none" stroke="#D4C862" strokeWidth="2"/>
-                    <circle cx="0" cy="2" r="1.5" fill="#D4C862"/>
-                    <path d="M-4,-6 L4,-6" stroke="#D4C862" strokeWidth="1.5"/>
-                  </g>
-                  
-                  {/* Decorative vines - Leaf color */}
-                  <g fill="none" stroke="#3B523A" strokeWidth="1.5">
-                    <path d="M15,35 Q20,30 25,35 Q30,40 35,35"/>
-                    <path d="M65,35 Q70,30 75,35 Q80,40 85,35"/>
-                    <path d="M15,65 Q20,70 25,65 Q30,60 35,65"/>
-                    <path d="M65,65 Q70,70 75,65 Q80,60 85,65"/>
-                  </g>
-                  
-                  {/* Small leaves on vines - Leaf color */}
-                  <g fill="#3B523A">
-                    <ellipse cx="20" cy="32" rx="2.5" ry="1.2" transform="rotate(45 20 32)"/>
-                    <ellipse cx="30" cy="38" rx="2.5" ry="1.2" transform="rotate(-45 30 38)"/>
-                    <ellipse cx="70" cy="32" rx="2.5" ry="1.2" transform="rotate(-45 70 32)"/>
-                    <ellipse cx="80" cy="38" rx="2.5" ry="1.2" transform="rotate(45 80 38)"/>
-                    <ellipse cx="20" cy="68" rx="2.5" ry="1.2" transform="rotate(-45 20 68)"/>
-                    <ellipse cx="30" cy="62" rx="2.5" ry="1.2" transform="rotate(45 30 62)"/>
-                    <ellipse cx="70" cy="68" rx="2.5" ry="1.2" transform="rotate(45 70 68)"/>
-                    <ellipse cx="80" cy="62" rx="2.5" ry="1.2" transform="rotate(-45 80 62)"/>
-                  </g>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
-            <h2 className="text-2xl font-bold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Create Your Root Work Lesson Plan</h2>
-            <p className="text-sm text-[#3B523A] mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-              Fields marked with <span className="text-red-500">*</span> are required. 
-              Our AI generates comprehensive, healing-centered lesson plans with just the basics!
-            </p>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    Subject Area <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Mathematics, Science, English"
-                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                    style={{ fontFamily: 'Inter, sans-serif' }}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    Grade Level <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="gradeLevel"
-                    value={formData.gradeLevel}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                    style={{ fontFamily: 'Inter, sans-serif' }}
-                    required
-                  >
-                    <option value="">Select Grade Level</option>
-                    <option value="PreK">Pre-K</option>
-                    <option value="K">Kindergarten</option>
-                    <option value="1">1st Grade</option>
-                    <option value="2">2nd Grade</option>
-                    <option value="3">3rd Grade</option>
-                    <option value="4">4th Grade</option>
-                    <option value="5">5th Grade</option>
-                    <option value="6">6th Grade</option>
-                    <option value="7">7th Grade</option>
-                    <option value="8">8th Grade</option>
-                    <option value="9">9th Grade</option>
-                    <option value="10">10th Grade</option>
-                    <option value="11">11th Grade</option>
-                    <option value="12">12th Grade</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Lesson Topic <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="topic"
-                  value={formData.topic}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Photosynthesis, Quadratic Equations, Character Development"
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  <Clock className="inline h-4 w-4 mr-1 text-[#D4C862]" />
-                  Duration <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="duration"
-                  value={formData.duration}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                  required
-                >
-                  <option value="">Select Duration</option>
-                  <option value="30 minutes">30 minutes</option>
-                  <option value="45 minutes">45 minutes</option>
-                  <option value="50 minutes">50 minutes</option>
-                  <option value="60 minutes">60 minutes</option>
-                  <option value="90 minutes">90 minutes</option>
-                  <option value="120 minutes">120 minutes</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  <Target className="inline h-4 w-4 mr-1 text-[#D4C862]" />
-                  Learning Objectives <span className="text-[#3B523A] text-xs">(Optional - AI will generate if blank)</span>
-                </label>
-                <textarea
-                  name="learningObjectives"
-                  value={formData.learningObjectives}
-                  onChange={handleInputChange}
-                  placeholder="What should students be able to do by the end of this lesson? (Leave blank for AI-generated objectives)"
-                  rows={3}
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  <Users className="inline h-4 w-4 mr-1 text-[#D4C862]" />
-                  Special Considerations <span className="text-[#3B523A] text-xs">(Optional)</span>
-                </label>
-                <textarea
-                  name="specialNeeds"
-                  value={formData.specialNeeds}
-                  onChange={handleInputChange}
-                  placeholder="ELL students, special education needs, differentiation requirements, trauma-informed considerations..."
-                  rows={2}
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Available Resources <span className="text-[#3B523A] text-xs">(Optional)</span>
-                </label>
-                <textarea
-                  name="availableResources"
-                  value={formData.availableResources}
-                  onChange={handleInputChange}
-                  placeholder="Technology, materials, lab equipment, outdoor spaces, etc."
-                  rows={2}
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                />
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-red-800">
-                  <p style={{ fontFamily: 'Inter, sans-serif' }}>{error}</p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isGenerating}
-                className="w-full bg-[#082A19] text-[#D4C862] py-4 px-6 rounded-lg font-semibold hover:bg-[#001C10] disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-2 border-[#D4C862]"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
-                {isGenerating ? 'Generating Root Work Lesson Plan...' : 'Generate Root Work Lesson Plan'}
-              </button>
-            </form>
-          </div>
-
-          {/* Results Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Your Root Work Lesson Plan</h2>
+            <div className="flex items-center space-x-2">
               {lessonPlan && (
-                <div className="flex space-x-2">
+                <>
                   <button
                     onClick={copyToClipboard}
                     className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#F2F4CA] hover:bg-[#D4C862] text-[#082A19] rounded-lg transition-colors border border-[#3B523A]"
@@ -606,74 +432,342 @@ Weaving academic rigor with healing-centered, biophilic practice
                     <span>Download TXT</span>
                   </button>
                   <button
-                    onClick={downloadAsPDF}
+                    onClick={downloadAsHTML}
                     className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#082A19] hover:bg-[#001C10] text-[#D4C862] rounded-lg transition-colors border border-[#D4C862]"
                     style={{ fontFamily: 'Inter, sans-serif' }}
                   >
                     <FileText className="h-4 w-4" />
-                    <span>Download HTML/PDF</span>
+                    <span>Download HTML</span>
                   </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Form */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
+            <h2 className="text-2xl font-bold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+              Create Your Root Work Lesson Plan
+            </h2>
+            <p className="text-sm text-[#3B523A] mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Fields with <span className="text-red-500">*</span> are required. RWFW plans include I Can + DOK, 5Rs, Literacy & links, Bloom’s, Co-Teaching,
+              Reteaching, MTSS T1–T3, Therapeutic context, and GRR steps with Teacher/Student Notes.
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#082A19] mb-2">Subject Area <span className="text-red-500">*</span></label>
+                  <input
+                    type="text" name="subject" value={formData.subject} onChange={handleInputChange}
+                    placeholder="e.g., ELA, Science, Math"
+                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#082A19] mb-2">Grade Level <span className="text-red-500">*</span></label>
+                  <select
+                    name="gradeLevel" value={formData.gradeLevel} onChange={handleInputChange}
+                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
+                  >
+                    <option value="">Select Grade Level</option>
+                    <option value="PreK">Pre-K</option><option value="K">Kindergarten</option>
+                    {[...Array(12)].map((_, i) => <option key={i+1} value={String(i+1)}>{i+1}th Grade</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2">Lesson Topic <span className="text-red-500">*</span></label>
+                <input
+                  type="text" name="topic" value={formData.topic} onChange={handleInputChange}
+                  placeholder="e.g., Beowulf & Savannah; Photosynthesis; Quadratics"
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2"><Clock className="inline h-4 w-4 mr-1 text-[#D4C862]" />Duration <span className="text-red-500">*</span></label>
+                <select
+                  name="duration" value={formData.duration} onChange={handleInputChange}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
+                >
+                  <option value="">Select Duration</option>
+                  {['30 minutes','45 minutes','50 minutes','60 minutes','90 minutes','120 minutes'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2"><Target className="inline h-4 w-4 mr-1 text-[#D4C862]" />Learning Objectives <span className="text-[#3B523A] text-xs">(Optional)</span></label>
+                <textarea
+                  name="learningObjectives" value={formData.learningObjectives} onChange={handleInputChange}
+                  placeholder="If blank, AI will generate I Can targets + DOK."
+                  rows={3}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2"><Users className="inline h-4 w-4 mr-1 text-[#D4C862]" />Special Considerations <span className="text-[#3B523A] text-xs">(Optional)</span></label>
+                <textarea
+                  name="specialNeeds" value={formData.specialNeeds} onChange={handleInputChange}
+                  placeholder="ELL/SPED needs, trauma-informed considerations, etc."
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2">Available Resources <span className="text-[#3B523A] text-xs">(Optional)</span></label>
+                <textarea
+                  name="availableResources" value={formData.availableResources} onChange={handleInputChange}
+                  placeholder="Tech, lab gear, outdoor space, etc."
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-red-800">
+                  <p>{error}</p>
                 </div>
               )}
+
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="w-full bg-[#082A19] text-[#D4C862] py-4 px-6 rounded-lg font-semibold hover:bg-[#001C10] disabled:opacity-50 transition-colors border-2 border-[#D4C862]"
+              >
+                {isGenerating ? 'Generating Root Work Lesson Plan…' : 'Generate Root Work Lesson Plan'}
+              </button>
+            </form>
+          </div>
+
+          {/* Results */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                Your Root Work Lesson Plan
+              </h2>
             </div>
 
             {!lessonPlan ? (
               <div className="text-center py-12">
                 <BookOpen className="h-16 w-16 text-[#D4C862] mx-auto mb-4" />
-                <p className="text-[#3B523A]" style={{ fontFamily: 'Inter, sans-serif' }}>Fill out the form to generate your Root Work Framework lesson plan</p>
+                <p className="text-[#3B523A]">Fill out the form to generate a plan.</p>
               </div>
             ) : (
-              <div className="space-y-6 max-h-96 overflow-y-auto">
-                <div>
-                  <h3 className="text-lg font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>{lessonPlan.title}</h3>
-                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.overview}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Learning Objectives:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    {lessonPlan.objectives.map((objective, index) => (
-                      <li key={index}>{objective}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Materials Needed:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    {lessonPlan.materials.map((material, index) => (
-                      <li key={index}>{material}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Lesson Timeline:</h4>
-                  <div className="space-y-3">
-                    {lessonPlan.timeline.map((item, index) => (
-                      <div key={index} className="border-l-4 border-[#D4C862] pl-4">
-                        <div className="font-medium text-[#082A19]" style={{ fontFamily: 'Inter, sans-serif' }}>{item.time} - {item.activity}</div>
-                        <div className="text-[#2B2B2B] text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>{item.description}</div>
-                      </div>
-                    ))}
+              <>
+                {usedFallback && (
+                  <div className="mb-4 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-3">
+                    Generated using backup pathway. You can still use/modify this plan while the primary model recovers.
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Assessment:</h4>
-                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.assessment}</p>
-                </div>
+                <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-1">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#082A19] mb-1">{lessonPlan.title}</h3>
+                    <p className="text-[#2B2B2B]">{lessonPlan.overview}</p>
+                  </div>
 
-                <div>
-                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Differentiation:</h4>
-                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.differentiation}</p>
-                </div>
+                  <div>
+                    <h4 className={sectionTitle()}><Target className="inline h-4 w-4 mr-1" />I Can Targets (DOK)</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {lessonPlan.iCanTargets.map((t, i) => (
+                        <li key={liKey('ican', i)}>{t.text} <span className="text-xs ml-1 text-[#3B523A]">DOK {t.dok}</span></li>
+                      ))}
+                    </ul>
+                  </div>
 
-                <div>
-                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Extension Activities:</h4>
-                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.extensions}</p>
+                  <div>
+                    <h4 className={sectionTitle()}><Clock className="inline h-4 w-4 mr-1" />5 Rs Schedule</h4>
+                    <ul className="space-y-2">
+                      {lessonPlan.fiveRsSchedule.map((b, i) => (
+                        <li key={liKey('5rs', i)} className="border-l-4 border-[#D4C862] pl-3">
+                          <div className="font-medium text-[#082A19]">{b.label} — {b.minutes} min</div>
+                          <div className="text-sm text-[#2B2B2B]">{b.purpose}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><BookOpen className="inline h-4 w-4 mr-1" />Literacy Skills & Resources</h4>
+                    <p className="font-medium text-[#082A19]">Skills</p>
+                    <ul className="list-disc list-inside mb-2">
+                      {lessonPlan.literacySkillsAndResources.skills.map((s, i) => <li key={liKey('lit-skill', i)}>{s}</li>)}
+                    </ul>
+                    <p className="font-medium text-[#082A19]">Resources</p>
+                    <ul className="list-disc list-inside">
+                      {lessonPlan.literacySkillsAndResources.resources.map((r, i) => <li key={liKey('lit-res', i)}>{r}</li>)}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Brain className="inline h-4 w-4 mr-1" />Bloom’s Alignment</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="bg-[#F6F7E6]">
+                            <th className="text-left p-2">Task</th>
+                            <th className="text-left p-2">Level</th>
+                            <th className="text-left p-2">Rationale</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lessonPlan.bloomsAlignment.map((b, i) => (
+                            <tr key={liKey('bloom', i)} className="border-b">
+                              <td className="p-2">{b.task}</td>
+                              <td className="p-2">{b.bloom}</td>
+                              <td className="p-2">{b.rationale}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Users className="inline h-4 w-4 mr-1" />Co-Teaching Integration</h4>
+                    <p><span className="font-medium">Model:</span> {lessonPlan.coTeachingIntegration.model}</p>
+                    <p><span className="font-medium">Grouping:</span> {lessonPlan.coTeachingIntegration.grouping}</p>
+                    <ul className="list-disc list-inside mt-1">
+                      {lessonPlan.coTeachingIntegration.roles.map((r, i) => <li key={liKey('roles', i)}>{r}</li>)}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><ListChecks className="inline h-4 w-4 mr-1" />Reteaching & Spiral</h4>
+                    <div className="border-l-4 border-[#D4C862] pl-3">
+                      <p><span className="font-medium">Same-Day Quick Pivot:</span> {lessonPlan.reteachingAndSpiral.sameDayQuickPivot}</p>
+                      <p><span className="font-medium">Next-Day Plan:</span> {lessonPlan.reteachingAndSpiral.nextDayPlan}</p>
+                      <p className="font-medium mt-1">Spiral Ideas</p>
+                      <ul className="list-disc list-inside">
+                        {lessonPlan.reteachingAndSpiral.spiralIdeas.map((s, i) => <li key={liKey('spiral', i)}>{s}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Layers className="inline h-4 w-4 mr-1" />MTSS Supports</h4>
+                    <p className="font-medium">Tier 1</p>
+                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier1.map((s, i) => <li key={liKey('t1', i)}>{s}</li>)}</ul>
+                    <p className="font-medium">Tier 2</p>
+                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier2.map((s, i) => <li key={liKey('t2', i)}>{s}</li>)}</ul>
+                    <p className="font-medium">Tier 3</p>
+                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier3.map((s, i) => <li key={liKey('t3', i)}>{s}</li>)}</ul>
+                    <p className="font-medium">Progress Monitoring</p>
+                    <ul className="list-disc list-inside">{lessonPlan.mtssSupports.progressMonitoring.map((s, i) => <li key={liKey('pm', i)}>{s}</li>)}</ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Sandwich className="inline h-4 w-4 mr-1" />Therapeutic Rootwork Context</h4>
+                    <div className="border-l-4 border-[#D4C862] pl-3">
+                      <p><span className="font-medium">Rationale:</span> {lessonPlan.therapeuticRootworkContext.rationale}</p>
+                      <p><span className="font-medium">Regulation Cue:</span> {lessonPlan.therapeuticRootworkContext.regulationCue}</p>
+                      <p><span className="font-medium">Restorative Practice:</span> {lessonPlan.therapeuticRootworkContext.restorativePractice}</p>
+                      <p className="font-medium mt-1">Community Assets</p>
+                      <ul className="list-disc list-inside">
+                        {lessonPlan.therapeuticRootworkContext.communityAssets.map((a, i) => <li key={liKey('asset', i)}>{a}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><GraduationCap className="inline h-4 w-4 mr-1" />Lesson Flow (GRR)</h4>
+                    <div className="space-y-3">
+                      {lessonPlan.lessonFlowGRR.map((s, i) => (
+                        <div key={liKey('flow', i)} className="border-l-4 border-[#D4C862] pl-3">
+                          <div className="font-medium text-[#082A19]">{s.phase}: {s.step}</div>
+                          <div className="text-sm">{s.details}</div>
+                          <div className="text-sm mt-1">{s.teacherNote}</div>
+                          <div className="text-sm">{s.studentNote}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Calendar className="inline h-4 w-4 mr-1" />Assessment & Evidence</h4>
+                    <p className="font-medium">Formative Checks</p>
+                    <ul className="list-disc list-inside">
+                      {lessonPlan.assessmentAndEvidence.formativeChecks.map((f, i) => <li key={liKey('ff', i)}>{f}</li>)}
+                    </ul>
+                    <p className="font-medium mt-2">Rubric</p>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="bg-[#F6F7E6]">
+                            <th className="text-left p-2">Criterion</th>
+                            <th className="text-left p-2">Developing</th>
+                            <th className="text-left p-2">Proficient</th>
+                            <th className="text-left p-2">Advanced</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lessonPlan.assessmentAndEvidence.rubric.map((r, i) => (
+                            <tr key={liKey('rub', i)} className="border-b">
+                              <td className="p-2">{r.criterion}</td>
+                              <td className="p-2">{r.developing}</td>
+                              <td className="p-2">{r.proficient}</td>
+                              <td className="p-2">{r.advanced}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="mt-2 border-l-4 border-[#D4C862] pl-3">
+                      <span className="font-medium">Exit Ticket:</span> {lessonPlan.assessmentAndEvidence.exitTicket}
+                    </div>
+                  </div>
+
+                  {/* Render legacy fields when present (old plans) */}
+                  {lessonPlan.objectives?.length ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Learning Objectives</h4>
+                      <ul className="list-disc list-inside">
+                        {lessonPlan.objectives.map((o, i) => <li key={liKey('obj', i)}>{o}</li>)}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {lessonPlan.timeline?.length ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Timeline</h4>
+                      <div className="space-y-2">
+                        {lessonPlan.timeline.map((t, i) => (
+                          <div key={liKey('time', i)} className="border-l-4 border-[#D4C862] pl-3">
+                            <div className="font-medium text-[#082A19]">{t.time} — {t.activity}</div>
+                            <div className="text-sm">{t.description}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {lessonPlan.assessment ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Assessment</h4>
+                      <p>{lessonPlan.assessment}</p>
+                    </div>
+                  ) : null}
+                  {lessonPlan.differentiation ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Differentiation</h4>
+                      <p>{lessonPlan.differentiation}</p>
+                    </div>
+                  ) : null}
+                  {lessonPlan.extensions ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Extensions</h4>
+                      <p>{lessonPlan.extensions}</p>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
