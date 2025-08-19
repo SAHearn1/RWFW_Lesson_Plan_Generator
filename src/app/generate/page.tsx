@@ -1,3 +1,4 @@
+// File: src/app/generate/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -6,9 +7,15 @@ import {
   ListChecks, Brain, GraduationCap, Layers, Sandwich
 } from 'lucide-react';
 
-import type { LessonPlan } from '@/types/lesson';
+import type {
+  LessonPlan,
+  LessonRequest,
+  LessonFlowStep,
+  FiveRsBlock,
+  Dok
+} from '@/types/lesson';
 
-/** ---- Simple helpers ---- */
+/** ---------- Small helpers ---------- */
 function sectionTitle(cls = '') {
   return `font-semibold text-[#082A19] mb-2 ${cls}`;
 }
@@ -16,6 +23,139 @@ function liKey(prefix: string, i: number) {
   return `${prefix}-${i}`;
 }
 
+/** ---------- Type-safe normalizers (defensive) ---------- */
+function asString(v: unknown, def = ''): string {
+  return typeof v === 'string' ? v : def;
+}
+function asNumber(v: unknown, def = 0): number {
+  return typeof v === 'number' && !Number.isNaN(v) ? v : def;
+}
+function asArray<T = unknown>(v: unknown): T[] {
+  return Array.isArray(v) ? (v as T[]) : [];
+}
+function asDok(v: unknown): Dok {
+  const n = typeof v === 'number' ? v : Number(v);
+  return (n === 1 || n === 2 || n === 3 || n === 4) ? (n as Dok) : 2;
+}
+function asFiveRsBlock(v: any): FiveRsBlock {
+  return {
+    label: asString(v?.label),
+    minutes: asNumber(v?.minutes, 0),
+    purpose: asString(v?.purpose),
+  };
+}
+function asFlowStep(v: any): LessonFlowStep {
+  const allowed = new Set(['I Do', 'We Do', 'You Do']);
+  const phase = allowed.has(v?.phase) ? v.phase : 'We Do';
+  return {
+    phase,
+    step: asString(v?.step),
+    details: asString(v?.details),
+    teacherNote: asString(v?.teacherNote),
+    studentNote: asString(v?.studentNote),
+  };
+}
+
+/** Normalize a possibly-messy object from the API into a LessonPlan */
+function normalizePlan(raw: any): LessonPlan {
+  const iCanTargets = asArray<any>(raw?.iCanTargets).map((t) => ({
+    text: asString(t?.text),
+    dok: asDok(t?.dok),
+  }));
+
+  const fiveRsSchedule = asArray<any>(raw?.fiveRsSchedule).map(asFiveRsBlock);
+
+  const literacy = {
+    skills: asArray<string>(raw?.literacySkillsAndResources?.skills).map(asString),
+    resources: asArray<string>(raw?.literacySkillsAndResources?.resources).map(asString),
+  };
+
+  const bloomsAlignment = asArray<any>(raw?.bloomsAlignment).map((b) => ({
+    task: asString(b?.task),
+    bloom: ((): 'Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create' => {
+      const v = asString(b?.bloom);
+      const allowed = new Set(['Remember','Understand','Apply','Analyze','Evaluate','Create']);
+      return (allowed.has(v) ? v : 'Understand') as any;
+    })(),
+    rationale: asString(b?.rationale),
+  }));
+
+  const coTeachingIntegration = {
+    model: asString(raw?.coTeachingIntegration?.model),
+    roles: asArray<string>(raw?.coTeachingIntegration?.roles).map(asString),
+    grouping: asString(raw?.coTeachingIntegration?.grouping),
+  };
+
+  const reteachingAndSpiral = {
+    sameDayQuickPivot: asString(raw?.reteachingAndSpiral?.sameDayQuickPivot),
+    nextDayPlan: asString(raw?.reteachingAndSpiral?.nextDayPlan),
+    spiralIdeas: asArray<string>(raw?.reteachingAndSpiral?.spiralIdeas).map(asString),
+  };
+
+  const mtssSupports = {
+    tier1: asArray<string>(raw?.mtssSupports?.tier1).map(asString),
+    tier2: asArray<string>(raw?.mtssSupports?.tier2).map(asString),
+    tier3: asArray<string>(raw?.mtssSupports?.tier3).map(asString),
+    progressMonitoring: asArray<string>(raw?.mtssSupports?.progressMonitoring).map(asString),
+  };
+
+  const therapeuticRootworkContext = {
+    rationale: asString(raw?.therapeuticRootworkContext?.rationale),
+    regulationCue: asString(raw?.therapeuticRootworkContext?.regulationCue),
+    restorativePractice: asString(raw?.therapeuticRootworkContext?.restorativePractice),
+    communityAssets: asArray<string>(raw?.therapeuticRootworkContext?.communityAssets).map(asString),
+  };
+
+  const lessonFlowGRR = asArray<any>(raw?.lessonFlowGRR).map(asFlowStep);
+
+  const assessmentAndEvidence = {
+    formativeChecks: asArray<string>(raw?.assessmentAndEvidence?.formativeChecks).map(asString),
+    rubric: asArray<any>(raw?.assessmentAndEvidence?.rubric).map((r) => ({
+      criterion: asString(r?.criterion),
+      developing: asString(r?.developing),
+      proficient: asString(r?.proficient),
+      advanced: asString(r?.advanced),
+    })),
+    exitTicket: asString(raw?.assessmentAndEvidence?.exitTicket),
+  };
+
+  // Legacy fields
+  const objectives = asArray<string>(raw?.objectives).map(asString);
+  const timeline = asArray<any>(raw?.timeline).map((t) => ({
+    time: asString(t?.time),
+    activity: asString(t?.activity),
+    description: asString(t?.description),
+  }));
+  const assessment = asString(raw?.assessment);
+  const differentiation = asString(raw?.differentiation);
+  const extensions = asString(raw?.extensions);
+
+  return {
+    title: asString(raw?.title),
+    overview: asString(raw?.overview),
+    materials: asArray<string>(raw?.materials).map(asString),
+
+    iCanTargets,
+    fiveRsSchedule,
+    literacySkillsAndResources: literacy,
+    bloomsAlignment,
+    coTeachingIntegration,
+    reteachingAndSpiral,
+    mtssSupports,
+    therapeuticRootworkContext,
+    lessonFlowGRR,
+    assessmentAndEvidence,
+
+    // legacy (optional)
+    ...(objectives.length ? { objectives } : {}),
+    ...(timeline.length ? { timeline } : {}),
+    ...(assessment ? { assessment } : {}),
+    ...(differentiation ? { differentiation } : {}),
+    ...(extensions ? { extensions } : {}),
+  };
+}
+
+/** ---------- Component ---------- */
 export default function GeneratePage() {
   const [formData, setFormData] = useState({
     subject: '',
@@ -45,7 +185,7 @@ export default function GeneratePage() {
     setError('');
     setUsedFallback(false);
 
-    // Minimal client validation (server now defaults gracefully)
+    // Minimal required validation (keep UX snappy)
     const missing: string[] = [];
     if (!formData.subject?.trim()) missing.push('Subject Area');
     if (!formData.gradeLevel?.trim()) missing.push('Grade Level');
@@ -57,7 +197,7 @@ export default function GeneratePage() {
       return;
     }
 
-    const payload = {
+    const payload: LessonRequest = {
       subject: formData.subject.trim(),
       gradeLevel: formData.gradeLevel.trim(),
       topic: formData.topic.trim(),
@@ -67,8 +207,6 @@ export default function GeneratePage() {
       availableResources: formData.availableResources?.trim() || '',
     };
 
-    console.log('Submitting payload:', JSON.stringify(payload, null, 2));
-
     try {
       const res = await fetch('/api/generate-lesson', {
         method: 'POST',
@@ -76,25 +214,21 @@ export default function GeneratePage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       console.log('Response status:', res.status);
       console.log('Response data:', JSON.stringify(data, null, 2));
 
-      if (!res.ok) {
-        const dbg = (data && (data.debug || data.error)) ? ` — ${JSON.stringify(data, null, 2)}` : '';
-        throw new Error(`Server error ${res.status}${dbg}`);
+      if (!res.ok || !data?.lessonPlan) {
+        throw new Error(data?.error || `Unexpected response (${res.status})`);
       }
 
-      if (data?.warnings?.length) {
-        console.warn('Server warnings:', data.warnings);
-      }
+      // **Key fix**: normalize before rendering to avoid "object as child" error
+      const normalized = normalizePlan(data.lessonPlan);
+      setLessonPlan(normalized);
 
-      if (!data?.lessonPlan) {
-        throw new Error('No lesson plan returned');
-      }
-
-      setLessonPlan(data.lessonPlan);
-      setUsedFallback(Boolean(data?.fallback));
+      // If backend signaled fallback, surface (we also tolerate either boolean or string flags)
+      const fb = Boolean(data?.fallback) || data?.success === false;
+      setUsedFallback(fb);
     } catch (err: any) {
       setError(`Failed to generate lesson plan: ${err?.message || 'Unknown error'}`);
       console.error('Form submission error:', err);
@@ -103,7 +237,7 @@ export default function GeneratePage() {
     }
   };
 
-  /** ---- Exporters ---- */
+  /** ---------- Exporters ---------- */
   const formatLessonPlanText = (plan: LessonPlan) => {
     const lines: string[] = [];
 
@@ -692,7 +826,7 @@ export default function GeneratePage() {
                     </div>
                   </div>
 
-                  {/* Legacy fields (old plans) */}
+                  {/* Legacy optional */}
                   {lessonPlan.objectives?.length ? (
                     <div>
                       <h4 className={sectionTitle()}>Legacy: Learning Objectives</h4>
