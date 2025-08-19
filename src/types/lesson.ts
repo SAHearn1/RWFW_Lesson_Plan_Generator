@@ -1,5 +1,4 @@
 // File: src/types/lesson.ts
-
 export type Dok = 1 | 2 | 3 | 4;
 
 export type FiveRsBlock = { label: string; minutes: number; purpose: string };
@@ -8,8 +7,10 @@ export type LessonFlowStep = {
   phase: 'I Do' | 'We Do' | 'You Do';
   step: string;
   details: string;
-  teacherNote: string;   // must include "[Teacher Note:]"
-  studentNote: string;   // must include "[Student Note:]"
+  /** Must include "[Teacher Note: ...]" in content */
+  teacherNote: string;
+  /** Must include "[Student Note: ...]" in content */
+  studentNote: string;
 };
 
 export type LessonPlan = {
@@ -41,7 +42,7 @@ export type LessonPlan = {
     exitTicket: string;
   };
 
-  /** legacy compatibility */
+  /** legacy compatibility (older plans) */
   objectives?: string[];
   timeline?: Array<{ time: string; activity: string; description: string }>;
   assessment?: string;
