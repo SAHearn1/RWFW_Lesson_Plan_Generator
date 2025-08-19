@@ -27,95 +27,13 @@ interface LessonPlan {
   extensions: string;
 }
 
-function parseClaudeResponse(text: string): LessonPlan {
-  // Parse the Claude response into the structured format your UI expects
-  const lines = text.split('\n');
-  
-  // Extract title
-  const titleMatch = text.match(/(?:LESSON PLAN:|TITLE:|UNIT:)\s*(.+)/i);
-  const title = titleMatch ? titleMatch[1].trim() : 'Root Work Framework Lesson Plan';
-  
-  // Extract overview
-  const overviewMatch = text.match(/(?:OVERVIEW|INTRODUCTION|DESCRIPTION):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  const overview = overviewMatch ? overviewMatch[1].trim() : 'A comprehensive lesson plan designed using Root Work Framework principles.';
-  
-  // Extract objectives
-  const objectivesMatch = text.match(/(?:OBJECTIVES?|GOALS?):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  let objectives = ['Students will engage with the topic through Root Work Framework principles'];
-  if (objectivesMatch) {
-    objectives = objectivesMatch[1]
-      .split(/\n/)
-      .filter(line => line.trim())
-      .map(line => line.replace(/^[-•*\d.]\s*/, '').trim())
-      .filter(line => line.length > 10);
-  }
-  
-  // Extract materials
-  const materialsMatch = text.match(/(?:MATERIALS?|RESOURCES?):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  let materials = ['Basic classroom supplies', 'Student notebooks', 'Whiteboard/projector'];
-  if (materialsMatch) {
-    materials = materialsMatch[1]
-      .split(/\n/)
-      .filter(line => line.trim())
-      .map(line => line.replace(/^[-•*\d.]\s*/, '').trim())
-      .filter(line => line.length > 3);
-  }
-  
-  // Extract timeline/activities
-  const timelineMatch = text.match(/(?:TIMELINE|ACTIVITIES?|LESSON STRUCTURE):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  let timeline = [
-    { time: '0-5 minutes', activity: 'Opening Circle', description: 'Community building and mindful transition' },
-    { time: '5-40 minutes', activity: 'Main Learning', description: 'Core content with Root Work Framework integration' },
-    { time: '40-45 minutes', activity: 'Reflection & Closure', description: 'Metacognitive processing and community circle' }
-  ];
-  
-  if (timelineMatch) {
-    const timelineText = timelineMatch[1];
-    const timeItems = timelineText.split(/\n/).filter(line => line.trim());
-    timeline = timeItems.map((item, index) => {
-      const timeMatch = item.match(/(\d+[-–]\d+|\d+)\s*(?:min|minutes?)/i);
-      const time = timeMatch ? timeMatch[0] : `${index * 15}-${(index + 1) * 15} minutes`;
-      const cleanItem = item.replace(/^[-•*\d.]\s*/, '').trim();
-      const [activity, ...descParts] = cleanItem.split(/[:-]/);
-      return {
-        time,
-        activity: activity.trim() || `Activity ${index + 1}`,
-        description: descParts.join(':').trim() || 'Root Work Framework aligned activity'
-      };
-    }).slice(0, 6); // Limit to 6 activities max
-  }
-  
-  // Extract assessment
-  const assessmentMatch = text.match(/(?:ASSESSMENT|EVALUATION):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  const assessment = assessmentMatch ? assessmentMatch[1].trim() : 'Formative assessment through observation, student reflection, and community sharing aligned with Root Work Framework principles.';
-  
-  // Extract differentiation
-  const differentiationMatch = text.match(/(?:DIFFERENTIATION|ACCOMMODATIONS?):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  const differentiation = differentiationMatch ? differentiationMatch[1].trim() : 'Multiple learning modalities, trauma-informed approaches, and culturally responsive practices following Root Work Framework guidelines.';
-  
-  // Extract extensions
-  const extensionsMatch = text.match(/(?:EXTENSIONS?|ENRICHMENT):\s*([\s\S]*?)(?=\n(?:[A-Z\s]+:|$))/i);
-  const extensions = extensionsMatch ? extensionsMatch[1].trim() : 'Community connections, real-world applications, and deeper inquiry opportunities that honor Root Work Framework values.';
-  
-  return {
-    title,
-    overview,
-    objectives: objectives.slice(0, 5), // Limit to 5 objectives
-    materials: materials.slice(0, 8), // Limit to 8 materials
-    timeline,
-    assessment,
-    differentiation,
-    extensions
-  };
-}
-
 export async function POST(request: NextRequest) {
   try {
     const data: LessonRequest = await request.json();
     
-    console.log('Received RWF lesson request:', data);
+    console.log('Received request data:', data);
 
-    // Validate required fields
+    // Validate required fields (match your frontend validation)
     const missingFields = [];
     if (!data.subject?.trim()) missingFields.push('subject');
     if (!data.gradeLevel?.trim()) missingFields.push('gradeLevel');
@@ -130,95 +48,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for API key - use your existing environment variable name
+    // Check for API key
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       console.error('ANTHROPIC_API_KEY environment variable is not set');
       return NextResponse.json(
-        { error: 'API configuration error. Please check environment variables.' },
+        { error: 'API configuration error' },
         { status: 500 }
       );
     }
 
-    // Construct the comprehensive Root Work Framework prompt
-    const prompt = `You are an expert educator specializing in the Root Work Framework - a dual-purpose pedagogy that weaves academic rigor with healing-centered, biophilic practice. Create a comprehensive lesson plan using the 5Rs methodology.
+    // Create Root Work Framework prompt
+    const prompt = `Create a comprehensive lesson plan using Root Work Framework principles:
 
-LESSON SPECIFICATIONS:
+LESSON DETAILS:
 - Subject: ${data.subject}
-- Grade Level: ${data.gradeLevel} 
+- Grade Level: ${data.gradeLevel}
 - Topic: ${data.topic}
 - Duration: ${data.duration}
-${data.learningObjectives ? `- Instructor's Learning Goals: ${data.learningObjectives}` : ''}
+${data.learningObjectives ? `- Learning Objectives: ${data.learningObjectives}` : ''}
 ${data.specialNeeds ? `- Special Considerations: ${data.specialNeeds}` : ''}
 ${data.availableResources ? `- Available Resources: ${data.availableResources}` : ''}
 
 ROOT WORK FRAMEWORK REQUIREMENTS:
-Structure this lesson around the 5Rs of Root Work Framework:
+Structure this lesson around the 5Rs:
+1. RELATIONSHIPS - Build authentic connections and community
+2. ROUTINES - Establish predictable, healing-centered structures  
+3. RELEVANCE - Connect learning to students' lives and experiences
+4. RIGOR - Maintain high academic expectations with support
+5. REFLECTION - Include metacognitive and restorative practices
 
-1. **RELATIONSHIPS** - Build authentic connections and community
-2. **ROUTINES** - Establish predictable, healing-centered structures  
-3. **RELEVANCE** - Connect learning to students' lives and cultural experiences
-4. **RIGOR** - Maintain high academic expectations with appropriate scaffolding
-5. **REFLECTION** - Include metacognitive and restorative practices
+Please provide a detailed lesson plan in JSON format with these sections:
+- title: Creative lesson title
+- overview: 2-3 sentence description incorporating Root Work principles
+- objectives: Array of 3-5 learning objectives
+- materials: Array of needed materials and resources
+- timeline: Array of timeline objects with time, activity, and description
+- assessment: Assessment strategies honoring multiple ways of knowing
+- differentiation: Accommodations for diverse learners including trauma-informed practices
+- extensions: Extension activities connecting to community and real-world applications
 
-LESSON PLAN FORMAT:
-Create a detailed lesson plan with these sections:
+Use warm, invitational language throughout. Focus on strengths-based, trauma-informed approaches. Ensure all activities are developmentally appropriate for ${data.gradeLevel}.
 
-**TITLE:** [Creative, engaging title that reflects the topic and Root Work approach]
+Return ONLY valid JSON - no markdown formatting or explanations.`;
 
-**OVERVIEW:**
-Write a 2-3 sentence overview explaining how this lesson embodies Root Work Framework principles while achieving academic goals.
-
-**LEARNING OBJECTIVES:**
-Create 3-5 specific, measurable objectives that:
-- Align with grade-level standards
-- Integrate social-emotional learning
-- Honor diverse learning styles
-- Connect to students' lived experiences
-
-**MATERIALS NEEDED:**
-List 5-8 materials including:
-- Traditional academic supplies
-- Technology if appropriate
-- Natural/biophilic elements when possible
-- Community/cultural resources
-
-**LESSON TIMELINE:**
-Create a detailed ${data.duration} timeline with specific time stamps:
-- Opening Circle/Relationships (5-10 minutes) - community building
-- Introduction/Hook (5-10 minutes) - relevance connection
-- Main Learning Activities (majority of time) - rigor with support
-- Guided Practice - scaffolded learning
-- Reflection/Closure (5-10 minutes) - metacognitive processing
-Include specific Root Work strategies for each segment.
-
-**ASSESSMENT:**
-Describe both formative and summative assessments that:
-- Honor multiple ways of knowing
-- Include self-reflection components
-- Connect to community and cultural values
-- Provide authentic feedback opportunities
-
-**DIFFERENTIATION:**
-Explain specific accommodations for:
-- English Language Learners
-- Students with disabilities
-- Gifted/advanced learners
-- Trauma-informed practices
-- Culturally responsive approaches
-
-**EXTENSION ACTIVITIES:**
-Suggest 2-3 ways to extend learning through:
-- Community connections
-- Real-world applications
-- Cross-curricular integration
-- Family/home connections
-
-Use warm, invitational language throughout. Write in "we/our" voice. Focus on strengths-based, trauma-informed approaches. Ensure all activities are developmentally appropriate for ${data.gradeLevel}.
-
-Generate a complete, ready-to-implement lesson plan that truly embodies Root Work Framework's commitment to healing-centered, academically rigorous education.`;
-
-    console.log('Calling Claude API with Root Work Framework prompt...');
+    console.log('Calling Claude API...');
 
     // Call Claude API
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -241,56 +115,55 @@ Generate a complete, ready-to-implement lesson plan that truly embodies Root Wor
       const errorText = await response.text();
       console.error('Claude API error:', response.status, response.statusText, errorText);
       
-      // Return a fallback lesson plan if Claude API fails
+      // Return fallback lesson plan
       const fallbackPlan: LessonPlan = {
-        title: `Root Work Framework: ${data.topic} (${data.gradeLevel})`,
-        overview: `This lesson integrates ${data.topic} with Root Work Framework's 5Rs: building relationships, establishing routines, ensuring relevance, maintaining rigor, and promoting reflection. Students will engage in healing-centered, academically challenging learning.`,
+        title: `Root Work Framework: ${data.topic} (Grade ${data.gradeLevel})`,
+        overview: `This ${data.duration} lesson integrates ${data.topic} with Root Work Framework's 5Rs, building relationships, establishing routines, ensuring relevance, maintaining rigor, and promoting reflection through healing-centered, academically challenging learning.`,
         objectives: [
           `Students will understand key concepts in ${data.topic} through culturally responsive instruction`,
           'Students will engage in collaborative learning that builds community',
-          'Students will connect learning to their lived experiences and cultural backgrounds',
+          'Students will connect learning to their lived experiences',
           'Students will demonstrate mastery through multiple assessment formats',
-          'Students will reflect on their learning and growth mindset development'
+          'Students will reflect on their learning and growth'
         ],
         materials: [
           'Student notebooks or digital devices',
-          'Whiteboard or projector for whole-group instruction',
+          'Whiteboard or projector',
           'Art supplies for creative expression',
-          'Natural elements (plants, stones, etc.) for biophilic connection',
-          'Community resources or guest speaker (if available)',
-          'Culturally relevant texts or materials',
-          'Assessment rubrics with student-friendly language'
+          'Natural elements for biophilic connection',
+          'Culturally relevant materials',
+          'Assessment rubrics'
         ],
         timeline: [
           {
-            time: '0-5 minutes',
+            time: '0-10 minutes',
             activity: 'Opening Circle & Community Building',
-            description: 'Begin with a mindful moment and community check-in. Share intention for learning and acknowledge the spaces and people that support our growth.'
+            description: 'Begin with mindful moment and community check-in. Share learning intentions and acknowledge the spaces and people that support our growth.'
           },
           {
-            time: '5-15 minutes', 
+            time: '10-20 minutes', 
             activity: 'Relevance Connection & Hook',
-            description: `Connect ${data.topic} to students' lives, communities, and interests. Use culturally responsive examples and real-world applications.`
+            description: `Connect ${data.topic} to students' lives, communities, and interests using culturally responsive examples and real-world applications.`
           },
           {
-            time: '15-35 minutes',
+            time: '20-40 minutes',
             activity: 'Core Learning with Rigor & Support',
-            description: `Engage in ${data.topic} instruction using multiple modalities. Include collaborative work, hands-on activities, and scaffolded challenges that honor diverse learning styles.`
+            description: `Engage in ${data.topic} instruction using multiple modalities, collaborative work, and scaffolded challenges that honor diverse learning styles.`
           },
           {
-            time: '35-45 minutes',
+            time: '40-50 minutes',
             activity: 'Application & Practice',
-            description: 'Students apply new learning through guided practice with peer support and instructor feedback. Emphasize growth mindset and collective success.'
+            description: 'Students apply new learning through guided practice with peer support and instructor feedback, emphasizing growth mindset.'
           },
           {
-            time: '45-50 minutes',
+            time: '50-60 minutes',
             activity: 'Reflection & Closing Circle',
             description: 'Individual and collective reflection on learning. Share insights, celebrate growth, and set intentions for continued learning.'
           }
         ],
-        assessment: 'Formative assessment through observation, peer feedback, and student self-reflection. Summative assessment honors multiple ways of demonstrating knowledge including verbal, written, artistic, and community-based expressions. Focus on growth and learning process rather than deficit-based evaluation.',
-        differentiation: 'Provide multiple entry points for learning, visual and auditory supports, movement opportunities, and culturally responsive materials. Use trauma-informed practices including choice, collaboration, and strength-based feedback. Accommodate diverse learning needs while maintaining high expectations for all students.',
-        extensions: 'Connect learning to family and community knowledge. Explore real-world applications in students\' neighborhoods. Create opportunities for students to teach others and engage in community problem-solving related to the topic.'
+        assessment: 'Formative assessment through observation, peer feedback, and student self-reflection. Summative assessment honors multiple ways of demonstrating knowledge including verbal, written, artistic, and community-based expressions.',
+        differentiation: 'Provide multiple entry points for learning, visual and auditory supports, movement opportunities, and culturally responsive materials. Use trauma-informed practices including choice, collaboration, and strength-based feedback.',
+        extensions: 'Connect learning to family and community knowledge. Explore real-world applications in students\' neighborhoods. Create opportunities for students to teach others and engage in community problem-solving.'
       };
 
       return NextResponse.json({
@@ -301,24 +174,69 @@ Generate a complete, ready-to-implement lesson plan that truly embodies Root Wor
     }
 
     const claudeData = await response.json();
-    console.log('Claude API response received successfully');
+    console.log('Claude API response received');
 
-    const rawLessonPlan = claudeData.content[0].text;
+    let rawLessonPlan = claudeData.content[0].text;
     
-    // Parse the Claude response into structured format
-    const structuredLessonPlan = parseClaudeResponse(rawLessonPlan);
+    // Clean up response - remove markdown if present
+    rawLessonPlan = rawLessonPlan.replace(/```json\s?/g, "").replace(/```\s?/g, "").trim();
+
+    let lessonPlan: LessonPlan;
+    try {
+      lessonPlan = JSON.parse(rawLessonPlan);
+    } catch (parseError) {
+      console.error('JSON parsing failed:', parseError);
+      
+      // Use fallback if parsing fails
+      lessonPlan = {
+        title: `Root Work Framework: ${data.topic} (Grade ${data.gradeLevel})`,
+        overview: `A comprehensive lesson plan designed using Root Work Framework principles for ${data.gradeLevel} students learning about ${data.topic}.`,
+        objectives: [
+          `Students will engage with ${data.topic} through Root Work Framework principles`,
+          'Students will practice collaboration and community building',
+          'Students will connect learning to personal experiences',
+          'Students will demonstrate understanding through multiple modalities'
+        ],
+        materials: [
+          'Basic classroom supplies',
+          'Student notebooks',
+          'Collaborative learning materials',
+          'Technology access as available'
+        ],
+        timeline: [
+          {
+            time: '0-15 minutes',
+            activity: 'Opening & Community Building',
+            description: 'Begin with community circle and cultural asset sharing related to the topic'
+          },
+          {
+            time: '15-45 minutes',
+            activity: 'Core Learning Experience',
+            description: `Engage in ${data.topic} learning through multiple modalities and collaborative exploration`
+          },
+          {
+            time: '45-60 minutes',
+            activity: 'Reflection & Closure',
+            description: 'Students reflect on learning and make connections to their lives and community'
+          }
+        ],
+        assessment: 'Multiple forms of assessment including self-reflection, peer feedback, and authentic demonstration of learning',
+        differentiation: 'Trauma-informed practices, multiple learning modalities, and culturally responsive approaches',
+        extensions: 'Community connections and real-world applications of learning'
+      };
+    }
 
     return NextResponse.json({ 
-      lessonPlan: structuredLessonPlan,
+      lessonPlan,
       success: true 
     });
 
   } catch (error) {
-    console.error('RWF API Error:', error);
+    console.error('API Error:', error);
     
     return NextResponse.json(
       { 
-        error: error instanceof Error ? error.message : 'Failed to generate Root Work Framework lesson plan',
+        error: 'Failed to generate lesson plan',
         success: false 
       },
       { status: 500 }
