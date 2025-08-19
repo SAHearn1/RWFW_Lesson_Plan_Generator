@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 interface LessonRequest {
+  unitTitle: string;
   gradeLevel: string;
   numberOfDays: string;
   minutes: string;
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Validate essential fields
     const missingFields = [];
+    if (!data.unitTitle?.trim()) missingFields.push('unitTitle');
     if (!data.gradeLevel?.trim()) missingFields.push('gradeLevel');
     if (!data.numberOfDays?.trim()) missingFields.push('numberOfDays');  
     if (!data.minutes?.trim()) missingFields.push('minutes');
@@ -58,6 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Clean and prepare data
     const cleanData = {
+      unitTitle: data.unitTitle.trim(),
       gradeLevel: data.gradeLevel.trim(),
       numberOfDays: data.numberOfDays.trim(),
       minutes: data.minutes.trim(),
