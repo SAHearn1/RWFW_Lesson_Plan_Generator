@@ -1,5 +1,5 @@
 // File: src/app/page.tsx
-// Root Work Framework Homepage
+import { BookOpen, Target, Clock, Users, ArrowRight, CheckCircle, Sparkles } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -7,125 +7,240 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-b border-gray-200 shadow-sm" style={{ backgroundColor: '#082A19' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <svg className="w-6 h-6" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2L13.09 6.26L18 7L13.09 7.74L12 12L10.91 7.74L6 7L10.91 6.26L12 2ZM4 17L5.09 19.26L8 20L5.09 20.74L4 23L2.91 20.74L0 20L2.91 19.26L4 17ZM20 17L21.09 19.26L24 20L21.09 20.74L20 23L18.91 20.74L16 20L18.91 19.26L20 17Z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Platform</h1>
-                  <p className="text-xs" style={{ color: '#D4C862' }}>Equity-Centered Learning Design</p>
-                </div>
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Root Work Framework</h1>
+                <p className="text-emerald-100 text-sm">AI-Powered Lesson Planning</p>
               </div>
             </div>
-            
-            <nav className="hidden md:flex space-x-8">
-              <a href="/" className="border-b-2 px-3 py-2 text-sm font-medium text-white" style={{ borderColor: '#D4C862' }}>Home</a>
-              <a href="/getting-started" className="text-gray-300 hover:text-white font-medium transition-colors">Getting Started</a>
-              <a href="/generate" className="text-gray-300 hover:text-white font-medium transition-colors">Generate</a>
-              <a href="#" className="text-gray-300 hover:text-white font-medium transition-colors">Resources</a>
+            <nav className="flex items-center space-x-6">
+              <a
+                href="/getting-started"
+                className="text-emerald-100 hover:text-white transition-colors"
+              >
+                Getting Started
+              </a>
+              <a
+                href="/generate"
+                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              >
+                Generate Lesson
+              </a>
             </nav>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-5xl mx-auto">
-          {/* Hero Section with Logo */}
-          <div className="mb-8">
-            <div className="w-32 h-32 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#082A19' }}>
-              {/* Root Work Logo - using the circular design pattern from your images */}
-              <svg className="w-24 h-24" style={{ color: '#D4C862' }} fill="currentColor" viewBox="0 0 100 100">
-                {/* Simplified version of your logo design */}
-                <g>
-                  {/* Central plant/sprout */}
-                  <path d="M50 65 L50 45 L45 40 L50 35 L55 40 L50 45 M45 50 L40 45 M55 50 L60 45 M45 55 L40 60 M55 55 L60 60" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  {/* Scales of justice */}
-                  <g transform="translate(25,25)">
-                    <rect x="8" y="0" width="1" height="15" fill="currentColor"/>
-                    <ellipse cx="4" cy="12" rx="4" ry="2" fill="none" stroke="currentColor" strokeWidth="1"/>
-                    <ellipse cx="12" cy="12" rx="4" ry="2" fill="none" stroke="currentColor" strokeWidth="1"/>
-                    <line x1="8" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1"/>
-                    <line x1="8" y1="8" x2="12" y2="10" stroke="currentColor" strokeWidth="1"/>
-                  </g>
-                  {/* Book */}
-                  <g transform="translate(65,25)">
-                    <rect x="0" y="5" width="12" height="8" rx="1" fill="none" stroke="currentColor" strokeWidth="1"/>
-                    <line x1="3" y1="7" x2="9" y2="7" stroke="currentColor" strokeWidth="0.5"/>
-                    <line x1="3" y1="9" x2="9" y2="9" stroke="currentColor" strokeWidth="0.5"/>
-                    <line x1="3" y1="11" x2="9" y2="11" stroke="currentColor" strokeWidth="0.5"/>
-                  </g>
-                  {/* Brain */}
-                  <g transform="translate(20,65)">
-                    <circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" strokeWidth="1"/>
-                    <path d="M3 6 Q6 3 9 6 Q6 9 3 6" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-                  </g>
-                  {/* Beaker */}
-                  <g transform="translate(70,65)">
-                    <path d="M4 2 L4 6 L2 10 L10 10 L8 6 L8 2 Z" fill="none" stroke="currentColor" strokeWidth="1"/>
-                    <line x1="4" y1="2" x2="8" y2="2" stroke="currentColor" strokeWidth="1"/>
-                    <circle cx="6" cy="8" r="1" fill="currentColor"/>
-                  </g>
-                  {/* Decorative flourishes */}
-                  <path d="M30 50 Q35 45 40 50 Q35 55 30 50" fill="none" stroke="currentColor" strokeWidth="1"/>
-                  <path d="M70 50 Q65 45 60 50 Q65 55 70 50" fill="none" stroke="currentColor" strokeWidth="1"/>
-                </g>
-              </svg>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>
-              Lesson Plans Rooted in 
-              <span style={{ color: '#D4C862' }}> Equity</span>
+      {/* Hero Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              Transform Your Teaching with
+              <span className="text-emerald-600 block">Root Work Framework</span>
             </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Create comprehensive, standards-aligned lesson plans in minutes with our 
+              AI-powered platform. Designed by educators, for educators.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="/generate"
+                className="bg-emerald-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center"
+              >
+                <Sparkles className="h-5 w-5 mr-2" />
+                Start Creating Lessons
+              </a>
+              <a
+                href="/getting-started"
+                className="border border-emerald-600 text-emerald-600 px-8 py-4 rounded-lg text-lg font-medium hover:bg-emerald-50 transition-colors flex items-center justify-center"
+              >
+                Learn How It Works
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Everything You Need for Effective Teaching
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Root Work Framework combines educational expertise with AI technology 
+              to deliver comprehensive lesson planning solutions.
+            </p>
           </div>
           
-          <p className="text-xl mb-12 leading-relaxed" style={{ color: '#2B2B2B' }}>
-            Professional lesson planning powered by the <strong>Root Work Framework</strong> and 
-            <strong> Garden to Growth</strong> methodology. Every lesson is equity-first, 
-            trauma-informed, strength-based, and community-connected.
-          </p>
-          
-          {/* Different User Journeys */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <a 
-              href="/getting-started"
-              className="text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all hover:opacity-90 transform hover:scale-105"
-              style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 100%)' }}
-            >
-              Start Growing
-              <p className="text-sm opacity-90 mt-1">Learn the Root Work approach</p>
-            </a>
-            <a 
-              href="/generate"
-              className="border-2 px-10 py-4 rounded-lg font-semibold text-lg transition-all hover:opacity-90 transform hover:scale-105"
-              style={{ 
-                borderColor: '#082A19', 
-                color: '#082A19',
-                backgroundColor: 'rgba(242, 244, 202, 0.5)'
-              }}
-            >
-              Generate Lesson Plan
-              <p className="text-sm opacity-80 mt-1">Jump straight to creation</p>
-            </a>
-          </div>
-          
-          {/* Framework Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div className="bg-white rounded-lg p-8 shadow-sm border-2 transition-all hover:shadow-lg" style={{ borderColor: '#D4C862' }}>
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F2F4CA' }}>
-                <svg className="w-8 h-8" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L13.09 6.26L18 7L13.09 7.74L12 12L10.91 7.74L6 7L10.91 6.26L12 2Z"/>
-                </svg>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Feature 1 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Target className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-4" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Framework</h3>
-              <p style={{ color: '#2B2B2B' }}>
-                Every lesson embeds equity-first, trauma-informed principles that honor student strengths and community assets.
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Standards Aligned</h3>
+              <p className="text-gray-600">
+                Every lesson plan aligns with educational standards and grade-level expectations.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Time Efficient</h3>
+              <p className="text-gray-600">
+                Generate comprehensive lesson plans in minutes, not hours of planning time.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Differentiated</h3>
+              <p className="text-gray-600">
+                Built-in strategies for diverse learners, including special education support.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Assessment Ready</h3>
+              <p className="text-gray-600">
+                Includes formative and summative assessment strategies for every lesson.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20" style={{ backgroundColor: '#f8fffe' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Three Simple Steps to Better Lessons
+            </h2>
+            <p className="text-xl text-gray-600">
+              Professional-quality lesson plans in just a few clicks
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center relative">
+              <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                1
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Input Your Requirements</h3>
+              <p className="text-gray-600">
+                Tell us your subject, grade level, topic, and learning objectives. 
+                Add any special considerations for your students.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center relative">
+              <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                2
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Creates Your Plan</h3>
+              <p className="text-gray-600">
+                Our intelligent system generates a comprehensive lesson plan with 
+                activities, timelines, assessments, and differentiation strategies.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center relative">
+              <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                3
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Customize & Teach</h3>
+              <p className="text-gray-600">
+                Review, customize, and download your lesson plan. Ready to use 
+                in your classroom immediately.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-emerald-600">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Revolutionize Your Teaching?
+          </h2>
+          <p className="text-xl text-emerald-100 mb-8">
+            Join thousands of educators who are saving time and creating 
+            better learning experiences with Root Work Framework.
+          </p>
+          <a
+            href="/generate"
+            className="bg-white text-emerald-600 px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-50 transition-colors inline-flex items-center"
+          >
+            <Sparkles className="h-5 w-5 mr-2" />
+            Generate Your First Lesson Plan
+          </a>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold">Root Work Framework</span>
+              </div>
+              <p className="text-gray-400">
+                Empowering educators with AI-powered lesson planning tools 
+                that save time and enhance student learning.
               </p>
             </div>
             
-            <div className="bg-white rounded-lg p-8 shadow-sm border-2 transition-all hover:shadow-lg" style={{ borderColor: '#D4C862' }}>
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F2F4CA' }}>
-                <svg className="w-8 h-8" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11,2V22C5.9,21.5 2,17.2 2,12S5.9,2.5 11,2M13,2V22C18.1,21.
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li><a href="/generate" className="text-gray-400 hover:text-white transition-colors">Generate Lesson</a></li>
+                <li><a href="/getting-started" className="text-gray-400 hover:text-white transition-colors">Getting Started</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">About</h3>
+              <p className="text-gray-400">
+                Built by educators for educators, Root Work Framework combines 
+                pedagogical expertise with cutting-edge AI technology.
+              </p>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p className="text-gray-400">
+              © 2025 Root Work Framework. Designed for educational excellence.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
