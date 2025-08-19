@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
 
     const prompt = buildPrompt(data);
 
-    // Keep conservative while we finish wiring; we'll raise after it works end-to-end
+    // Conservative while finishing wiring; we’ll raise after confirmed working
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
