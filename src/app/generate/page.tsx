@@ -377,4 +377,353 @@ export default function GeneratePage() {
                   </button>
                   <button
                     onClick={downloadLessonPlan}
-                    className="flex items-center space-x-2 px-3 py-2 tex
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#F2F4CA] hover:bg-[#D4C862] text-[#082A19] rounded-lg transition-colors border border-[#3B523A]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download TXT</span>
+                  </button>
+                  <button
+                    onClick={downloadAsHTML}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#082A19] hover:bg-[#001C10] text-[#D4C862] rounded-lg transition-colors border border-[#D4C862]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Download HTML</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Form */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
+            <h2 className="text-2xl font-bold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+              Create Your Root Work Lesson Plan
+            </h2>
+            <p className="text-sm text-[#3B523A] mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Fields with <span className="text-red-500">*</span> are required. RWFW plans include I Can + DOK, 5Rs, Literacy & links, Bloom’s, Co-Teaching,
+              Reteaching, MTSS T1–T3, Therapeutic context, and GRR steps with Teacher/Student Notes.
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#082A19] mb-2">Subject Area <span className="text-red-500">*</span></label>
+                  <input
+                    type="text" name="subject" value={formData.subject} onChange={handleInputChange}
+                    placeholder="e.g., ELA, Science, Math"
+                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#082A19] mb-2">Grade Level <span className="text-red-500">*</span></label>
+                  <select
+                    name="gradeLevel" value={formData.gradeLevel} onChange={handleInputChange}
+                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
+                  >
+                    <option value="">Select Grade Level</option>
+                    <option value="PreK">Pre-K</option><option value="K">Kindergarten</option>
+                    {[...Array(12)].map((_, i) => <option key={i+1} value={String(i+1)}>{i+1}th Grade</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2">Lesson Topic <span className="text-red-500">*</span></label>
+                <input
+                  type="text" name="topic" value={formData.topic} onChange={handleInputChange}
+                  placeholder="e.g., Beowulf & Savannah; Photosynthesis; Quadratics"
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2"><Clock className="inline h-4 w-4 mr-1 text-[#D4C862]" />Duration <span className="text-red-500">*</span></label>
+                <select
+                  name="duration" value={formData.duration} onChange={handleInputChange}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
+                >
+                  <option value="">Select Duration</option>
+                  {['30 minutes','45 minutes','50 minutes','60 minutes','90 minutes','120 minutes'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2"><Target className="inline h-4 w-4 mr-1 text-[#D4C862]" />Learning Objectives <span className="text-[#3B523A] text-xs">(Optional)</span></label>
+                <textarea
+                  name="learningObjectives" value={formData.learningObjectives} onChange={handleInputChange}
+                  placeholder="If blank, AI will generate I Can targets + DOK."
+                  rows={3}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2"><Users className="inline h-4 w-4 mr-1 text-[#D4C862]" />Special Considerations <span className="text-[#3B523A] text-xs">(Optional)</span></label>
+                <textarea
+                  name="specialNeeds" value={formData.specialNeeds} onChange={handleInputChange}
+                  placeholder="ELL/SPED needs, trauma-informed considerations, etc."
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2">Available Resources <span className="text-[#3B523A] text-xs">(Optional)</span></label>
+                <textarea
+                  name="availableResources" value={formData.availableResources} onChange={handleInputChange}
+                  placeholder="Tech, lab gear, outdoor space, etc."
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-red-800">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="w-full bg-[#082A19] text-[#D4C862] py-4 px-6 rounded-lg font-semibold hover:bg-[#001C10] disabled:opacity-50 transition-colors border-2 border-[#D4C862]"
+              >
+                {isGenerating ? 'Generating Root Work Lesson Plan…' : 'Generate Root Work Lesson Plan'}
+              </button>
+            </form>
+          </div>
+
+          {/* Results */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                Your Root Work Lesson Plan
+              </h2>
+            </div>
+
+            {!lessonPlan ? (
+              <div className="text-center py-12">
+                <BookOpen className="h-16 w-16 text-[#D4C862] mx-auto mb-4" />
+                <p className="text-[#3B523A]">Fill out the form to generate a plan.</p>
+              </div>
+            ) : (
+              <>
+                {usedFallback && (
+                  <div className="mb-4 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-3">
+                    Generated using backup pathway. You can still use/modify this plan while the primary model recovers.
+                  </div>
+                )}
+
+                <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-1">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#082A19] mb-1">{lessonPlan.title}</h3>
+                    <p className="text-[#2B2B2B]">{lessonPlan.overview}</p>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Target className="inline h-4 w-4 mr-1" />I Can Targets (DOK)</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {lessonPlan.iCanTargets.map((t, i) => (
+                        <li key={liKey('ican', i)}>{t.text} <span className="text-xs ml-1 text-[#3B523A]">DOK {t.dok}</span></li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Clock className="inline h-4 w-4 mr-1" />5 Rs Schedule</h4>
+                    <ul className="space-y-2">
+                      {lessonPlan.fiveRsSchedule.map((b, i) => (
+                        <li key={liKey('5rs', i)} className="border-l-4 border-[#D4C862] pl-3">
+                          <div className="font-medium text-[#082A19]">{b.label} — {b.minutes} min</div>
+                          <div className="text-sm text-[#2B2B2B]">{b.purpose}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><BookOpen className="inline h-4 w-4 mr-1" />Literacy Skills & Resources</h4>
+                    <p className="font-medium text-[#082A19]">Skills</p>
+                    <ul className="list-disc list-inside mb-2">
+                      {lessonPlan.literacySkillsAndResources.skills.map((s, i) => <li key={liKey('lit-skill', i)}>{s}</li>)}
+                    </ul>
+                    <p className="font-medium text-[#082A19]">Resources</p>
+                    <ul className="list-disc list-inside">
+                      {lessonPlan.literacySkillsAndResources.resources.map((r, i) => <li key={liKey('lit-res', i)}>{r}</li>)}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Brain className="inline h-4 w-4 mr-1" />Bloom’s Alignment</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="bg-[#F6F7E6]">
+                            <th className="text-left p-2">Task</th>
+                            <th className="text-left p-2">Level</th>
+                            <th className="text-left p-2">Rationale</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lessonPlan.bloomsAlignment.map((b, i) => (
+                            <tr key={liKey('bloom', i)} className="border-b">
+                              <td className="p-2">{b.task}</td>
+                              <td className="p-2">{b.bloom}</td>
+                              <td className="p-2">{b.rationale}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Users className="inline h-4 w-4 mr-1" />Co-Teaching Integration</h4>
+                    <p><span className="font-medium">Model:</span> {lessonPlan.coTeachingIntegration.model}</p>
+                    <p><span className="font-medium">Grouping:</span> {lessonPlan.coTeachingIntegration.grouping}</p>
+                    <ul className="list-disc list-inside mt-1">
+                      {lessonPlan.coTeachingIntegration.roles.map((r, i) => <li key={liKey('roles', i)}>{r}</li>)}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><ListChecks className="inline h-4 w-4 mr-1" />Reteaching & Spiral</h4>
+                    <div className="border-l-4 border-[#D4C862] pl-3">
+                      <p><span className="font-medium">Same-Day Quick Pivot:</span> {lessonPlan.reteachingAndSpiral.sameDayQuickPivot}</p>
+                      <p><span className="font-medium">Next-Day Plan:</span> {lessonPlan.reteachingAndSpiral.nextDayPlan}</p>
+                      <p className="font-medium mt-1">Spiral Ideas</p>
+                      <ul className="list-disc list-inside">
+                        {lessonPlan.reteachingAndSpiral.spiralIdeas.map((s, i) => <li key={liKey('spiral', i)}>{s}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Layers className="inline h-4 w-4 mr-1" />MTSS Supports</h4>
+                    <p className="font-medium">Tier 1</p>
+                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier1.map((s, i) => <li key={liKey('t1', i)}>{s}</li>)}</ul>
+                    <p className="font-medium">Tier 2</p>
+                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier2.map((s, i) => <li key={liKey('t2', i)}>{s}</li>)}</ul>
+                    <p className="font-medium">Tier 3</p>
+                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier3.map((s, i) => <li key={liKey('t3', i)}>{s}</li>)}</ul>
+                    <p className="font-medium">Progress Monitoring</p>
+                    <ul className="list-disc list-inside">{lessonPlan.mtssSupports.progressMonitoring.map((s, i) => <li key={liKey('pm', i)}>{s}</li>)}</ul>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Sandwich className="inline h-4 w-4 mr-1" />Therapeutic Rootwork Context</h4>
+                    <div className="border-l-4 border-[#D4C862] pl-3">
+                      <p><span className="font-medium">Rationale:</span> {lessonPlan.therapeuticRootworkContext.rationale}</p>
+                      <p><span className="font-medium">Regulation Cue:</span> {lessonPlan.therapeuticRootworkContext.regulationCue}</p>
+                      <p><span className="font-medium">Restorative Practice:</span> {lessonPlan.therapeuticRootworkContext.restorativePractice}</p>
+                      <p className="font-medium mt-1">Community Assets</p>
+                      <ul className="list-disc list-inside">
+                        {lessonPlan.therapeuticRootworkContext.communityAssets.map((a, i) => <li key={liKey('asset', i)}>{a}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><GraduationCap className="inline h-4 w-4 mr-1" />Lesson Flow (GRR)</h4>
+                    <div className="space-y-3">
+                      {lessonPlan.lessonFlowGRR.map((s, i) => (
+                        <div key={liKey('flow', i)} className="border-l-4 border-[#D4C862] pl-3">
+                          <div className="font-medium text-[#082A19]">{s.phase}: {s.step}</div>
+                          <div className="text-sm">{s.details}</div>
+                          <div className="text-sm mt-1">{s.teacherNote}</div>
+                          <div className="text-sm">{s.studentNote}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className={sectionTitle()}><Calendar className="inline h-4 w-4 mr-1" />Assessment & Evidence</h4>
+                    <p className="font-medium">Formative Checks</p>
+                    <ul className="list-disc list-inside">
+                      {lessonPlan.assessmentAndEvidence.formativeChecks.map((f, i) => <li key={liKey('ff', i)}>{f}</li>)}
+                    </ul>
+                    <p className="font-medium mt-2">Rubric</p>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="bg-[#F6F7E6]">
+                            <th className="text-left p-2">Criterion</th>
+                            <th className="text-left p-2">Developing</th>
+                            <th className="text-left p-2">Proficient</th>
+                            <th className="text-left p-2">Advanced</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lessonPlan.assessmentAndEvidence.rubric.map((r, i) => (
+                            <tr key={liKey('rub', i)} className="border-b">
+                              <td className="p-2">{r.criterion}</td>
+                              <td className="p-2">{r.developing}</td>
+                              <td className="p-2">{r.proficient}</td>
+                              <td className="p-2">{r.advanced}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="mt-2 border-l-4 border-[#D4C862] pl-3">
+                      <span className="font-medium">Exit Ticket:</span> {lessonPlan.assessmentAndEvidence.exitTicket}
+                    </div>
+                  </div>
+
+                  {/* Legacy fields */}
+                  {lessonPlan.objectives?.length ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Learning Objectives</h4>
+                      <ul className="list-disc list-inside">
+                        {lessonPlan.objectives.map((o, i) => <li key={liKey('obj', i)}>{o}</li>)}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {lessonPlan.timeline?.length ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Timeline</h4>
+                      <div className="space-y-2">
+                        {lessonPlan.timeline.map((t, i) => (
+                          <div key={liKey('time', i)} className="border-l-4 border-[#D4C862] pl-3">
+                            <div className="font-medium text-[#082A19]">{t.time} — {t.activity}</div>
+                            <div className="text-sm">{t.description}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {lessonPlan.assessment ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Assessment</h4>
+                      <p>{lessonPlan.assessment}</p>
+                    </div>
+                  ) : null}
+                  {lessonPlan.differentiation ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Differentiation</h4>
+                      <p>{lessonPlan.differentiation}</p>
+                    </div>
+                  ) : null}
+                  {lessonPlan.extensions ? (
+                    <div>
+                      <h4 className={sectionTitle()}>Legacy: Extensions</h4>
+                      <p>{lessonPlan.extensions}</p>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
