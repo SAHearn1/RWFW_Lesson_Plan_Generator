@@ -30,24 +30,24 @@ export default function GettingStartedPage() {
               >
                 Back to Home
               </a>
-              {/* Root Work Framework Logo */}
-              <div className="w-10 h-10 rounded-full bg-emerald-800 border-2 border-emerald-600 p-1">
+              {/* Root Work Framework Logo - Brand Compliant */}
+              <div className="w-12 h-12 rounded-full border-2 p-1 flex-shrink-0" style={{ backgroundColor: '#082A19', borderColor: '#D4C862' }}>
                 <svg viewBox="0 0 100 100" className="w-full h-full">
-                  {/* Background Circle */}
-                  <circle cx="50" cy="50" r="48" fill="#1f2937" stroke="#fcd34d" strokeWidth="1"/>
+                  {/* Background Circle - Evergreen */}
+                  <circle cx="50" cy="50" r="48" fill="#082A19" stroke="#D4C862" strokeWidth="2"/>
                   
                   {/* Central Plant */}
                   <g transform="translate(50,50)">
-                    {/* Plant stem */}
-                    <path d="M0,-15 L0,15" stroke="#fcd34d" strokeWidth="2" fill="none"/>
-                    {/* Central leaves */}
-                    <path d="M-8,-5 Q-12,-8 -8,-12 Q-4,-8 0,-5" fill="#a3a83a"/>
-                    <path d="M8,-5 Q12,-8 8,-12 Q4,-8 0,-5" fill="#a3a83a"/>
-                    <path d="M-6,5 Q-10,2 -6,-2 Q-2,2 0,5" fill="#a3a83a"/>
-                    <path d="M6,5 Q10,2 6,-2 Q2,2 0,5" fill="#a3a83a"/>
+                    {/* Plant stem - Gold Leaf */}
+                    <path d="M0,-15 L0,15" stroke="#D4C862" strokeWidth="3" fill="none"/>
+                    {/* Central leaves - Leaf color */}
+                    <path d="M-8,-5 Q-12,-8 -8,-12 Q-4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M8,-5 Q12,-8 8,-12 Q4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M-6,5 Q-10,2 -6,-2 Q-2,2 0,5" fill="#3B523A"/>
+                    <path d="M6,5 Q10,2 6,-2 Q2,2 0,5" fill="#3B523A"/>
                     
-                    {/* Radiating lines */}
-                    <g stroke="#fcd34d" strokeWidth="1">
+                    {/* Radiating lines - Gold Leaf */}
+                    <g stroke="#D4C862" strokeWidth="1.5">
                       <path d="M-12,0 L-8,0"/>
                       <path d="M8,0 L12,0"/>
                       <path d="M0,-12 L0,-8"/>
@@ -59,56 +59,56 @@ export default function GettingStartedPage() {
                     </g>
                   </g>
                   
-                  {/* Scales of Justice - Upper Left */}
-                  <g transform="translate(25,25) scale(0.6)">
-                    <path d="M0,-8 L0,8" stroke="#fcd34d" strokeWidth="1.5"/>
-                    <path d="M-8,0 L8,0" stroke="#fcd34d" strokeWidth="1"/>
-                    <ellipse cx="-6" cy="4" rx="4" ry="2" fill="none" stroke="#fcd34d" strokeWidth="1"/>
-                    <ellipse cx="6" cy="4" rx="4" ry="2" fill="none" stroke="#fcd34d" strokeWidth="1"/>
+                  {/* Scales of Justice - Upper Left - Gold Leaf */}
+                  <g transform="translate(25,25) scale(0.7)">
+                    <path d="M0,-8 L0,8" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-8,0 L8,0" stroke="#D4C862" strokeWidth="1.5"/>
+                    <ellipse cx="-6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                    <ellipse cx="6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
                   </g>
                   
-                  {/* Book - Upper Right */}
-                  <g transform="translate(75,25) scale(0.6)">
-                    <rect x="-6" y="-4" width="12" height="8" fill="none" stroke="#fcd34d" strokeWidth="1.5"/>
-                    <path d="M-6,-4 L6,-4 L6,4 L-6,4 Z" fill="none" stroke="#fcd34d" strokeWidth="1"/>
-                    <path d="M0,-4 L0,4" stroke="#fcd34d" strokeWidth="1"/>
-                    <path d="M-3,-1 L3,-1" stroke="#fcd34d" strokeWidth="0.5"/>
-                    <path d="M-3,1 L3,1" stroke="#fcd34d" strokeWidth="0.5"/>
+                  {/* Book - Upper Right - Gold Leaf */}
+                  <g transform="translate(75,25) scale(0.7)">
+                    <rect x="-6" y="-4" width="12" height="8" fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-6,-4 L6,-4 L6,4 L-6,4 Z" fill="none" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M0,-4 L0,4" stroke="#D4C862" strokeWidth="1.5"/>
+                    <path d="M-3,-1 L3,-1" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M-3,1 L3,1" stroke="#D4C862" strokeWidth="1"/>
                   </g>
                   
-                  {/* Brain - Lower Left */}
-                  <g transform="translate(25,75) scale(0.6)">
+                  {/* Brain - Lower Left - Gold Leaf */}
+                  <g transform="translate(25,75) scale(0.7)">
                     <path d="M-6,-4 Q-8,-6 -4,-6 Q0,-8 4,-6 Q8,-6 6,-4 Q8,-2 6,0 Q8,2 6,4 Q4,6 0,4 Q-4,6 -6,4 Q-8,2 -6,0 Q-8,-2 -6,-4" 
-                          fill="none" stroke="#fcd34d" strokeWidth="1.5"/>
-                    <path d="M-2,-2 Q0,-4 2,-2" stroke="#fcd34d" strokeWidth="0.8" fill="none"/>
-                    <path d="M-2,2 Q0,0 2,2" stroke="#fcd34d" strokeWidth="0.8" fill="none"/>
+                          fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-2,-2 Q0,-4 2,-2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
+                    <path d="M-2,2 Q0,0 2,2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
                   </g>
                   
-                  {/* Science Flask - Lower Right */}
-                  <g transform="translate(75,75) scale(0.6)">
-                    <path d="M-2,-6 L-2,-2 L-6,4 L6,4 L2,-2 L2,-6" fill="none" stroke="#fcd34d" strokeWidth="1.5"/>
-                    <circle cx="0" cy="2" r="1" fill="#fcd34d"/>
-                    <path d="M-4,-6 L4,-6" stroke="#fcd34d" strokeWidth="1"/>
+                  {/* Science Flask - Lower Right - Gold Leaf */}
+                  <g transform="translate(75,75) scale(0.7)">
+                    <path d="M-2,-6 L-2,-2 L-6,4 L6,4 L2,-2 L2,-6" fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <circle cx="0" cy="2" r="1.5" fill="#D4C862"/>
+                    <path d="M-4,-6 L4,-6" stroke="#D4C862" strokeWidth="1.5"/>
                   </g>
                   
-                  {/* Decorative vines */}
-                  <g fill="none" stroke="#a3a83a" strokeWidth="1">
+                  {/* Decorative vines - Leaf color */}
+                  <g fill="none" stroke="#3B523A" strokeWidth="1.5">
                     <path d="M15,35 Q20,30 25,35 Q30,40 35,35"/>
                     <path d="M65,35 Q70,30 75,35 Q80,40 85,35"/>
                     <path d="M15,65 Q20,70 25,65 Q30,60 35,65"/>
                     <path d="M65,65 Q70,70 75,65 Q80,60 85,65"/>
                   </g>
                   
-                  {/* Small leaves on vines */}
-                  <g fill="#a3a83a">
-                    <ellipse cx="20" cy="32" rx="2" ry="1" transform="rotate(45 20 32)"/>
-                    <ellipse cx="30" cy="38" rx="2" ry="1" transform="rotate(-45 30 38)"/>
-                    <ellipse cx="70" cy="32" rx="2" ry="1" transform="rotate(-45 70 32)"/>
-                    <ellipse cx="80" cy="38" rx="2" ry="1" transform="rotate(45 80 38)"/>
-                    <ellipse cx="20" cy="68" rx="2" ry="1" transform="rotate(-45 20 68)"/>
-                    <ellipse cx="30" cy="62" rx="2" ry="1" transform="rotate(45 30 62)"/>
-                    <ellipse cx="70" cy="68" rx="2" ry="1" transform="rotate(45 70 68)"/>
-                    <ellipse cx="80" cy="62" rx="2" ry="1" transform="rotate(-45 80 62)"/>
+                  {/* Small leaves on vines - Leaf color */}
+                  <g fill="#3B523A">
+                    <ellipse cx="20" cy="32" rx="2.5" ry="1.2" transform="rotate(45 20 32)"/>
+                    <ellipse cx="30" cy="38" rx="2.5" ry="1.2" transform="rotate(-45 30 38)"/>
+                    <ellipse cx="70" cy="32" rx="2.5" ry="1.2" transform="rotate(-45 70 32)"/>
+                    <ellipse cx="80" cy="38" rx="2.5" ry="1.2" transform="rotate(45 80 38)"/>
+                    <ellipse cx="20" cy="68" rx="2.5" ry="1.2" transform="rotate(-45 20 68)"/>
+                    <ellipse cx="30" cy="62" rx="2.5" ry="1.2" transform="rotate(45 30 62)"/>
+                    <ellipse cx="70" cy="68" rx="2.5" ry="1.2" transform="rotate(45 70 68)"/>
+                    <ellipse cx="80" cy="62" rx="2.5" ry="1.2" transform="rotate(-45 80 62)"/>
                   </g>
                 </svg>
               </div>
