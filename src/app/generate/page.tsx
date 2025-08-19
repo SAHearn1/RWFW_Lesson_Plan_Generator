@@ -1,3 +1,6 @@
+// File: src/app/generate/page.tsx
+// Root Work Framework Lesson Plan Generator
+
 'use client'
 
 import { useState } from 'react'
@@ -9,7 +12,7 @@ export default function GeneratePage() {
     gradeLevel: '',
     topic: '',
     objectives: '',
-    duration: '1', // Changed to days instead of minutes
+    duration: '1',
     standards: '',
     specialNeeds: [] as string[],
     technology: ''
@@ -42,12 +45,12 @@ export default function GeneratePage() {
     
     // Simulate progress stages
     const progressStages = [
-      { progress: 15, stage: 'Analyzing equity considerations...' },
-      { progress: 30, stage: 'Integrating trauma-informed practices...' },
-      { progress: 45, stage: 'Building strength-based activities...' },
-      { progress: 60, stage: 'Creating community connections...' },
-      { progress: 75, stage: 'Structuring 4E instructional model...' },
-      { progress: 90, stage: 'Finalizing comprehensive lesson plan...' },
+      { progress: 15, stage: 'Building relationship foundations...' },
+      { progress: 30, stage: 'Establishing trauma-informed routines...' },
+      { progress: 45, stage: 'Connecting learning to community relevance...' },
+      { progress: 60, stage: 'Designing rigorous, accessible activities...' },
+      { progress: 75, stage: 'Creating reflection and growth opportunities...' },
+      { progress: 90, stage: 'Integrating 5Rs framework...' },
       { progress: 100, stage: 'Root Work lesson plan complete!' }
     ]
     
@@ -61,7 +64,6 @@ export default function GeneratePage() {
     }, 800)
     
     try {
-      // Call the correct API endpoint with enhanced prompting for intelligent completion
       const response = await fetch('/api/generate-lesson', {
         method: 'POST',
         headers: {
@@ -71,7 +73,7 @@ export default function GeneratePage() {
           messages: [
             { 
               role: "user", 
-              content: `Create a comprehensive ${formData.duration}-day lesson plan that integrates Root Work Framework principles (equity-centered, trauma-informed, strength-based, community-connected) with the 4E instructional model structure.
+              content: `Create a comprehensive ${formData.duration}-day lesson plan that authentically implements the Root Work Framework 5Rs methodology (Relationships, Routines, Relevance, Rigor, Reflection).
 
 **INTELLIGENT AUTO-COMPLETION:** For any missing or incomplete information in the requirements below, use your educational expertise to intelligently fill in appropriate, high-quality content that aligns with Root Work Framework principles and the specified grade level.
 
@@ -85,32 +87,33 @@ export default function GeneratePage() {
 - Special Considerations: ${formData.specialNeeds.join(', ') || '[AI: Please include universal design principles and general accommodations]'}
 - Technology Integration: ${formData.technology || '[AI: Please suggest age-appropriate educational technology tools]'}
 
-**HYBRID FRAMEWORK STRUCTURE:**
-Create lesson plans that blend Root Work Framework principles with the 4E instructional model:
+**ROOT WORK 5Rs FRAMEWORK STRUCTURE:**
+Create lesson plans that authentically implement the Root Work Framework 5Rs methodology:
 
-1. **ENGAGE** (10-15 minutes) - Root Work Community Circle/Opening:
+1. **RELATIONSHIPS** (10-15 minutes) - Community Circle/Opening:
    - Relationship building and community connection
-   - Cultural asset activation and prior knowledge connection
-   - Hook/activator that honors student experiences
-   - Trauma-informed safe space establishment
+   - Cultural asset activation and trauma-informed safe space establishment
+   - Honor student experiences and build trust
 
-2. **EXPLORE** (15-20 minutes) - Root Work Strength-Based Direct Instruction:
-   - Teacher modeling with cultural responsiveness
-   - Direct instruction that builds on community knowledge
-   - Mini-lesson with equity considerations
-   - Explicit Bloom's Taxonomy level identification
+2. **ROUTINES** (Throughout lesson) - Predictable Structure:
+   - Clear, consistent procedures that support regulation
+   - Trauma-informed transitions and expectations
+   - Embedded self-regulation and co-regulation strategies
 
-3. **APPLY** (25-40 minutes) - Root Work Collaborative & Individual Practice:
-   - "We do" collaborative practice with peer support
-   - "You do" independent practice with choice and voice
-   - Student-centered activities that honor diverse learning styles
-   - Multiple ways to demonstrate understanding
+3. **RELEVANCE** (15-20 minutes) - Culturally Connected Instruction:
+   - Connect learning to student lives and community knowledge
+   - Strength-based direct instruction with cultural responsiveness
+   - Honor diverse ways of knowing and communicating
 
-4. **REFLECT** (5-10 minutes) - Root Work Community Sharing & Closure:
-   - Check for understanding through community dialogue
-   - Student self-reflection and goal setting
-   - Celebration of learning and cultural contributions
-   - Preview connections to next lesson
+4. **RIGOR** (25-40 minutes) - High Expectations with Support:
+   - Collaborative and individual practice with appropriate challenge
+   - Multiple pathways to demonstrate understanding
+   - Student choice and voice in learning approaches
+
+5. **REFLECTION** (5-10 minutes) - Community Sharing & Growth:
+   - Individual and collective reflection on learning
+   - Goal setting and celebration of growth
+   - Community sharing and preview connections
 
 **OUTPUT REQUIREMENTS:**
 Generate a professional lesson plan in clean, well-formatted HTML with proper CSS styling:
@@ -118,7 +121,7 @@ Generate a professional lesson plan in clean, well-formatted HTML with proper CS
 <div style="font-family: Inter, sans-serif; max-width: 100%; margin: 0 auto; background: white;">
 <header style="background: linear-gradient(135deg, #082A19 0%, #3B523A 100%); color: white; padding: 24px; border-radius: 8px; margin-bottom: 24px;">
   <h1 style="margin: 0; font-family: Merriweather, serif; font-size: 28px;">Root Work Framework Lesson Plan</h1>
-  <p style="margin: 8px 0 0 0; color: #F2F4CA; font-size: 16px;">Equity-Centered • Trauma-Informed • Strength-Based • Community-Connected</p>
+  <p style="margin: 8px 0 0 0; color: #F2F4CA; font-size: 16px;">5Rs: Relationships • Routines • Relevance • Rigor • Reflection</p>
 </header>
 
 Then include all sections with proper formatting...
@@ -130,12 +133,13 @@ Then include all sections with proper formatting...
    - Essential questions that connect to student experiences
    - Literacy skills integration with specific strategies
 
-2. **Daily 4E Structure** (for each day):
-   - ENGAGE: Community circle with cultural connections (10-15 min)
-   - EXPLORE: Strength-based direct instruction (15-20 min) 
-   - APPLY: Collaborative and independent practice with choice (25-40 min)
-   - REFLECT: Community sharing and reflection (5-10 min)
-   - Bloom's Taxonomy levels explicitly identified for each phase
+2. **Daily 5Rs Structure** (for each day):
+   - RELATIONSHIPS: Community circle with cultural connections (10-15 min)
+   - ROUTINES: Predictable structure and trauma-informed transitions (throughout)
+   - RELEVANCE: Culturally connected instruction (15-20 min) 
+   - RIGOR: Collaborative and individual practice with choice (25-40 min)
+   - REFLECTION: Community sharing and growth (5-10 min)
+   - Explicit identification of how each R is implemented
    - Differentiation strategies embedded throughout
 
 3. **Comprehensive Accommodations:**
@@ -158,7 +162,7 @@ Then include all sections with proper formatting...
    - Community resource connections
 
 6. **Assessment Strategy:**
-   - Formative assessment throughout each phase
+   - Formative assessment throughout each R
    - Summative assessment options with multiple modalities
    - Student self-assessment opportunities
    - Progress monitoring tools
@@ -180,7 +184,7 @@ Then include all sections with proper formatting...
 - Include actual working hyperlinks to educational resources
 - Maintain professional formatting with specific time allocations
 - Use consistent color scheme: #082A19 (dark green), #D4C862 (gold), #F2F4CA (light cream)
-- Emphasize both 4E structure AND Root Work principles throughout
+- Emphasize 5Rs structure AND Root Work principles throughout
 - Provide detailed, actionable descriptions for immediate implementation
 - Ensure all content is culturally responsive and trauma-informed
 
@@ -205,7 +209,7 @@ Generate comprehensive content that meets district template requirements while m
       clearInterval(progressInterval)
       setError(err instanceof Error ? err.message : 'Error generating lesson. Please try again.')
     } finally {
-      setTimeout(() => setIsGenerating(false), 1000) // Keep progress visible briefly
+      setTimeout(() => setIsGenerating(false), 1000)
     }
   }
 
@@ -229,7 +233,6 @@ Generate comprehensive content that meets district template requirements while m
   const handleExportPDF = () => {
     if (!generatedLesson) return
     
-    // Create a new window for printing
     const printWindow = window.open('', '_blank')
     if (printWindow) {
       printWindow.document.write(`
@@ -271,7 +274,6 @@ Generate comprehensive content that meets district template requirements while m
           url: window.location.href
         })
       } catch (error) {
-        // Fallback to clipboard
         handleCopyToClipboard()
       }
     } else {
@@ -363,20 +365,23 @@ Generate comprehensive content that meets district template requirements while m
         <div className="rounded-xl p-6 mb-8 text-white" style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 50%, #082A19 100%)' }}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Comprehensive Lesson Generation</h2>
+              <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>5Rs Lesson Generation</h2>
               <p className="mb-4" style={{ color: '#F2F4CA' }}>Create equity-centered lesson plans with Root Work Framework integration</p>
               <div className="flex flex-wrap gap-3">
                 <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Equity First
+                  Relationships
                 </span>
                 <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Trauma Informed
+                  Routines
                 </span>
                 <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Strength Based
+                  Relevance
                 </span>
                 <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Community Connected
+                  Rigor
+                </span>
+                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
+                  Reflection
                 </span>
               </div>
             </div>
@@ -407,7 +412,6 @@ Generate comprehensive content that meets district template requirements while m
                     Subject Areas (Select one or more for interdisciplinary lessons)
                   </label>
                   
-                  {/* Selected Subjects Display */}
                   {formData.subjects.length > 0 && (
                     <div className="mb-4">
                       <div className="flex flex-wrap gap-2">
@@ -433,7 +437,6 @@ Generate comprehensive content that meets district template requirements while m
                     </div>
                   )}
 
-                  {/* Subject Selection Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {subjectOptions.map((option) => (
                       <div
@@ -487,7 +490,6 @@ Generate comprehensive content that meets district template requirements while m
                   </select>
                 </div>
 
-                {/* Topic Field */}
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Lesson Topic/Unit
@@ -501,7 +503,6 @@ Generate comprehensive content that meets district template requirements while m
                   />
                 </div>
 
-                {/* Duration in Days */}
                 <div>
                   <label className="block text-sm font-semibold mb-2 flex items-center" style={{ color: '#2B2B2B' }}>
                     <Calendar className="w-4 h-4 mr-2" style={{ color: '#3B523A' }} />
@@ -523,7 +524,6 @@ Generate comprehensive content that meets district template requirements while m
                   </select>
                 </div>
 
-                {/* Standards Field */}
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Academic Standards
@@ -550,7 +550,6 @@ Generate comprehensive content that meets district template requirements while m
                   />
                 </div>
 
-                {/* Technology Integration */}
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
                     Technology Integration
@@ -610,7 +609,6 @@ Generate comprehensive content that meets district template requirements while m
                   </div>
                 </div>
 
-                {/* Error Display */}
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-center">
@@ -620,33 +618,19 @@ Generate comprehensive content that meets district template requirements while m
                   </div>
                 )}
 
-                {/* Root Work Framework Validation */}
                 <div className="border rounded-lg p-4" style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}>
                   <h4 className="font-semibold mb-3 flex items-center" style={{ color: '#082A19' }}>
                     <CheckCircle className="w-5 h-5 mr-2" />
-                    Root Work Framework Integration
+                    Root Work 5Rs Framework Integration
                   </h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-1 gap-2 text-sm">
                     <div className="flex items-center" style={{ color: '#082A19' }}>
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Equity considerations active
-                    </div>
-                    <div className="flex items-center" style={{ color: '#082A19' }}>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Trauma-informed design enabled
-                    </div>
-                    <div className="flex items-center" style={{ color: '#082A19' }}>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Strength-based approach integrated
-                    </div>
-                    <div className="flex items-center" style={{ color: '#082A19' }}>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Community connections embedded
+                      <span>Relationships • Routines • Relevance • Rigor • Reflection</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Generation Progress Bar */}
                 {isGenerating && (
                   <div className="border rounded-lg p-6 mb-6" style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}>
                     <h4 className="font-semibold mb-4 flex items-center" style={{ color: '#082A19' }}>
@@ -670,22 +654,10 @@ Generate comprehensive content that meets district template requirements while m
                         ></div>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4 text-xs mt-4" style={{ color: '#082A19' }}>
+                      <div className="grid grid-cols-1 gap-2 text-xs mt-4" style={{ color: '#082A19' }}>
                         <div className="flex items-center">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          <span>Equity-Centered Design</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          <span>Trauma-Informed Practices</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          <span>Strength-Based Approach</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          <span>Community Connections</span>
+                          <span>5Rs Framework: Relationships • Routines • Relevance • Rigor • Reflection</span>
                         </div>
                       </div>
                     </div>
@@ -713,25 +685,22 @@ Generate comprehensive content that meets district template requirements while m
 
           {/* Right Sidebar */}
           <div className="space-y-6">
-            {/* Garden to Growth Journey */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Garden to Growth Journey</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Root Work 5Rs</h3>
               <div className="space-y-4">
-                {growthStages.map((stage, index) => (
-                  <div key={stage.name} className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-full ${stage.color} flex items-center justify-center text-sm font-bold`}>
-                      {index + 1}
+                {['Relationships', 'Routines', 'Relevance', 'Rigor', 'Reflection'].map((r, index) => (
+                  <div key={r} className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: '#D4C862', color: '#082A19' }}>
+                      R
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold" style={{ color: '#2B2B2B' }}>{stage.name}</p>
-                      <p className="text-sm text-gray-600">{stage.description}</p>
+                      <p className="font-semibold" style={{ color: '#2B2B2B' }}>{r}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Enhanced Pro Tips */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Pro Tips</h3>
               <div className="space-y-3 text-sm">
@@ -753,14 +722,13 @@ Generate comprehensive content that meets district template requirements while m
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
-                  <span className="text-gray-700">Includes assessment rubrics and differentiation</span>
+                  <span className="text-gray-700">5Rs framework ensures equity-centered design</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Enhanced Generated Lesson Display */}
         {generatedLesson && (
           <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -793,7 +761,6 @@ Generate comprehensive content that meets district template requirements while m
               </div>
             </div>
             
-            {/* FIXED: Proper HTML rendering instead of plain text */}
             <div className="prose max-w-none">
               <div 
                 className="p-6 rounded-lg border overflow-auto max-h-96"
