@@ -1,359 +1,338 @@
-// File: src/app/generate/page.tsx
-// Root Work Framework Lesson Plan Generator
+<div className="flex items-center space-x-4">
+              <a
+                href="/generate"
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Generate Lesson
+              </a>
+              <a
+                href="/"
+                className="text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                Back to Home
+              </a>
+              {/* Root Work Framework Logo - Brand Compliant */}
+              <div className="w-12 h-12 rounded-full border-2 p-1 flex-shrink-0" style={{ backgroundColor: '#082A19', borderColor: '#D4C862' }}>
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  {/* Background Circle - Evergreen */}
+                  <circle cx="50" cy="50" r="48" fill="#082A19" stroke="#D4C862" strokeWidth="2"/>
+                  
+                  {/* Central Plant */}
+                  <g transform="translate(50,50)">
+                    {/* Plant stem - Gold Leaf */}
+                    <path d="M0,-15 L0,15" stroke="#D4C862" strokeWidth="3" fill="none"/>
+                    {/* Central leaves - Leaf color */}
+                    <path d="M-8,-5 Q-12,-8 -8,-12 Q-4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M8,-5 Q12,-8 8,-12 Q4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M-6,5 Q-10,2 -6,-2 Q-2,2 0,5" fill="#3B523A"/>
+                    <path d="M6,5 Q10,2 6,-2 Q2,2 0,5" fill="#3B523A"/>
+                    
+                    {/* Radiating lines - Gold Leaf */}
+                    <g stroke="#D4C862" strokeWidth="1.5">
+                      <path d="M-12,0 L-8,0"/>
+                      <path d="M8,0 L12,0"/>
+                      <path d="M0,-12 L0,-8"/>
+                      <path d="M0,8 L0,12"/>
+                      <path d="M-8,-8 L-6,-6"/>
+                      <path d="M8,-8 L6,-6"/>
+                      <path d="M-8,8 L-6,6"/>
+                      <path d="M8,8 L6,6"/>
+                    </g>
+                  </g>
+                  
+                  {/* Scales of Justice - Upper Left - Gold Leaf */}
+                  <g transform="translate(25,25) scale(0.7)">
+                    <path d="M0,-8 L0,8" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-8,0 L8,0" stroke="#D4C862" strokeWidth="1.5"/>
+                    <ellipse cx="-6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                    <ellipse cx="6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                  </g>
+                  
+                  {/* Book - Upper Right - Gold Leaf */}
+                  <g transform="translate(75,25) scale(0.7)">
+                    <rect x="-6" y="-4" width="12" height="8" fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-6,-4 L6,-4 L6,4 L-6,4 Z" fill="none" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M0,-4 L0,4" stroke="#D4C862" strokeWidth="1.5"/>
+                    <path d="M-3,-1 L3,-1" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M-3,1 L3,1" stroke="#D4C862" strokeWidth="1"/>
+                  </g>
+                  
+                  {/* Brain - Lower Left - Gold Leaf */}
+                  <g transform="translate(25,75) scale(0.7)">
+                    <path d="M-6,-4 Q-8,-6 -4,-6 Q0,-8 4,-6 Q8,-6 6,-4 Q8,-2 6,0 Q8,2 6,4 Q4,6 0,4 Q-4,6 -6,4 Q-8,2 -6,0 Q-8,-2 -6,-4" 
+                          fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-2,-2 Q0,-4 2,-2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
+                    <path d="M-2,2 Q0,0 2,2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
+                  </g>
+                  
+                  {/* Science Fla// File: src/app/generate/page.tsx
+'use client';
 
-'use client'
+import { useState } from 'react';
+import { Calendar, Clock, Users, Target, BookOpen, Download, Copy, Check } from 'lucide-react';
 
-import { useState } from 'react'
-import { BookOpen, Users, Shield, CheckCircle, AlertCircle, Clock, Download, Share, Save, X, Calendar, Target } from 'lucide-react'
+interface LessonPlan {
+  title: string;
+  overview: string;
+  objectives: string[];
+  materials: string[];
+  timeline: Array<{
+    time: string;
+    activity: string;
+    description: string;
+  }>;
+  assessment: string;
+  differentiation: string;
+  extensions: string;
+}
 
 export default function GeneratePage() {
   const [formData, setFormData] = useState({
-    subjects: [] as string[],
+    subject: '',
     gradeLevel: '',
     topic: '',
-    objectives: '',
-    duration: '1',
-    standards: '',
-    specialNeeds: [] as string[],
-    technology: ''
-  })
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedLesson, setGeneratedLesson] = useState('')
-  const [error, setError] = useState('')
-  const [generationProgress, setGenerationProgress] = useState(0)
-  const [generationStage, setGenerationStage] = useState('')
+    duration: '',
+    learningObjectives: '',
+    specialNeeds: '',
+    availableResources: ''
+  });
+  
+  const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const subjectOptions = [
-    { value: 'mathematics', label: 'Mathematics' },
-    { value: 'english', label: 'English Language Arts' },
-    { value: 'science', label: 'Science' },
-    { value: 'social-studies', label: 'Social Studies' },
-    { value: 'steam', label: 'STEAM Integration' },
-    { value: 'special-education', label: 'Special Education' },
-    { value: 'social-emotional-learning', label: 'Social-Emotional Learning' },
-    { value: 'arts', label: 'Arts' },
-    { value: 'physical-education', label: 'Physical Education' },
-    { value: 'world-languages', label: 'World Languages' },
-    { value: 'career-technical', label: 'Career & Technical Education' }
-  ]
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
-  const handleSubmit = async () => {
-    setIsGenerating(true)
-    setError('')
-    setGenerationProgress(0)
-    setGenerationStage('Initializing Root Work Framework...')
-    
-    // Simulate progress stages
-    const progressStages = [
-      { progress: 15, stage: 'Building relationship foundations...' },
-      { progress: 30, stage: 'Establishing trauma-informed routines...' },
-      { progress: 45, stage: 'Connecting learning to community relevance...' },
-      { progress: 60, stage: 'Designing rigorous, accessible activities...' },
-      { progress: 75, stage: 'Creating reflection and growth opportunities...' },
-      { progress: 90, stage: 'Integrating 5Rs framework...' },
-      { progress: 100, stage: 'Root Work lesson plan complete!' }
-    ]
-    
-    let currentStage = 0
-    const progressInterval = setInterval(() => {
-      if (currentStage < progressStages.length) {
-        setGenerationProgress(progressStages[currentStage].progress)
-        setGenerationStage(progressStages[currentStage].stage)
-        currentStage++
-      }
-    }, 800)
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    setError('');
+
+    // Only validate the most essential fields
+    const missingFields = [];
+    if (!formData.subject?.trim()) missingFields.push('Subject Area');
+    if (!formData.gradeLevel?.trim()) missingFields.push('Grade Level');
+    if (!formData.topic?.trim()) missingFields.push('Lesson Topic');
+    if (!formData.duration?.trim()) missingFields.push('Duration');
+
+    if (missingFields.length > 0) {
+      setError(`Please fill in these required fields: ${missingFields.join(', ')}`);
+      setIsGenerating(false);
+      return;
+    }
+
+    // Create a clean payload with defaults
+    const payload = {
+      subject: formData.subject.trim(),
+      gradeLevel: formData.gradeLevel.trim(),
+      topic: formData.topic.trim(),
+      duration: formData.duration.trim(),
+      learningObjectives: formData.learningObjectives?.trim() || '',
+      specialNeeds: formData.specialNeeds?.trim() || '',
+      availableResources: formData.availableResources?.trim() || ''
+    };
+
+    console.log('Submitting payload:', payload);
+
     try {
       const response = await fetch('/api/generate-lesson', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            { 
-              role: "user", 
-              content: `Create a comprehensive ${formData.duration}-day lesson plan that authentically implements the Root Work Framework 5Rs methodology (Relationships, Routines, Relevance, Rigor, Reflection).
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-**INTELLIGENT AUTO-COMPLETION:** For any missing or incomplete information in the requirements below, use your educational expertise to intelligently fill in appropriate, high-quality content that aligns with Root Work Framework principles and the specified grade level.
-
-**LESSON REQUIREMENTS:**
-- Subject(s): ${formData.subjects.join(', ')}
-- Grade Level: ${formData.gradeLevel}
-- Topic: ${formData.topic || '[AI: Please select an engaging, grade-appropriate topic for these subjects]'}
-- Duration: ${formData.duration} day(s)
-- Standards: ${formData.standards || '[AI: Please identify and cite relevant national/state standards]'}
-- Learning Objectives: ${formData.objectives || '[AI: Please create measurable, student-centered learning objectives]'}
-- Special Considerations: ${formData.specialNeeds.join(', ') || '[AI: Please include universal design principles and general accommodations]'}
-- Technology Integration: ${formData.technology || '[AI: Please suggest age-appropriate educational technology tools]'}
-
-**ROOT WORK 5Rs FRAMEWORK STRUCTURE:**
-Create lesson plans that authentically implement the Root Work Framework 5Rs methodology:
-
-1. **RELATIONSHIPS** (10-15 minutes) - Community Circle/Opening:
-   - Relationship building and community connection
-   - Cultural asset activation and trauma-informed safe space establishment
-   - Honor student experiences and build trust
-
-2. **ROUTINES** (Throughout lesson) - Predictable Structure:
-   - Clear, consistent procedures that support regulation
-   - Trauma-informed transitions and expectations
-   - Embedded self-regulation and co-regulation strategies
-
-3. **RELEVANCE** (15-20 minutes) - Culturally Connected Instruction:
-   - Connect learning to student lives and community knowledge
-   - Strength-based direct instruction with cultural responsiveness
-   - Honor diverse ways of knowing and communicating
-
-4. **RIGOR** (25-40 minutes) - High Expectations with Support:
-   - Collaborative and individual practice with appropriate challenge
-   - Multiple pathways to demonstrate understanding
-   - Student choice and voice in learning approaches
-
-5. **REFLECTION** (5-10 minutes) - Community Sharing & Growth:
-   - Individual and collective reflection on learning
-   - Goal setting and celebration of growth
-   - Community sharing and preview connections
-
-**OUTPUT REQUIREMENTS:**
-Generate a professional lesson plan in clean, well-formatted HTML with proper CSS styling:
-
-<div style="font-family: Inter, sans-serif; max-width: 100%; margin: 0 auto; background: white;">
-<header style="background: linear-gradient(135deg, #082A19 0%, #3B523A 100%); color: white; padding: 24px; border-radius: 8px; margin-bottom: 24px;">
-  <h1 style="margin: 0; font-family: Merriweather, serif; font-size: 28px;">Root Work Framework Lesson Plan</h1>
-  <p style="margin: 8px 0 0 0; color: #F2F4CA; font-size: 16px;">5Rs: Relationships • Routines • Relevance • Rigor • Reflection</p>
-</header>
-
-Then include all sections with proper formatting...
-
-1. **Lesson Header Information:**
-   - Course, week, teacher information placeholders
-   - Deconstructed standards with specific citations
-   - "I Can" learning targets (student-facing statements)
-   - Essential questions that connect to student experiences
-   - Literacy skills integration with specific strategies
-
-2. **Daily 5Rs Structure** (for each day):
-   - RELATIONSHIPS: Community circle with cultural connections (10-15 min)
-   - ROUTINES: Predictable structure and trauma-informed transitions (throughout)
-   - RELEVANCE: Culturally connected instruction (15-20 min) 
-   - RIGOR: Collaborative and individual practice with choice (25-40 min)
-   - REFLECTION: Community sharing and growth (5-10 min)
-   - Explicit identification of how each R is implemented
-   - Differentiation strategies embedded throughout
-
-3. **Comprehensive Accommodations:**
-   - 504 Plan accommodations with specific strategies
-   - Gifted and Talented extensions with higher-order thinking
-   - SPED accommodations with UDL principles
-   - ELL supports with language scaffolding
-   - Trauma-informed modifications
-
-4. **Co-Teaching Integration:**
-   - Recommended co-teaching model (if applicable)
-   - Role definitions for general and special education teachers
-   - Collaborative strategies that support all learners
-
-5. **Resources & Materials** with ACTUAL working links:
-   - Educational websites (Khan Academy, Crash Course, PBS Learning Media)
-   - Video resources (YouTube educational channels)
-   - Interactive tools and culturally relevant materials
-   - Assessment rubrics and tools
-   - Community resource connections
-
-6. **Assessment Strategy:**
-   - Formative assessment throughout each R
-   - Summative assessment options with multiple modalities
-   - Student self-assessment opportunities
-   - Progress monitoring tools
-
-7. **Reteaching Plan:**
-   - Specific strategies for students who don't master objectives
-   - Alternative approaches honoring different learning styles
-   - Additional scaffolding and support options
-   - Community and family engagement for reinforcement
-
-8. **Community Extensions:**
-   - Family engagement opportunities
-   - Community expert connections
-   - Real-world application projects
-   - Service learning possibilities
-
-**FORMATTING REQUIREMENTS:**
-- Use proper HTML structure with inline CSS for clean presentation
-- Include actual working hyperlinks to educational resources
-- Maintain professional formatting with specific time allocations
-- Use consistent color scheme: #082A19 (dark green), #D4C862 (gold), #F2F4CA (light cream)
-- Emphasize 5Rs structure AND Root Work principles throughout
-- Provide detailed, actionable descriptions for immediate implementation
-- Ensure all content is culturally responsive and trauma-informed
-
-Generate comprehensive content that meets district template requirements while maintaining Root Work Framework integrity for equitable, community-centered learning experiences.`
-            }
-          ]
-        }),
-      })
-
-      clearInterval(progressInterval)
-      setGenerationProgress(100)
-      setGenerationStage('Root Work lesson plan complete!')
+      console.log('Response status:', response.status);
+      
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate lesson')
+        throw new Error(responseData.error || `Server error: ${response.status}`);
       }
 
-      const data = await response.json()
-      setGeneratedLesson(data.lesson)
+      if (responseData.lessonPlan) {
+        setLessonPlan(responseData.lessonPlan);
+        if (responseData.fallback) {
+          setError('Generated using backup system - lesson plan created successfully!');
+        }
+      } else {
+        throw new Error('No lesson plan received from server');
+      }
     } catch (err) {
-      clearInterval(progressInterval)
-      setError(err instanceof Error ? err.message : 'Error generating lesson. Please try again.')
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Failed to generate lesson plan: ${errorMessage}`);
+      console.error('Form submission error:', err);
     } finally {
-      setTimeout(() => setIsGenerating(false), 1000)
+      setIsGenerating(false);
     }
-  }
+  };
 
-  const handleSave = () => {
-    if (!generatedLesson) return
+  const copyToClipboard = () => {
+    if (!lessonPlan) return;
     
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
-    const filename = `Root_Work_Lesson_Plan_${timestamp}.html`
+    const text = formatLessonPlanText(lessonPlan);
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const downloadLessonPlan = () => {
+    if (!lessonPlan) return;
     
-    const blob = new Blob([generatedLesson], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+    const text = formatLessonPlanText(lessonPlan);
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${lessonPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_lesson_plan.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-  const handleExportPDF = () => {
-    if (!generatedLesson) return
-    
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Root Work Lesson Plan</title>
-          <style>
-            body { 
-              font-family: Inter, sans-serif; 
-              margin: 20px; 
-              line-height: 1.6; 
-            }
-            @media print {
-              body { margin: 0; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          ${generatedLesson}
-        </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.focus()
-      printWindow.print()
-    }
-  }
+  const formatLessonPlanText = (plan: LessonPlan) => {
+    return `
+LESSON PLAN: ${plan.title}
 
-  const handleShare = async () => {
-    if (!generatedLesson) return
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Root Work Framework Lesson Plan',
-          text: 'Check out this equity-centered lesson plan created with Root Work Framework principles',
-          url: window.location.href
-        })
-      } catch (error) {
-        handleCopyToClipboard()
-      }
-    } else {
-      handleCopyToClipboard()
-    }
-  }
+OVERVIEW:
+${plan.overview}
 
-  const handleCopyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(generatedLesson)
-      alert('Lesson plan copied to clipboard!')
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
-      alert('Unable to copy. Please manually select and copy the lesson plan.')
-    }
-  }
+LEARNING OBJECTIVES:
+${plan.objectives.map((obj, i) => `${i + 1}. ${obj}`).join('\n')}
 
-  const toggleSubject = (subject: string) => {
-    setFormData(prev => ({
-      ...prev,
-      subjects: prev.subjects.includes(subject)
-        ? prev.subjects.filter(s => s !== subject)
-        : [...prev.subjects, subject]
-    }))
-  }
+MATERIALS NEEDED:
+${plan.materials.map(material => `• ${material}`).join('\n')}
 
-  const removeSubject = (subject: string) => {
-    setFormData(prev => ({
-      ...prev,
-      subjects: prev.subjects.filter(s => s !== subject)
-    }))
-  }
+LESSON TIMELINE:
+${plan.timeline.map(item => `${item.time} - ${item.activity}\n   ${item.description}`).join('\n\n')}
 
-  const toggleSpecialNeed = (need: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialNeeds: prev.specialNeeds.includes(need)
-        ? prev.specialNeeds.filter(n => n !== need)
-        : [...prev.specialNeeds, need]
-    }))
-  }
+ASSESSMENT:
+${plan.assessment}
 
-  const growthStages = [
-    { name: 'Seed', color: 'bg-yellow-100 text-yellow-800', description: 'Planting curiosity' },
-    { name: 'Sprout', color: 'bg-green-100 text-green-800', description: 'Understanding emerges' },
-    { name: 'Bloom', color: 'bg-amber-100 text-amber-800', description: 'Creative expression' },
-    { name: 'Harvest', color: 'bg-orange-200 text-orange-900', description: 'Sharing knowledge' }
-  ]
+DIFFERENTIATION STRATEGIES:
+${plan.differentiation}
+
+EXTENSION ACTIVITIES:
+${plan.extensions}
+
+Generated by Root Work Framework
+`.trim();
+  };
 
   return (
-    <div className="min-h-screen bg-stone-50" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-      {/* Professional Header */}
-      <header className="border-b border-gray-200 shadow-sm" style={{ backgroundColor: '#082A19' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <BookOpen className="w-5 h-5" style={{ color: '#082A19' }} />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Platform</h1>
-                  <p className="text-xs" style={{ color: '#D4C862' }}>Equity-Centered Learning Design</p>
-                </div>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #F2F4CA, #ffffff)' }}>
+      {/* Header */}
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Root Work Framework</h1>
+                <p className="text-sm text-gray-600">Lesson Plan Generator</p>
               </div>
             </div>
-            
-            <nav className="hidden md:flex space-x-8">
-              <a href="/" className="text-gray-300 hover:text-white font-medium transition-colors">Dashboard</a>
-              <a href="/generate" className="border-b-2 px-3 py-2 text-sm font-medium text-white" style={{ borderColor: '#D4C862' }}>Generate</a>
-              <a href="#" className="text-gray-300 hover:text-white font-medium transition-colors">My Lessons</a>
-              <a href="#" className="text-gray-300 hover:text-white font-medium transition-colors">Frameworks</a>
-            </nav>
-            
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-300 hover:text-white transition-colors">
-                <Users className="w-5 h-5" />
-              </button>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium" style={{ backgroundColor: '#D4C862', color: '#082A19' }}>
-                U
+              <a
+                href="/generate"
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Generate Lesson
+              </a>
+              <a
+                href="/"
+                className="text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                Back to Home
+              </a>
+              {/* Root Work Framework Logo - Brand Compliant */}
+              <div className="w-10 h-10 rounded-full border-2 p-1" style={{ backgroundColor: '#082A19', borderColor: '#D4C862' }}>
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  {/* Background Circle - Evergreen */}
+                  <circle cx="50" cy="50" r="48" fill="#082A19" stroke="#D4C862" strokeWidth="1"/>
+                  
+                  {/* Central Plant */}
+                  <g transform="translate(50,50)">
+                    {/* Plant stem - Gold Leaf */}
+                    <path d="M0,-15 L0,15" stroke="#D4C862" strokeWidth="2" fill="none"/>
+                    {/* Central leaves - Leaf color */}
+                    <path d="M-8,-5 Q-12,-8 -8,-12 Q-4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M8,-5 Q12,-8 8,-12 Q4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M-6,5 Q-10,2 -6,-2 Q-2,2 0,5" fill="#3B523A"/>
+                    <path d="M6,5 Q10,2 6,-2 Q2,2 0,5" fill="#3B523A"/>
+                    
+                    {/* Radiating lines - Gold Leaf */}
+                    <g stroke="#D4C862" strokeWidth="1">
+                      <path d="M-12,0 L-8,0"/>
+                      <path d="M8,0 L12,0"/>
+                      <path d="M0,-12 L0,-8"/>
+                      <path d="M0,8 L0,12"/>
+                      <path d="M-8,-8 L-6,-6"/>
+                      <path d="M8,-8 L6,-6"/>
+                      <path d="M-8,8 L-6,6"/>
+                      <path d="M8,8 L6,6"/>
+                    </g>
+                  </g>
+                  
+                  {/* Scales of Justice - Upper Left - Gold Leaf */}
+                  <g transform="translate(25,25) scale(0.6)">
+                    <path d="M0,-8 L0,8" stroke="#D4C862" strokeWidth="1.5"/>
+                    <path d="M-8,0 L8,0" stroke="#D4C862" strokeWidth="1"/>
+                    <ellipse cx="-6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1"/>
+                    <ellipse cx="6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1"/>
+                  </g>
+                  
+                  {/* Book - Upper Right - Gold Leaf */}
+                  <g transform="translate(75,25) scale(0.6)">
+                    <rect x="-6" y="-4" width="12" height="8" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                    <path d="M-6,-4 L6,-4 L6,4 L-6,4 Z" fill="none" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M0,-4 L0,4" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M-3,-1 L3,-1" stroke="#D4C862" strokeWidth="0.5"/>
+                    <path d="M-3,1 L3,1" stroke="#D4C862" strokeWidth="0.5"/>
+                  </g>
+                  
+                  {/* Brain - Lower Left - Gold Leaf */}
+                  <g transform="translate(25,75) scale(0.6)">
+                    <path d="M-6,-4 Q-8,-6 -4,-6 Q0,-8 4,-6 Q8,-6 6,-4 Q8,-2 6,0 Q8,2 6,4 Q4,6 0,4 Q-4,6 -6,4 Q-8,2 -6,0 Q-8,-2 -6,-4" 
+                          fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                    <path d="M-2,-2 Q0,-4 2,-2" stroke="#D4C862" strokeWidth="0.8" fill="none"/>
+                    <path d="M-2,2 Q0,0 2,2" stroke="#D4C862" strokeWidth="0.8" fill="none"/>
+                  </g>
+                  
+                  {/* Science Flask - Lower Right - Gold Leaf */}
+                  <g transform="translate(75,75) scale(0.6)">
+                    <path d="M-2,-6 L-2,-2 L-6,4 L6,4 L2,-2 L2,-6" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                    <circle cx="0" cy="2" r="1" fill="#D4C862"/>
+                    <path d="M-4,-6 L4,-6" stroke="#D4C862" strokeWidth="1"/>
+                  </g>
+                  
+                  {/* Decorative vines - Leaf color */}
+                  <g fill="none" stroke="#3B523A" strokeWidth="1">
+                    <path d="M15,35 Q20,30 25,35 Q30,40 35,35"/>
+                    <path d="M65,35 Q70,30 75,35 Q80,40 85,35"/>
+                    <path d="M15,65 Q20,70 25,65 Q30,60 35,65"/>
+                    <path d="M65,65 Q70,70 75,65 Q80,60 85,65"/>
+                  </g>
+                  
+                  {/* Small leaves on vines - Leaf color */}
+                  <g fill="#3B523A">
+                    <ellipse cx="20" cy="32" rx="2" ry="1" transform="rotate(45 20 32)"/>
+                    <ellipse cx="30" cy="38" rx="2" ry="1" transform="rotate(-45 30 38)"/>
+                    <ellipse cx="70" cy="32" rx="2" ry="1" transform="rotate(-45 70 32)"/>
+                    <ellipse cx="80" cy="38" rx="2" ry="1" transform="rotate(45 80 38)"/>
+                    <ellipse cx="20" cy="68" rx="2" ry="1" transform="rotate(-45 20 68)"/>
+                    <ellipse cx="30" cy="62" rx="2" ry="1" transform="rotate(45 30 62)"/>
+                    <ellipse cx="70" cy="68" rx="2" ry="1" transform="rotate(45 70 68)"/>
+                    <ellipse cx="80" cy="62" rx="2" ry="1" transform="rotate(-45 80 62)"/>
+                  </g>
+                </svg>
               </div>
             </div>
           </div>
@@ -361,416 +340,244 @@ Generate comprehensive content that meets district template requirements while m
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Root Work Framework Banner */}
-        <div className="rounded-xl p-6 mb-8 text-white" style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 50%, #082A19 100%)' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>5Rs Lesson Generation</h2>
-              <p className="mb-4" style={{ color: '#F2F4CA' }}>Create equity-centered lesson plans with Root Work Framework integration</p>
-              <div className="flex flex-wrap gap-3">
-                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Relationships
-                </span>
-                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Routines
-                </span>
-                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Relevance
-                </span>
-                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Rigor
-                </span>
-                <span className="backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)', color: '#F2F4CA' }}>
-                  Reflection
-                </span>
-              </div>
-            </div>
-            <div className="hidden lg:block">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center border-2" style={{ backgroundColor: 'rgba(212, 200, 98, 0.2)', borderColor: 'rgba(212, 200, 98, 0.3)' }}>
-                <Shield className="w-12 h-12" style={{ color: '#D4C862' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Lesson Generator - Main Panel */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Lesson Plan Generator</h3>
-                <span className="text-xs font-medium px-2.5 py-0.5 rounded-full" style={{ backgroundColor: '#D4C862', color: '#082A19' }}>
-                  Root Work Powered
-                </span>
-              </div>
-
-              <div className="space-y-6">
-                {/* Subject Selection */}
-                <div>
-                  <label className="block text-sm font-semibold mb-3" style={{ color: '#2B2B2B' }}>
-                    Subject Areas (Select one or more for interdisciplinary lessons)
-                  </label>
-                  
-                  {formData.subjects.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2">
-                        {formData.subjects.map((subject) => {
-                          const subjectLabel = subjectOptions.find(opt => opt.value === subject)?.label || subject
-                          return (
-                            <span
-                              key={subject}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                              style={{ backgroundColor: '#F2F4CA', color: '#082A19' }}
-                            >
-                              {subjectLabel}
-                              <button
-                                onClick={() => removeSubject(subject)}
-                                className="ml-2 hover:bg-stone-200 rounded-full p-0.5 transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </span>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {subjectOptions.map((option) => (
-                      <div
-                        key={option.value}
-                        onClick={() => toggleSubject(option.value)}
-                        className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-colors ${
-                          formData.subjects.includes(option.value)
-                            ? 'border-2'
-                            : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
-                        }`}
-                        style={formData.subjects.includes(option.value) ? 
-                          { backgroundColor: '#F2F4CA', borderColor: '#3B523A' } : 
-                          {}
-                        }
-                      >
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          formData.subjects.includes(option.value)
-                            ? ''
-                            : 'border-gray-300'
-                        }`}
-                        style={formData.subjects.includes(option.value) ? 
-                          { backgroundColor: '#082A19', borderColor: '#082A19' } : 
-                          {}
-                        }
-                        >
-                          {formData.subjects.includes(option.value) && (
-                            <CheckCircle className="w-3 h-3 text-white" />
-                          )}
-                        </div>
-                        <span className="text-sm" style={{ color: '#2B2B2B' }}>{option.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Grade Level */}
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
-                    Grade Level
-                  </label>
-                  <select 
-                    value={formData.gradeLevel}
-                    onChange={(e) => setFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                  >
-                    <option value="">Select Grade</option>
-                    <option value="prek-2">PreK-2 (Early Elementary)</option>
-                    <option value="3-5">3-5 (Late Elementary)</option>
-                    <option value="6-8">6-8 (Middle School)</option>
-                    <option value="9-12">9-12 (High School)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
-                    Lesson Topic/Unit
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.topic}
-                    onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                    placeholder="e.g., Fractions, Photosynthesis, Civil Rights Movement"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2 flex items-center" style={{ color: '#2B2B2B' }}>
-                    <Calendar className="w-4 h-4 mr-2" style={{ color: '#3B523A' }} />
-                    Lesson Duration (Days)
-                  </label>
-                  <select 
-                    value={formData.duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                  >
-                    <option value="1">1 Day</option>
-                    <option value="2">2 Days</option>
-                    <option value="3">3 Days</option>
-                    <option value="4">4 Days</option>
-                    <option value="5">5 Days (1 Week)</option>
-                    <option value="10">10 Days (2 Weeks)</option>
-                    <option value="15">15 Days (3 Weeks)</option>
-                    <option value="20">20 Days (4 Weeks)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
-                    Academic Standards
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.standards}
-                    onChange={(e) => setFormData(prev => ({ ...prev, standards: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                    placeholder="e.g., CCSS.MATH.3.NF.A.1, NGSS.5-PS1-1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
-                    Learning Objectives & Goals
-                  </label>
-                  <textarea 
-                    value={formData.objectives}
-                    onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600" 
-                    rows={5} 
-                    placeholder="Describe what students will learn and be able to do. Example: 'Students will understand fractions by connecting them to real-world situations like cooking and sharing. They will compare fractions and explain their thinking using both visual models and mathematical language. This lesson will engage students who face math anxiety and connect to their cultural backgrounds.'"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: '#2B2B2B' }}>
-                    Technology Integration
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.technology}
-                    onChange={(e) => setFormData(prev => ({ ...prev, technology: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors focus:ring-2 focus:ring-green-600 focus:border-green-600"
-                    placeholder="iPads, Chromebooks, interactive whiteboard, online tools"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-3" style={{ color: '#2B2B2B' }}>
-                    Learning Support & Accommodations
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {[
-                      'English Language Learners',
-                      'Students with Disabilities',
-                      'Gifted & Talented',
-                      'Trauma-Informed Practices',
-                      'Culturally Responsive',
-                      'Behavioral Support'
-                    ].map((need) => (
-                      <div 
-                        key={need}
-                        onClick={() => toggleSpecialNeed(need)}
-                        className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-colors ${
-                          formData.specialNeeds.includes(need)
-                            ? 'border-2'
-                            : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
-                        }`}
-                        style={formData.specialNeeds.includes(need) ? 
-                          { backgroundColor: '#F2F4CA', borderColor: '#3B523A' } : 
-                          {}
-                        }
-                      >
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          formData.specialNeeds.includes(need)
-                            ? ''
-                            : 'border-gray-300'
-                        }`}
-                        style={formData.specialNeeds.includes(need) ? 
-                          { backgroundColor: '#082A19', borderColor: '#082A19' } : 
-                          {}
-                        }
-                        >
-                          {formData.specialNeeds.includes(need) && (
-                            <CheckCircle className="w-3 h-3 text-white" />
-                          )}
-                        </div>
-                        <span className="text-sm" style={{ color: '#2B2B2B' }}>{need}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                      <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                      <span className="text-red-800">{error}</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="border rounded-lg p-4" style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}>
-                  <h4 className="font-semibold mb-3 flex items-center" style={{ color: '#082A19' }}>
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Root Work 5Rs Framework Integration
-                  </h4>
-                  <div className="grid grid-cols-1 gap-2 text-sm">
-                    <div className="flex items-center" style={{ color: '#082A19' }}>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      <span>Relationships • Routines • Relevance • Rigor • Reflection</span>
-                    </div>
-                  </div>
-                </div>
-
-                {isGenerating && (
-                  <div className="border rounded-lg p-6 mb-6" style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}>
-                    <h4 className="font-semibold mb-4 flex items-center" style={{ color: '#082A19' }}>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 mr-3" style={{ borderColor: '#082A19' }}></div>
-                      Creating Your Root Work Lesson Plan
-                    </h4>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium" style={{ color: '#082A19' }}>{generationStage}</span>
-                        <span className="text-sm font-bold" style={{ color: '#082A19' }}>{generationProgress}%</span>
-                      </div>
-                      
-                      <div className="w-full bg-white rounded-full h-3 border" style={{ borderColor: '#3B523A' }}>
-                        <div 
-                          className="h-3 rounded-full transition-all duration-500 ease-out"
-                          style={{ 
-                            width: `${generationProgress}%`,
-                            background: 'linear-gradient(90deg, #082A19 0%, #3B523A 50%, #D4C862 100%)'
-                          }}
-                        ></div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 gap-2 text-xs mt-4" style={{ color: '#082A19' }}>
-                        <div className="flex items-center">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          <span>5Rs Framework: Relationships • Routines • Relevance • Rigor • Reflection</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <button 
-                  onClick={handleSubmit}
-                  disabled={isGenerating || formData.subjects.length === 0 || !formData.gradeLevel || !formData.objectives}
-                  className="w-full text-white py-4 px-6 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                  style={{ background: isGenerating ? '#6B7280' : 'linear-gradient(135deg, #082A19 0%, #3B523A 100%)' }}
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Creating your lesson plan...</span>
-                    </>
-                  ) : (
-                    <span>Generate {formData.subjects.length > 1 ? 'Interdisciplinary' : ''} Lesson Plan</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Root Work 5Rs</h3>
-              <div className="space-y-4">
-                {['Relationships', 'Routines', 'Relevance', 'Rigor', 'Reflection'].map((r, index) => (
-                  <div key={r} className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: '#D4C862', color: '#082A19' }}>
-                      R
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold" style={{ color: '#2B2B2B' }}>{r}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold mb-4" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Pro Tips</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start space-x-2">
-                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
-                  <span className="text-gray-700">Select multiple subjects for interdisciplinary lessons</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
-                  <span className="text-gray-700">Multi-day plans include detailed daily breakdowns</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
-                  <span className="text-gray-700">Generated plans include working resource links</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
-                  <span className="text-gray-700">Include cultural considerations and student interests</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="mt-1" style={{ color: '#D4C862' }}>•</span>
-                  <span className="text-gray-700">5Rs framework ensures equity-centered design</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {generatedLesson && (
-          <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold" style={{ color: '#2B2B2B', fontFamily: 'Merriweather, Georgia, serif' }}>Generated Lesson Plan</h3>
-              <div className="flex space-x-3">
-                <button 
-                  onClick={handleSave}
-                  className="text-white px-4 py-2 rounded-md transition-colors flex items-center space-x-2 hover:opacity-90" 
-                  style={{ backgroundColor: '#082A19' }}
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Save</span>
-                </button>
-                <button 
-                  onClick={handleExportPDF}
-                  className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" 
-                  style={{ borderColor: '#3B523A' }}
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Export PDF</span>
-                </button>
-                <button 
-                  onClick={handleShare}
-                  className="border text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2" 
-                  style={{ borderColor: '#3B523A' }}
-                >
-                  <Share className="w-4 h-4" />
-                  <span>Share</span>
-                </button>
-              </div>
-            </div>
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Form Section */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Lesson Plan</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Fields marked with <span className="text-red-500">*</span> are required. 
+              The AI can generate comprehensive lesson plans with just the basics!
+            </p>
             
-            <div className="prose max-w-none">
-              <div 
-                className="p-6 rounded-lg border overflow-auto max-h-96"
-                style={{ backgroundColor: '#F2F4CA', borderColor: '#3B523A' }}
-                dangerouslySetInnerHTML={{ __html: generatedLesson }}
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subject Area <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Mathematics, Science, English"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Grade Level <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="gradeLevel"
+                    value={formData.gradeLevel}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    required
+                  >
+                    <option value="">Select Grade Level</option>
+                    <option value="PreK">Pre-K</option>
+                    <option value="K">Kindergarten</option>
+                    <option value="1">1st Grade</option>
+                    <option value="2">2nd Grade</option>
+                    <option value="3">3rd Grade</option>
+                    <option value="4">4th Grade</option>
+                    <option value="5">5th Grade</option>
+                    <option value="6">6th Grade</option>
+                    <option value="7">7th Grade</option>
+                    <option value="8">8th Grade</option>
+                    <option value="9">9th Grade</option>
+                    <option value="10">10th Grade</option>
+                    <option value="11">11th Grade</option>
+                    <option value="12">12th Grade</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Lesson Topic <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="topic"
+                  value={formData.topic}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Photosynthesis, Quadratic Equations, Character Development"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Clock className="inline h-4 w-4 mr-1" />
+                  Duration <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                >
+                  <option value="">Select Duration</option>
+                  <option value="30 minutes">30 minutes</option>
+                  <option value="45 minutes">45 minutes</option>
+                  <option value="50 minutes">50 minutes</option>
+                  <option value="60 minutes">60 minutes</option>
+                  <option value="90 minutes">90 minutes</option>
+                  <option value="120 minutes">120 minutes</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Target className="inline h-4 w-4 mr-1" />
+                  Learning Objectives <span className="text-gray-400 text-xs">(Optional - AI will generate if blank)</span>
+                </label>
+                <textarea
+                  name="learningObjectives"
+                  value={formData.learningObjectives}
+                  onChange={handleInputChange}
+                  placeholder="What should students be able to do by the end of this lesson? (Leave blank for AI-generated objectives)"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Users className="inline h-4 w-4 mr-1" />
+                  Special Considerations <span className="text-gray-400 text-xs">(Optional)</span>
+                </label>
+                <textarea
+                  name="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={handleInputChange}
+                  placeholder="ELL students, special education needs, differentiation requirements..."
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Available Resources <span className="text-gray-400 text-xs">(Optional)</span>
+                </label>
+                <textarea
+                  name="availableResources"
+                  value={formData.availableResources}
+                  onChange={handleInputChange}
+                  placeholder="Technology, materials, lab equipment, etc."
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="w-full bg-emerald-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isGenerating ? 'Generating Lesson Plan...' : 'Generate Lesson Plan'}
+              </button>
+            </form>
           </div>
-        )}
+
+          {/* Results Section */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Generated Lesson Plan</h2>
+              {lessonPlan && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={copyToClipboard}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <span>{copied ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                  <button
+                    onClick={downloadLessonPlan}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!lessonPlan ? (
+              <div className="text-center py-12">
+                <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Fill out the form to generate your lesson plan</p>
+              </div>
+            ) : (
+              <div className="space-y-6 max-h-96 overflow-y-auto">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{lessonPlan.title}</h3>
+                  <p className="text-gray-600">{lessonPlan.overview}</p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Learning Objectives:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    {lessonPlan.objectives.map((objective, index) => (
+                      <li key={index}>{objective}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Materials Needed:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    {lessonPlan.materials.map((material, index) => (
+                      <li key={index}>{material}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Lesson Timeline:</h4>
+                  <div className="space-y-3">
+                    {lessonPlan.timeline.map((item, index) => (
+                      <div key={index} className="border-l-4 border-emerald-500 pl-4">
+                        <div className="font-medium text-gray-900">{item.time} - {item.activity}</div>
+                        <div className="text-gray-600 text-sm">{item.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Assessment:</h4>
+                  <p className="text-gray-600">{lessonPlan.assessment}</p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Differentiation:</h4>
+                  <p className="text-gray-600">{lessonPlan.differentiation}</p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Extension Activities:</h4>
+                  <p className="text-gray-600">{lessonPlan.extensions}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }
