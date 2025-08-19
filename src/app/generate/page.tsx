@@ -66,8 +66,8 @@ function normalizePlan(raw: any): LessonPlan {
   const fiveRsSchedule = asArray<any>(raw?.fiveRsSchedule).map(asFiveRsBlock);
 
   const literacy = {
-    skills: asArray<string>(raw?.literacySkillsAndResources?.skills).map(asString),
-    resources: asArray<string>(raw?.literacySkillsAndResources?.resources).map(asString),
+    skills: asArray<string>(raw?.literacySkillsAndResources?.skills).map((s) => asString(s)),
+    resources: asArray<string>(raw?.literacySkillsAndResources?.resources).map((r) => asString(r)),
   };
 
   const bloomsAlignment = asArray<any>(raw?.bloomsAlignment).map((b) => ({
@@ -82,34 +82,34 @@ function normalizePlan(raw: any): LessonPlan {
 
   const coTeachingIntegration = {
     model: asString(raw?.coTeachingIntegration?.model),
-    roles: asArray<string>(raw?.coTeachingIntegration?.roles).map(asString),
+    roles: asArray<string>(raw?.coTeachingIntegration?.roles).map((r) => asString(r)),
     grouping: asString(raw?.coTeachingIntegration?.grouping),
   };
 
   const reteachingAndSpiral = {
     sameDayQuickPivot: asString(raw?.reteachingAndSpiral?.sameDayQuickPivot),
     nextDayPlan: asString(raw?.reteachingAndSpiral?.nextDayPlan),
-    spiralIdeas: asArray<string>(raw?.reteachingAndSpiral?.spiralIdeas).map(asString),
+    spiralIdeas: asArray<string>(raw?.reteachingAndSpiral?.spiralIdeas).map((s) => asString(s)),
   };
 
   const mtssSupports = {
-    tier1: asArray<string>(raw?.mtssSupports?.tier1).map(asString),
-    tier2: asArray<string>(raw?.mtssSupports?.tier2).map(asString),
-    tier3: asArray<string>(raw?.mtssSupports?.tier3).map(asString),
-    progressMonitoring: asArray<string>(raw?.mtssSupports?.progressMonitoring).map(asString),
+    tier1: asArray<string>(raw?.mtssSupports?.tier1).map((s) => asString(s)),
+    tier2: asArray<string>(raw?.mtssSupports?.tier2).map((s) => asString(s)),
+    tier3: asArray<string>(raw?.mtssSupports?.tier3).map((s) => asString(s)),
+    progressMonitoring: asArray<string>(raw?.mtssSupports?.progressMonitoring).map((s) => asString(s)),
   };
 
   const therapeuticRootworkContext = {
     rationale: asString(raw?.therapeuticRootworkContext?.rationale),
     regulationCue: asString(raw?.therapeuticRootworkContext?.regulationCue),
     restorativePractice: asString(raw?.therapeuticRootworkContext?.restorativePractice),
-    communityAssets: asArray<string>(raw?.therapeuticRootworkContext?.communityAssets).map(asString),
+    communityAssets: asArray<string>(raw?.therapeuticRootworkContext?.communityAssets).map((a) => asString(a)),
   };
 
   const lessonFlowGRR = asArray<any>(raw?.lessonFlowGRR).map(asFlowStep);
 
   const assessmentAndEvidence = {
-    formativeChecks: asArray<string>(raw?.assessmentAndEvidence?.formativeChecks).map(asString),
+    formativeChecks: asArray<string>(raw?.assessmentAndEvidence?.formativeChecks).map((f) => asString(f)),
     rubric: asArray<any>(raw?.assessmentAndEvidence?.rubric).map((r) => ({
       criterion: asString(r?.criterion),
       developing: asString(r?.developing),
@@ -120,7 +120,7 @@ function normalizePlan(raw: any): LessonPlan {
   };
 
   // Legacy fields
-  const objectives = asArray<string>(raw?.objectives).map(asString);
+  const objectives = asArray<string>(raw?.objectives).map((o) => asString(o));
   const timeline = asArray<any>(raw?.timeline).map((t) => ({
     time: asString(t?.time),
     activity: asString(t?.activity),
@@ -133,7 +133,7 @@ function normalizePlan(raw: any): LessonPlan {
   return {
     title: asString(raw?.title),
     overview: asString(raw?.overview),
-    materials: asArray<string>(raw?.materials).map(asString),
+    materials: asArray<string>(raw?.materials).map((m) => asString(m)),
 
     iCanTargets,
     fiveRsSchedule,
@@ -256,9 +256,9 @@ export default function GeneratePage() {
     lines.push('');
 
     lines.push('LITERACY SKILLS:');
-    plan.literacySkillsAndResources?.skills?.forEach(s => lines.push(`• ${s}`));
+    plan.literacySkillsAndResources?.skills?.forEach((s) => lines.push(`• ${s}`));
     lines.push('RESOURCES:');
-    plan.literacySkillsAndResources?.resources?.forEach(r => lines.push(`• ${r}`));
+    plan.literacySkillsAndResources?.resources?.forEach((r) => lines.push(`• ${r}`));
     lines.push('');
 
     lines.push("BLOOM'S ALIGNMENT:");
@@ -271,21 +271,21 @@ export default function GeneratePage() {
     lines.push(`Model: ${plan.coTeachingIntegration?.model}`);
     lines.push(`Grouping: ${plan.coTeachingIntegration?.grouping}`);
     lines.push('Roles:');
-    plan.coTeachingIntegration?.roles?.forEach(r => lines.push(`• ${r}`));
+    plan.coTeachingIntegration?.roles?.forEach((r) => lines.push(`• ${r}`));
     lines.push('');
 
     lines.push('RETEACHING & SPIRAL:');
     lines.push(`Same-Day Quick Pivot: ${plan.reteachingAndSpiral?.sameDayQuickPivot}`);
     lines.push(`Next-Day Plan: ${plan.reteachingAndSpiral?.nextDayPlan}`);
     lines.push('Spiral Ideas:');
-    plan.reteachingAndSpiral?.spiralIdeas?.forEach(s => lines.push(`• ${s}`));
+    plan.reteachingAndSpiral?.spiralIdeas?.forEach((s) => lines.push(`• ${s}`));
     lines.push('');
 
     lines.push('MTSS SUPPORTS:');
-    lines.push('Tier 1:'); plan.mtssSupports?.tier1?.forEach(s => lines.push(`• ${s}`));
-    lines.push('Tier 2:'); plan.mtssSupports?.tier2?.forEach(s => lines.push(`• ${s}`));
-    lines.push('Tier 3:'); plan.mtssSupports?.tier3?.forEach(s => lines.push(`• ${s}`));
-    lines.push('Progress Monitoring:'); plan.mtssSupports?.progressMonitoring?.forEach(s => lines.push(`• ${s}`));
+    lines.push('Tier 1:'); plan.mtssSupports?.tier1?.forEach((s) => lines.push(`• ${s}`));
+    lines.push('Tier 2:'); plan.mtssSupports?.tier2?.forEach((s) => lines.push(`• ${s}`));
+    lines.push('Tier 3:'); plan.mtssSupports?.tier3?.forEach((s) => lines.push(`• ${s}`));
+    lines.push('Progress Monitoring:'); plan.mtssSupports?.progressMonitoring?.forEach((s) => lines.push(`• ${s}`));
     lines.push('');
 
     lines.push('THERAPEUTIC ROOTWORK CONTEXT:');
@@ -293,7 +293,7 @@ export default function GeneratePage() {
     lines.push(`Regulation Cue: ${plan.therapeuticRootworkContext?.regulationCue}`);
     lines.push(`Restorative Practice: ${plan.therapeuticRootworkContext?.restorativePractice}`);
     lines.push('Community Assets:');
-    plan.therapeuticRootworkContext?.communityAssets?.forEach(a => lines.push(`• ${a}`));
+    plan.therapeuticRootworkContext?.communityAssets?.forEach((a) => lines.push(`• ${a}`));
     lines.push('');
 
     lines.push('LESSON FLOW (GRR):');
@@ -307,9 +307,9 @@ export default function GeneratePage() {
 
     lines.push('ASSESSMENT & EVIDENCE:');
     lines.push('Formative Checks:');
-    plan.assessmentAndEvidence?.formativeChecks?.forEach(f => lines.push(`• ${f}`));
+    plan.assessmentAndEvidence?.formativeChecks?.forEach((f) => lines.push(`• ${f}`));
     lines.push('Rubric:');
-    plan.assessmentAndEvidence?.rubric?.forEach(r =>
+    plan.assessmentAndEvidence?.rubric?.forEach((r) =>
       lines.push(`• ${r.criterion} — Dev: ${r.developing} | Prof: ${r.proficient} | Adv: ${r.advanced}`)
     );
     lines.push(`Exit Ticket: ${plan.assessmentAndEvidence?.exitTicket}`);
@@ -323,7 +323,7 @@ export default function GeneratePage() {
     }
     if (plan.timeline?.length) {
       lines.push('LEGACY: TIMELINE');
-      plan.timeline.forEach(t => lines.push(`${t.time} — ${t.activity}\n   ${t.description}`));
+      plan.timeline.forEach((t) => lines.push(`${t.time} — ${t.activity}\n   ${t.description}`));
       lines.push('');
     }
     if (plan.assessment) {
@@ -399,20 +399,20 @@ export default function GeneratePage() {
 
   <section>
     <h3>I Can Targets (with DOK)</h3>
-    <ul>${plan.iCanTargets.map(t => `<li>${h(t.text)} <span class="chip">DOK ${t.dok}</span></li>`).join('')}</ul>
+    <ul>${plan.iCanTargets.map((t) => `<li>${h(t.text)} <span class="chip">DOK ${t.dok}</span></li>`).join('')}</ul>
   </section>
 
   <section>
     <h3>5 Rs Schedule</h3>
-    <ul>${plan.fiveRsSchedule.map(b => `<li><strong>${h(b.label)}</strong> — ${b.minutes} min<br/><span class="muted">${h(b.purpose)}</span></li>`).join('')}</ul>
+    <ul>${plan.fiveRsSchedule.map((b) => `<li><strong>${h(b.label)}</strong> — ${b.minutes} min<br/><span class="muted">${h(b.purpose)}</span></li>`).join('')}</ul>
   </section>
 
   <section>
     <h3>Literacy Skills & Resources</h3>
     <p><strong>Skills:</strong></p>
-    <ul>${plan.literacySkillsAndResources.skills.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <ul>${plan.literacySkillsAndResources.skills.map((s) => `<li>${h(s)}</li>`).join('')}</ul>
     <p><strong>Resources:</strong></p>
-    <ul>${plan.literacySkillsAndResources.resources.map(r => `<li>${h(r)}</li>`).join('')}</ul>
+    <ul>${plan.literacySkillsAndResources.resources.map((r) => `<li>${h(r)}</li>`).join('')}</ul>
   </section>
 
   <section>
@@ -420,7 +420,7 @@ export default function GeneratePage() {
     <table>
       <thead><tr><th>Task</th><th>Level</th><th>Rationale</th></tr></thead>
       <tbody>
-        ${plan.bloomsAlignment.map(b => `<tr><td>${h(b.task)}</td><td>${b.bloom}</td><td>${h(b.rationale)}</td></tr>`).join('')}
+        ${plan.bloomsAlignment.map((b) => `<tr><td>${h(b.task)}</td><td>${b.bloom}</td><td>${h(b.rationale)}</td></tr>`).join('')}
       </tbody>
     </table>
   </section>
@@ -429,7 +429,7 @@ export default function GeneratePage() {
     <h3>Co-Teaching Integration</h3>
     <p><strong>Model:</strong> ${h(plan.coTeachingIntegration.model)}<br/>
        <strong>Grouping:</strong> ${h(plan.coTeachingIntegration.grouping)}</p>
-    <ul>${plan.coTeachingIntegration.roles.map(r => `<li>${h(r)}</li>`).join('')}</ul>
+    <ul>${plan.coTeachingIntegration.roles.map((r) => `<li>${h(r)}</li>`).join('')}</ul>
   </section>
 
   <section>
@@ -437,15 +437,15 @@ export default function GeneratePage() {
     <div class="box"><strong>Same-Day Quick Pivot:</strong> ${h(plan.reteachingAndSpiral.sameDayQuickPivot)}</div>
     <div class="box"><strong>Next-Day Plan:</strong> ${h(plan.reteachingAndSpiral.nextDayPlan)}</div>
     <p><strong>Spiral Ideas:</strong></p>
-    <ul>${plan.reteachingAndSpiral.spiralIdeas.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <ul>${plan.reteachingAndSpiral.spiralIdeas.map((s) => `<li>${h(s)}</li>`).join('')}</ul>
   </section>
 
   <section>
     <h3>MTSS (Tier 1–3) & Monitoring</h3>
-    <p><strong>Tier 1:</strong></p><ul>${plan.mtssSupports.tier1.map(s => `<li>${h(s)}</li>`).join('')}</ul>
-    <p><strong>Tier 2:</strong></p><ul>${plan.mtssSupports.tier2.map(s => `<li>${h(s)}</li>`).join('')}</ul>
-    <p><strong>Tier 3:</strong></p><ul>${plan.mtssSupports.tier3.map(s => `<li>${h(s)}</li>`).join('')}</ul>
-    <p><strong>Progress Monitoring:</strong></p><ul>${plan.mtssSupports.progressMonitoring.map(s => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Tier 1:</strong></p><ul>${plan.mtssSupports.tier1.map((s) => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Tier 2:</strong></p><ul>${plan.mtssSupports.tier2.map((s) => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Tier 3:</strong></p><ul>${plan.mtssSupports.tier3.map((s) => `<li>${h(s)}</li>`).join('')}</ul>
+    <p><strong>Progress Monitoring:</strong></p><ul>${plan.mtssSupports.progressMonitoring.map((s) => `<li>${h(s)}</li>`).join('')}</ul>
   </section>
 
   <section>
@@ -454,12 +454,12 @@ export default function GeneratePage() {
     <div class="box"><strong>Regulation Cue:</strong> ${h(plan.therapeuticRootworkContext.regulationCue)}</div>
     <div class="box"><strong>Restorative Practice:</strong> ${h(plan.therapeuticRootworkContext.restorativePractice)}</div>
     <p><strong>Community Assets:</strong></p>
-    <ul>${plan.therapeuticRootworkContext.communityAssets.map(a => `<li>${h(a)}</li>`).join('')}</ul>
+    <ul>${plan.therapeuticRootworkContext.communityAssets.map((a) => `<li>${h(a)}</li>`).join('')}</ul>
   </section>
 
   <section>
     <h3>Lesson Flow — GRR</h3>
-    ${plan.lessonFlowGRR.map(s => `
+    ${plan.lessonFlowGRR.map((s) => `
       <div class="box">
         <strong>${s.phase}:</strong> ${h(s.step)}<br/>
         ${h(s.details)}<br/>
@@ -472,12 +472,12 @@ export default function GeneratePage() {
   <section>
     <h3>Assessment & Evidence</h3>
     <p><strong>Formative Checks:</strong></p>
-    <ul>${plan.assessmentAndEvidence.formativeChecks.map(f => `<li>${h(f)}</li>`).join('')}</ul>
+    <ul>${plan.assessmentAndEvidence.formativeChecks.map((f) => `<li>${h(f)}</li>`).join('')}</ul>
     <p><strong>Rubric:</strong></p>
     <table>
       <thead><tr><th>Criterion</th><th>Developing</th><th>Proficient</th><th>Advanced</th></tr></thead>
       <tbody>
-        ${plan.assessmentAndEvidence.rubric.map(r => `<tr><td>${h(r.criterion)}</td><td>${h(r.developing)}</td><td>${h(r.proficient)}</td><td>${h(r.advanced)}</td></tr>`).join('')}
+        ${plan.assessmentAndEvidence.rubric.map((r) => `<tr><td>${h(r.criterion)}</td><td>${h(r.developing)}</td><td>${h(r.proficient)}</td><td>${h(r.advanced)}</td></tr>`).join('')}
       </tbody>
     </table>
     <div class="box"><strong>Exit Ticket:</strong> ${h(plan.assessmentAndEvidence.exitTicket)}</div>
@@ -598,7 +598,7 @@ export default function GeneratePage() {
                   className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]" required
                 >
                   <option value="">Select Duration</option>
-                  {['30 minutes','45 minutes','50 minutes','60 minutes','90 minutes','120 minutes'].map(v => <option key={v} value={v}>{v}</option>)}
+                  {['30 minutes','45 minutes','50 minutes','60 minutes','90 minutes','120 minutes'].map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
 
@@ -617,261 +617,4 @@ export default function GeneratePage() {
                 <textarea
                   name="specialNeeds" value={formData.specialNeeds} onChange={handleInputChange}
                   placeholder="ELL/SPED needs, trauma-informed considerations, etc."
-                  rows={2}
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#082A19] mb-2">Available Resources <span className="text-[#3B523A] text-xs">(Optional)</span></label>
-                <textarea
-                  name="availableResources" value={formData.availableResources} onChange={handleInputChange}
-                  placeholder="Tech, lab gear, outdoor space, etc."
-                  rows={2}
-                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
-                />
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-red-800">
-                  <p>{error}</p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isGenerating}
-                className="w-full bg-[#082A19] text-[#D4C862] py-4 px-6 rounded-lg font-semibold hover:bg-[#001C10] disabled:opacity-50 transition-colors border-2 border-[#D4C862]"
-              >
-                {isGenerating ? 'Generating Root Work Lesson Plan…' : 'Generate Root Work Lesson Plan'}
-              </button>
-            </form>
-          </div>
-
-          {/* Results */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
-                Your Root Work Lesson Plan
-              </h2>
-            </div>
-
-            {!lessonPlan ? (
-              <div className="text-center py-12">
-                <BookOpen className="h-16 w-16 text-[#D4C862] mx-auto mb-4" />
-                <p className="text-[#3B523A]">Fill out the form to generate a plan.</p>
-              </div>
-            ) : (
-              <>
-                {usedFallback && (
-                  <div className="mb-4 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-3">
-                    Generated using backup pathway. You can still use/modify this plan while the primary model recovers.
-                  </div>
-                )}
-
-                <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-1">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#082A19] mb-1">{lessonPlan.title}</h3>
-                    <p className="text-[#2B2B2B]">{lessonPlan.overview}</p>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Target className="inline h-4 w-4 mr-1" />I Can Targets (DOK)</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      {lessonPlan.iCanTargets.map((t, i) => (
-                        <li key={liKey('ican', i)}>{t.text} <span className="text-xs ml-1 text-[#3B523A]">DOK {t.dok}</span></li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Clock className="inline h-4 w-4 mr-1" />5 Rs Schedule</h4>
-                    <ul className="space-y-2">
-                      {lessonPlan.fiveRsSchedule.map((b, i) => (
-                        <li key={liKey('5rs', i)} className="border-l-4 border-[#D4C862] pl-3">
-                          <div className="font-medium text-[#082A19]">{b.label} — {b.minutes} min</div>
-                          <div className="text-sm text-[#2B2B2B]">{b.purpose}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><BookOpen className="inline h-4 w-4 mr-1" />Literacy Skills & Resources</h4>
-                    <p className="font-medium text-[#082A19]">Skills</p>
-                    <ul className="list-disc list-inside mb-2">
-                      {lessonPlan.literacySkillsAndResources.skills.map((s, i) => <li key={liKey('lit-skill', i)}>{s}</li>)}
-                    </ul>
-                    <p className="font-medium text-[#082A19]">Resources</p>
-                    <ul className="list-disc list-inside">
-                      {lessonPlan.literacySkillsAndResources.resources.map((r, i) => <li key={liKey('lit-res', i)}>{r}</li>)}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Brain className="inline h-4 w-4 mr-1" />Bloom’s Alignment</h4>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-sm">
-                        <thead>
-                          <tr className="bg-[#F6F7E6]">
-                            <th className="text-left p-2">Task</th>
-                            <th className="text-left p-2">Level</th>
-                            <th className="text-left p-2">Rationale</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {lessonPlan.bloomsAlignment.map((b, i) => (
-                            <tr key={liKey('bloom', i)} className="border-b">
-                              <td className="p-2">{b.task}</td>
-                              <td className="p-2">{b.bloom}</td>
-                              <td className="p-2">{b.rationale}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Users className="inline h-4 w-4 mr-1" />Co-Teaching Integration</h4>
-                    <p><span className="font-medium">Model:</span> {lessonPlan.coTeachingIntegration.model}</p>
-                    <p><span className="font-medium">Grouping:</span> {lessonPlan.coTeachingIntegration.grouping}</p>
-                    <ul className="list-disc list-inside mt-1">
-                      {lessonPlan.coTeachingIntegration.roles.map((r, i) => <li key={liKey('roles', i)}>{r}</li>)}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><ListChecks className="inline h-4 w-4 mr-1" />Reteaching & Spiral</h4>
-                    <div className="border-l-4 border-[#D4C862] pl-3">
-                      <p><span className="font-medium">Same-Day Quick Pivot:</span> {lessonPlan.reteachingAndSpiral.sameDayQuickPivot}</p>
-                      <p><span className="font-medium">Next-Day Plan:</span> {lessonPlan.reteachingAndSpiral.nextDayPlan}</p>
-                      <p className="font-medium mt-1">Spiral Ideas</p>
-                      <ul className="list-disc list-inside">
-                        {lessonPlan.reteachingAndSpiral.spiralIdeas.map((s, i) => <li key={liKey('spiral', i)}>{s}</li>)}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Layers className="inline h-4 w-4 mr-1" />MTSS Supports</h4>
-                    <p className="font-medium">Tier 1</p>
-                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier1.map((s, i) => <li key={liKey('t1', i)}>{s}</li>)}</ul>
-                    <p className="font-medium">Tier 2</p>
-                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier2.map((s, i) => <li key={liKey('t2', i)}>{s}</li>)}</ul>
-                    <p className="font-medium">Tier 3</p>
-                    <ul className="list-disc list-inside mb-1">{lessonPlan.mtssSupports.tier3.map((s, i) => <li key={liKey('t3', i)}>{s}</li>)}</ul>
-                    <p className="font-medium">Progress Monitoring</p>
-                    <ul className="list-disc list-inside">{lessonPlan.mtssSupports.progressMonitoring.map((s, i) => <li key={liKey('pm', i)}>{s}</li>)}</ul>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Sandwich className="inline h-4 w-4 mr-1" />Therapeutic Rootwork Context</h4>
-                    <div className="border-l-4 border-[#D4C862] pl-3">
-                      <p><span className="font-medium">Rationale:</span> {lessonPlan.therapeuticRootworkContext.rationale}</p>
-                      <p><span className="font-medium">Regulation Cue:</span> {lessonPlan.therapeuticRootworkContext.regulationCue}</p>
-                      <p><span className="font-medium">Restorative Practice:</span> {lessonPlan.therapeuticRootworkContext.restorativePractice}</p>
-                      <p className="font-medium mt-1">Community Assets</p>
-                      <ul className="list-disc list-inside">
-                        {lessonPlan.therapeuticRootworkContext.communityAssets.map((a, i) => <li key={liKey('asset', i)}>{a}</li>)}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><GraduationCap className="inline h-4 w-4 mr-1" />Lesson Flow (GRR)</h4>
-                    <div className="space-y-3">
-                      {lessonPlan.lessonFlowGRR.map((s, i) => (
-                        <div key={liKey('flow', i)} className="border-l-4 border-[#D4C862] pl-3">
-                          <div className="font-medium text-[#082A19]">{s.phase}: {s.step}</div>
-                          <div className="text-sm">{s.details}</div>
-                          <div className="text-sm mt-1">{s.teacherNote}</div>
-                          <div className="text-sm">{s.studentNote}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className={sectionTitle()}><Calendar className="inline h-4 w-4 mr-1" />Assessment & Evidence</h4>
-                    <p className="font-medium">Formative Checks</p>
-                    <ul className="list-disc list-inside">
-                      {lessonPlan.assessmentAndEvidence.formativeChecks.map((f, i) => <li key={liKey('ff', i)}>{f}</li>)}
-                    </ul>
-                    <p className="font-medium mt-2">Rubric</p>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-sm">
-                        <thead>
-                          <tr className="bg-[#F6F7E6]">
-                            <th className="text-left p-2">Criterion</th>
-                            <th className="text-left p-2">Developing</th>
-                            <th className="text-left p-2">Proficient</th>
-                            <th className="text-left p-2">Advanced</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {lessonPlan.assessmentAndEvidence.rubric.map((r, i) => (
-                            <tr key={liKey('rub', i)} className="border-b">
-                              <td className="p-2">{r.criterion}</td>
-                              <td className="p-2">{r.developing}</td>
-                              <td className="p-2">{r.proficient}</td>
-                              <td className="p-2">{r.advanced}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mt-2 border-l-4 border-[#D4C862] pl-3">
-                      <span className="font-medium">Exit Ticket:</span> {lessonPlan.assessmentAndEvidence.exitTicket}
-                    </div>
-                  </div>
-
-                  {/* Legacy optional */}
-                  {lessonPlan.objectives?.length ? (
-                    <div>
-                      <h4 className={sectionTitle()}>Legacy: Learning Objectives</h4>
-                      <ul className="list-disc list-inside">
-                        {lessonPlan.objectives.map((o, i) => <li key={liKey('obj', i)}>{o}</li>)}
-                      </ul>
-                    </div>
-                  ) : null}
-                  {lessonPlan.timeline?.length ? (
-                    <div>
-                      <h4 className={sectionTitle()}>Legacy: Timeline</h4>
-                      <div className="space-y-2">
-                        {lessonPlan.timeline.map((t, i) => (
-                          <div key={liKey('time', i)} className="border-l-4 border-[#D4C862] pl-3">
-                            <div className="font-medium text-[#082A19]">{t.time} — {t.activity}</div>
-                            <div className="text-sm">{t.description}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  {lessonPlan.assessment ? (
-                    <div>
-                      <h4 className={sectionTitle()}>Legacy: Assessment</h4>
-                      <p>{lessonPlan.assessment}</p>
-                    </div>
-                  ) : null}
-                  {lessonPlan.differentiation ? (
-                    <div>
-                      <h4 className={sectionTitle()}>Legacy: Differentiation</h4>
-                      <p>{lessonPlan.differentiation}</p>
-                    </div>
-                  ) : null}
-                  {lessonPlan.extensions ? (
-                    <div>
-                      <h4 className={sectionTitle()}>Legacy: Extensions</h4>
-                      <p>{lessonPlan.extensions}</p>
-                    </div>
-                  ) : null}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+                  rows=
