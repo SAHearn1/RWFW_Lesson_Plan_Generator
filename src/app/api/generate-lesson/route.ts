@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { LessonPlan } from '@/types/lesson';
 
+// Ensure stable body parsing on Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 interface LessonRequest {
   subject: string;
   gradeLevel: string;
@@ -12,33 +16,70 @@ interface LessonRequest {
   availableResources?: string;
 }
 
+async function readBody(req: NextRequest): Promise<Partial<LessonRequest>> {
+  // Read as text once, then try multiple parsers
+  const raw = await req.text();
+  if (!raw) return {};
+
+  // Try JSON
+  try {
+    const j = JSON.parse(raw);
+    if (j && typeof j === 'object') return j;
+  } catch { /* ignore */ }
+
+  // Try URLSearchParams (in case something posts form-encoded)
+  try {
+    const sp = new URLSearchParams(raw);
+    const obj: Record<string, string> = {};
+    sp.forEach((v, k) => { obj[k] = v; });
+    if (Object.keys(obj).length) return obj as Partial<LessonRequest>;
+  } catch { /* ignore */ }
+
+  return {};
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const data: LessonRequest = await request.json();
+    const dataPartial = await readBody(request);
+    const data = {
+      subject: dataPartial.subject?.toString() ?? '',
+      gradeLevel: dataPartial.gradeLevel?.toString() ?? '',
+      topic: dataPartial.topic?.toString() ?? '',
+      duration: dataPartial.duration?.toString() ?? '',
+      learningObjectives: dataPartial.learningObjectives?.toString() ?? '',
+      specialNeeds: dataPartial.specialNeeds?.toString() ?? '',
+      availableResources: dataPartial.availableResources?.toString() ?? '',
+    };
 
-    // Validate required fields (match frontend)
-    const missingFields = [];
-    if (!data.subject?.trim()) missingFields.push('subject');
-    if (!data.gradeLevel?.trim()) missingFields.push('gradeLevel');
-    if (!data.topic?.trim()) missingFields.push('topic');
-    if (!data.duration?.trim()) missingFields.push('duration');
+    // Validate required fields (mirror client)
+    const missingFields: string[] = [];
+    if (!data.subject.trim()) missingFields.push('subject');
+    if (!data.gradeLevel.trim()) missingFields.push('gradeLevel');
+    if (!data.topic.trim()) missingFields.push('topic');
+    if (!data.duration.trim()) missingFields.push('duration');
 
     if (missingFields.length > 0) {
+      // Echo what we actually received to make debugging easy
       return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
+        {
+          error: `Missing required fields: ${missingFields.join(', ')}`,
+          received: {
+            subject: data.subject,
+            gradeLevel: data.gradeLevel,
+            topic: data.topic,
+            duration: data.duration,
+          },
+        },
         { status: 400 }
       );
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'API configuration error' }, { status: 500 });
     }
 
-    // Build the prompt (you may already have buildPrompt in src/lib/prompt.ts)
+    // --- Prompt (unchanged core idea, shortened here) ---
     const prompt = `Create a comprehensive lesson plan using Root Work Framework principles. Return ONLY a valid JSON object with no markdown formatting.
 
 LESSON DETAILS:
@@ -50,29 +91,23 @@ ${data.learningObjectives ? `- Learning Objectives: ${data.learningObjectives}` 
 ${data.specialNeeds ? `- Special Considerations: ${data.specialNeeds}` : ''}
 ${data.availableResources ? `- Available Resources: ${data.availableResources}` : ''}
 
-ROOT WORK FRAMEWORK REQUIREMENTS:
-Structure this lesson around the 5Rs:
-1. RELATIONSHIPS - Build authentic connections and community
-2. ROUTINES - Establish predictable, healing-centered structures
-3. RELEVANCE - Connect learning to students' lives and experiences
-4. RIGOR - Maintain high academic expectations with support
-5. REFLECTION - Include metacognitive and restorative practices
-
 Return a JSON object with exactly these fields:
 {
-  "title": "Creative lesson title incorporating Root Work Framework",
-  "overview": "2-3 sentence description incorporating Root Work principles and healing-centered approach",
-  "objectives": ["Array of 3-5 specific learning objectives that integrate SEL and academic goals"],
-  "materials": ["Array of needed materials including culturally responsive and biophilic elements"],
-  "timeline": [{"time": "0-10 minutes", "activity": "Activity name", "description": "Detailed description with trauma-informed approaches"}],
-  "assessment": "Assessment strategies that honor multiple ways of knowing and include self-reflection",
-  "differentiation": "Comprehensive accommodations for diverse learners including trauma-informed practices and MTSS support",
-  "extensions": "Extension activities connecting to community, real-world applications, and family engagement"
-}
+  "title": "...",
+  "overview": "...",
+  "materials": ["..."],
+  "iCanTargets": [{"text":"...", "dok": 1}],
+  "fiveRsSchedule": [{"label":"...", "minutes":10, "purpose":"..."}],
+  "literacySkillsAndResources": {"skills":["..."], "resources":["..."]},
+  "bloomsAlignment": [{"task":"...", "bloom":"Apply", "rationale":"..."}],
+  "coTeachingIntegration": {"model":"...", "roles":["..."], "grouping":"..."},
+  "reteachingAndSpiral": {"sameDayQuickPivot":"...", "nextDayPlan":"...", "spiralIdeas":["..."]},
+  "mtssSupports": {"tier1":["..."], "tier2":["..."], "tier3":["..."], "progressMonitoring":["..."]},
+  "therapeuticRootworkContext": {"rationale":"...", "regulationCue":"...", "restorativePractice":"...", "communityAssets":["..."]},
+  "lessonFlowGRR": [{"phase":"I Do","step":"...","details":"...","teacherNote":"[Teacher Note: ...]","studentNote":"[Student Note: ...]"}],
+  "assessmentAndEvidence": {"formativeChecks":["..."], "rubric":[{"criterion":"...","developing":"...","proficient":"...","advanced":"..."}], "exitTicket":"..."}
+}`;
 
-Use warm, invitational language throughout. Focus on strengths-based, trauma-informed approaches. Ensure all activities are developmentally appropriate for ${data.gradeLevel}. Include healing-centered practices and cultural responsiveness.`;
-
-    // Call Claude API (kept as in your current file)
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -81,39 +116,39 @@ Use warm, invitational language throughout. Focus on strengths-based, trauma-inf
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     if (!response.ok) {
+      // --- Fallback compatible with UI schema ---
       const fallbackPlan: LessonPlan = {
         title: `Root Work Framework: ${data.topic} - Grade ${data.gradeLevel}`,
-        overview: `This ${data.duration} lesson integrates ${data.topic} with Root Work Framework's 5Rs, creating a healing-centered learning environment that builds relationships, establishes routines, ensures relevance, maintains rigor, and promotes reflection through culturally responsive, trauma-informed instruction.`,
-        // Minimal fill for new schema keys so UI doesn't break when fallback triggers
+        overview: `This ${data.duration} lesson integrates ${data.topic} with the 5Rs for a healing-centered, culturally responsive experience.`,
         materials: ['Student journals', 'Chart paper', 'Markers'],
         iCanTargets: [
-          { text: `I can explain key ideas about ${data.topic}.`, dok: 2 },
-          { text: 'I can collaborate with my peers to apply the concept.', dok: 3 },
+          { text: `I can explain the main idea of ${data.topic}.`, dok: 2 },
+          { text: 'I can collaborate to apply the concept.', dok: 3 },
         ],
         fiveRsSchedule: [
           { label: 'Relationships/Regulate', minutes: 10, purpose: 'Community check-in & readiness' },
-          { label: 'Readiness & Relevance', minutes: 10, purpose: 'Connect topic to lived experiences' },
+          { label: 'Readiness & Relevance', minutes: 10, purpose: 'Connect to lived experience' },
           { label: 'Rigor', minutes: 25, purpose: 'Model + guided practice with scaffolds' },
-          { label: 'Release', minutes: 10, purpose: 'Partner or small-group application' },
+          { label: 'Release', minutes: 10, purpose: 'Partner/small-group application' },
           { label: 'Reflection/Restorative', minutes: 5, purpose: 'Exit reflection & celebration' },
         ],
-        literacySkillsAndResources: { skills: ['Academic vocabulary', 'Speaking & listening'], resources: ['[Insert link here]'] },
+        literacySkillsAndResources: { skills: ['Academic vocabulary', 'Speaking & listening'], resources: ['https://example.com/resource'] },
         bloomsAlignment: [
-          { task: `Summarize ${data.topic} in your own words`, bloom: 'Understand', rationale: 'Checks conceptual grasp' },
-          { task: 'Apply the idea to a real-world scenario', bloom: 'Apply', rationale: 'Transfers learning' },
+          { task: `Summarize ${data.topic}`, bloom: 'Understand', rationale: 'Checks conceptual grasp' },
+          { task: 'Apply to a local scenario', bloom: 'Apply', rationale: 'Transfers learning' },
         ],
-        coTeachingIntegration: { model: 'Team Teaching', roles: ['Lead mini-lesson', 'Monitor + confers'], grouping: 'Pairs/triads' },
+        coTeachingIntegration: { model: 'Team Teaching', roles: ['Mini-lesson lead', 'Conference/monitor'], grouping: 'Pairs/triads' },
         reteachingAndSpiral: {
-          sameDayQuickPivot: 'Re-model with a worked example; use sentence stems.',
-          nextDayPlan: 'Small-group reteach using manipulatives/visuals.',
-          spiralIdeas: ['Do Now retrieval prompts', 'Weekly station revisit'],
+          sameDayQuickPivot: 'Re-model with worked example; sentence stems.',
+          nextDayPlan: 'Small-group reteach with manipulatives/visuals.',
+          spiralIdeas: ['Do Now retrieval', 'Weekly station revisit'],
         },
         mtssSupports: {
           tier1: ['Multiple modalities', 'Visuals & organizers'],
@@ -122,26 +157,24 @@ Use warm, invitational language throughout. Focus on strengths-based, trauma-inf
           progressMonitoring: ['Exit tickets', 'Work samples'],
         },
         therapeuticRootworkContext: {
-          rationale: 'Ground learning in safety, belonging, and cultural wealth.',
-          regulationCue: 'Box breathing + short movement reset.',
+          rationale: 'Center safety, belonging, and cultural wealth.',
+          regulationCue: 'Box breathing + stretch.',
           restorativePractice: 'Closing circle appreciations.',
           communityAssets: ['Family knowledge', 'Local examples'],
         },
         lessonFlowGRR: [
-          { phase: 'I Do', step: 'Modeling', details: 'Teacher models with think-aloud.', teacherNote: '[Teacher Note: Emphasize success criteria.]', studentNote: '[Student Note: Track the steps in notebook.]' },
-          { phase: 'We Do', step: 'Guided practice', details: 'Solve a problem together.', teacherNote: '[Teacher Note: Prompt equitable participation.]', studentNote: '[Student Note: Try, then check with partner.]' },
-          { phase: 'You Do', step: 'Independent/partner application', details: 'Apply to a short task.', teacherNote: '[Teacher Note: Confer with 3–5 students.]', studentNote: '[Student Note: Use checklist to self-assess.]' },
+          { phase: 'I Do', step: 'Modeling', details: 'Teacher models with think-aloud.', teacherNote: '[Teacher Note: Highlight success criteria.]', studentNote: '[Student Note: Track steps in notebook.]' },
+          { phase: 'We Do', step: 'Guided practice', details: 'Solve one together.', teacherNote: '[Teacher Note: Prompt equitable voice.]', studentNote: '[Student Note: Try, then check with partner.]' },
+          { phase: 'You Do', step: 'Application', details: 'Short task with choice of representation.', teacherNote: '[Teacher Note: Confer with 3–5 students.]', studentNote: '[Student Note: Use checklist to self-assess.]' },
         ],
         assessmentAndEvidence: {
-          formativeChecks: ['Thumbs-interval check', 'Quick write'],
+          formativeChecks: ['Fist-to-five', 'Quick write'],
           rubric: [{ criterion: 'Concept understanding', developing: 'Partial', proficient: 'Clear', advanced: 'Insightful' }],
           exitTicket: 'One-sentence summary + question.',
         },
-        // legacy fields for your renderer
+        // Legacy for backward compatibility
         objectives: [
-          `Understand key concepts in ${data.topic}`,
-          'Collaborate to solve problems',
-          'Reflect on learning growth',
+          `Understand key ideas in ${data.topic}`, 'Collaborate effectively', 'Reflect on growth'
         ],
         timeline: [
           { time: '0–10', activity: 'Community building', description: 'Opening circle & norms' },
@@ -150,27 +183,25 @@ Use warm, invitational language throughout. Focus on strengths-based, trauma-inf
           { time: '55–60', activity: 'Closure', description: 'Reflection & exit ticket' },
         ],
         assessment: 'Observation, discussion, exit ticket',
-        differentiation: 'Visuals, sentence stems, choice of response mode',
-        extensions: 'Community interview; teach-back to peers',
+        differentiation: 'Visuals, stems, alternative response modes',
+        extensions: 'Community interview; peer teach-back',
       };
 
-      return NextResponse.json({
-        lessonPlan: fallbackPlan,
-        fallback: true,
-        success: true,
-      });
+      return NextResponse.json({ lessonPlan: fallbackPlan, fallback: true, success: true });
     }
 
     const claudeData = await response.json();
-    let raw = claudeData.content?.[0]?.text ?? '';
+    let raw = claudeData?.content?.[0]?.text ?? '';
     raw = raw.replace(/```json\s?/g, '').replace(/```\s?/g, '').trim();
 
     let lessonPlan: LessonPlan;
     try {
       lessonPlan = JSON.parse(raw) as LessonPlan;
     } catch {
-      // If the model returns malformed JSON, fall back to the structured plan above
-      return NextResponse.json({ error: 'Parsing error from model output' }, { status: 502 });
+      return NextResponse.json(
+        { error: 'Parsing error from model output', raw },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({ lessonPlan, success: true });
