@@ -30,6 +30,88 @@ export default function HomePage() {
               >
                 Generate Lesson
               </a>
+              {/* Root Work Framework Logo - Brand Compliant */}
+              <div className="w-14 h-14 rounded-full border-2 border-emerald-100 p-1 flex-shrink-0" style={{ backgroundColor: '#082A19' }}>
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  {/* Background Circle - Evergreen */}
+                  <circle cx="50" cy="50" r="48" fill="#082A19" stroke="#D4C862" strokeWidth="2"/>
+                  
+                  {/* Central Plant */}
+                  <g transform="translate(50,50)">
+                    {/* Plant stem - Gold Leaf */}
+                    <path d="M0,-15 L0,15" stroke="#D4C862" strokeWidth="3" fill="none"/>
+                    {/* Central leaves - Leaf color */}
+                    <path d="M-8,-5 Q-12,-8 -8,-12 Q-4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M8,-5 Q12,-8 8,-12 Q4,-8 0,-5" fill="#3B523A"/>
+                    <path d="M-6,5 Q-10,2 -6,-2 Q-2,2 0,5" fill="#3B523A"/>
+                    <path d="M6,5 Q10,2 6,-2 Q2,2 0,5" fill="#3B523A"/>
+                    
+                    {/* Radiating lines - Gold Leaf */}
+                    <g stroke="#D4C862" strokeWidth="1.5">
+                      <path d="M-12,0 L-8,0"/>
+                      <path d="M8,0 L12,0"/>
+                      <path d="M0,-12 L0,-8"/>
+                      <path d="M0,8 L0,12"/>
+                      <path d="M-8,-8 L-6,-6"/>
+                      <path d="M8,-8 L6,-6"/>
+                      <path d="M-8,8 L-6,6"/>
+                      <path d="M8,8 L6,6"/>
+                    </g>
+                  </g>
+                  
+                  {/* Scales of Justice - Upper Left - Gold Leaf */}
+                  <g transform="translate(25,25) scale(0.7)">
+                    <path d="M0,-8 L0,8" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-8,0 L8,0" stroke="#D4C862" strokeWidth="1.5"/>
+                    <ellipse cx="-6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                    <ellipse cx="6" cy="4" rx="4" ry="2" fill="none" stroke="#D4C862" strokeWidth="1.5"/>
+                  </g>
+                  
+                  {/* Book - Upper Right - Gold Leaf */}
+                  <g transform="translate(75,25) scale(0.7)">
+                    <rect x="-6" y="-4" width="12" height="8" fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-6,-4 L6,-4 L6,4 L-6,4 Z" fill="none" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M0,-4 L0,4" stroke="#D4C862" strokeWidth="1.5"/>
+                    <path d="M-3,-1 L3,-1" stroke="#D4C862" strokeWidth="1"/>
+                    <path d="M-3,1 L3,1" stroke="#D4C862" strokeWidth="1"/>
+                  </g>
+                  
+                  {/* Brain - Lower Left - Gold Leaf */}
+                  <g transform="translate(25,75) scale(0.7)">
+                    <path d="M-6,-4 Q-8,-6 -4,-6 Q0,-8 4,-6 Q8,-6 6,-4 Q8,-2 6,0 Q8,2 6,4 Q4,6 0,4 Q-4,6 -6,4 Q-8,2 -6,0 Q-8,-2 -6,-4" 
+                          fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <path d="M-2,-2 Q0,-4 2,-2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
+                    <path d="M-2,2 Q0,0 2,2" stroke="#D4C862" strokeWidth="1.2" fill="none"/>
+                  </g>
+                  
+                  {/* Science Flask - Lower Right - Gold Leaf */}
+                  <g transform="translate(75,75) scale(0.7)">
+                    <path d="M-2,-6 L-2,-2 L-6,4 L6,4 L2,-2 L2,-6" fill="none" stroke="#D4C862" strokeWidth="2"/>
+                    <circle cx="0" cy="2" r="1.5" fill="#D4C862"/>
+                    <path d="M-4,-6 L4,-6" stroke="#D4C862" strokeWidth="1.5"/>
+                  </g>
+                  
+                  {/* Decorative vines - Leaf color */}
+                  <g fill="none" stroke="#3B523A" strokeWidth="1.5">
+                    <path d="M15,35 Q20,30 25,35 Q30,40 35,35"/>
+                    <path d="M65,35 Q70,30 75,35 Q80,40 85,35"/>
+                    <path d="M15,65 Q20,70 25,65 Q30,60 35,65"/>
+                    <path d="M65,65 Q70,70 75,65 Q80,60 85,65"/>
+                  </g>
+                  
+                  {/* Small leaves on vines - Leaf color */}
+                  <g fill="#3B523A">
+                    <ellipse cx="20" cy="32" rx="2.5" ry="1.2" transform="rotate(45 20 32)"/>
+                    <ellipse cx="30" cy="38" rx="2.5" ry="1.2" transform="rotate(-45 30 38)"/>
+                    <ellipse cx="70" cy="32" rx="2.5" ry="1.2" transform="rotate(-45 70 32)"/>
+                    <ellipse cx="80" cy="38" rx="2.5" ry="1.2" transform="rotate(45 80 38)"/>
+                    <ellipse cx="20" cy="68" rx="2.5" ry="1.2" transform="rotate(-45 20 68)"/>
+                    <ellipse cx="30" cy="62" rx="2.5" ry="1.2" transform="rotate(45 30 62)"/>
+                    <ellipse cx="70" cy="68" rx="2.5" ry="1.2" transform="rotate(45 70 68)"/>
+                    <ellipse cx="80" cy="62" rx="2.5" ry="1.2" transform="rotate(-45 80 62)"/>
+                  </g>
+                </svg>
+              </div>
             </nav>
           </div>
         </div>
@@ -44,8 +126,9 @@ export default function HomePage() {
               <span className="text-emerald-600 block">Root Work Framework</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Create comprehensive, standards-aligned lesson plans in minutes with our 
-              AI-powered platform. Designed by educators, for educators.
+              A trauma-informed, regenerative learning ecosystem that integrates project-based STEAM education, 
+              culturally responsive pedagogy, and place-based learning. Designed by Dr. S.A. Hearn for 
+              urban schools and community transformation.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
@@ -72,11 +155,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Everything You Need for Effective Teaching
+              Trauma-Informed, Regenerative Learning Ecosystem
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Root Work Framework combines educational expertise with AI technology 
-              to deliver comprehensive lesson planning solutions.
+              Root Work Framework integrates SAMHSA trauma-informed principles, CASEL SEL competencies, 
+              and regenerative agriculture into comprehensive Living Learning Labs.
             </p>
           </div>
           
@@ -86,9 +169,10 @@ export default function HomePage() {
               <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Target className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Standards Aligned</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Trauma-Informed Care</h3>
               <p className="text-gray-600">
-                Every lesson plan aligns with educational standards and grade-level expectations.
+                Lessons embed SAMHSA's six principles: safety, trustworthiness, peer support, 
+                collaboration, empowerment, and cultural responsiveness.
               </p>
             </div>
 
@@ -97,9 +181,10 @@ export default function HomePage() {
               <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Time Efficient</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Place-Based STEAM</h3>
               <p className="text-gray-600">
-                Generate comprehensive lesson plans in minutes, not hours of planning time.
+                Project-based learning through regenerative urban homesteading, 
+                integrating science, technology, engineering, arts, and mathematics.
               </p>
             </div>
 
@@ -108,9 +193,10 @@ export default function HomePage() {
               <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Differentiated</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Cultural Responsiveness</h3>
               <p className="text-gray-600">
-                Built-in strategies for diverse learners, including special education support.
+                Culturally responsive pedagogy that honors student backgrounds while 
+                building intergenerational stewardship and community connections.
               </p>
             </div>
 
@@ -119,9 +205,10 @@ export default function HomePage() {
               <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Assessment Ready</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Living Learning Labs</h3>
               <p className="text-gray-600">
-                Includes formative and summative assessment strategies for every lesson.
+                Evidence-based practices creating hubs for healing, learning, innovation, 
+                and community transformation through regenerative systems.
               </p>
             </div>
           </div>
@@ -212,8 +299,8 @@ export default function HomePage() {
                 <span className="text-xl font-bold">Root Work Framework</span>
               </div>
               <p className="text-gray-400">
-                Empowering educators with AI-powered lesson planning tools 
-                that save time and enhance student learning.
+                Developed by Dr. S.A. Hearn through Community Exceptional Children's Services (CECSC). 
+                A trauma-informed, regenerative learning ecosystem for urban schools and communities.
               </p>
             </div>
             
@@ -226,10 +313,11 @@ export default function HomePage() {
             </div>
             
             <div>
-              <h3 className="text-lg font-semibold mb-4">About</h3>
+              <h3 className="text-lg font-semibold mb-4">Research Foundation</h3>
               <p className="text-gray-400">
-                Built by educators for educators, Root Work Framework combines 
-                pedagogical expertise with cutting-edge AI technology.
+                Grounded in SAMHSA trauma-informed principles, CASEL SEL competencies, 
+                and USDA regenerative agriculture guidelines. Evidence-based practices 
+                for community transformation.
               </p>
             </div>
           </div>
