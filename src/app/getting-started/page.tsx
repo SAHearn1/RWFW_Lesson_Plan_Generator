@@ -1,276 +1,277 @@
+// File: src/app/getting-started/page.tsx
+import { BookOpen, Target, Clock, Users, CheckCircle, ArrowRight, Lightbulb, FileText, Download } from 'lucide-react';
+
 export default function GettingStartedPage() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F2F4CA' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #F2F4CA, #ffffff)' }}>
       {/* Header */}
-      <header className="border-b border-gray-200 shadow-sm" style={{ backgroundColor: '#082A19' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <svg className="w-6 h-6" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2L13.09 6.26L18 7L13.09 7.74L12 12L10.91 7.74L6 7L10.91 6.26L12 2Z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Platform</h1>
-                  <p className="text-xs" style={{ color: '#D4C862' }}>Equity-Centered Learning Design</p>
-                </div>
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Root Work Framework</h1>
+                <p className="text-sm text-gray-600">Getting Started Guide</p>
               </div>
             </div>
-            
-            <nav className="hidden md:flex space-x-8">
-              <a href="/" className="text-gray-300 hover:text-white font-medium transition-colors">Home</a>
-              <a href="/getting-started" className="border-b-2 px-3 py-2 text-sm font-medium text-white" style={{ borderColor: '#D4C862' }}>Getting Started</a>
-              <a href="/generate" className="text-gray-300 hover:text-white font-medium transition-colors">Generate</a>
-              <a href="#" className="text-gray-300 hover:text-white font-medium transition-colors">Resources</a>
-            </nav>
+            <div className="flex items-center space-x-4">
+              <a
+                href="/generate"
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Generate Lesson
+              </a>
+              <a
+                href="/"
+                className="text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                Back to Home
+              </a>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>
-            Start Growing with Root Work
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Welcome to Root Work Framework
           </h1>
-          <p className="text-xl mb-8" style={{ color: '#2B2B2B' }}>
-            Learn how to create equity-centered, trauma-informed lesson plans that honor student strengths and build community connections.
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Your comprehensive AI-powered lesson planning tool designed to create engaging, 
+            standards-aligned educational experiences for every classroom.
           </p>
         </div>
 
-        {/* What is Root Work Framework */}
+        {/* What is Root Work */}
         <section className="mb-16">
-          <div className="bg-white rounded-xl shadow-lg p-8 border-2" style={{ borderColor: '#3B523A' }}>
-            <h2 className="text-3xl font-bold mb-6" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>
-              What is the Root Work Framework?
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <Lightbulb className="h-6 w-6 text-emerald-600 mr-2" />
+              What is Root Work Framework?
             </h2>
-            <p className="text-lg mb-6" style={{ color: '#2B2B2B' }}>
-              Root Work Framework is a dual-purpose pedagogy that weaves academic rigor with healing-centered, biophilic practice. It's grounded in four foundational principles that transform how we approach education.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-lg" style={{ backgroundColor: '#F2F4CA' }}>
-                <h3 className="text-xl font-semibold mb-3" style={{ color: '#082A19' }}>1. Equity First</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  We begin by identifying and dismantling barriers that prevent students from accessing learning. Every lesson centers marginalized voices and experiences.
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-gray-600 mb-4">
+                  Root Work Framework is an innovative lesson planning platform that combines 
+                  educational best practices with AI technology to help teachers create 
+                  comprehensive, engaging lesson plans in minutes rather than hours.
+                </p>
+                <p className="text-gray-600">
+                  Built on research-based pedagogical principles and designed for compliance 
+                  with educational standards, Root Work ensures every lesson plan meets 
+                  professional teaching requirements while saving valuable preparation time.
                 </p>
               </div>
-              
-              <div className="p-6 rounded-lg" style={{ backgroundColor: '#F2F4CA' }}>
-                <h3 className="text-xl font-semibold mb-3" style={{ color: '#082A19' }}>2. Trauma Informed</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Learning environments are designed to be safe, predictable, and healing. We recognize how trauma impacts learning and build in supports.
-                </p>
-              </div>
-              
-              <div className="p-6 rounded-lg" style={{ backgroundColor: '#F2F4CA' }}>
-                <h3 className="text-xl font-semibold mb-3" style={{ color: '#082A19' }}>3. Strength Based</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Instead of deficit thinking, we build on the cultural wealth, knowledge, and assets that students and communities bring to learning.
-                </p>
-              </div>
-              
-              <div className="p-6 rounded-lg" style={{ backgroundColor: '#F2F4CA' }}>
-                <h3 className="text-xl font-semibold mb-3" style={{ color: '#082A19' }}>4. Community Connected</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Learning connects to students' lived experiences, families, and communities. Education serves the broader goal of community well-being.
-                </p>
+              <div className="bg-emerald-50 rounded-lg p-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Key Benefits:</h3>
+                <ul className="space-y-2">
+                  <li className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
+                    Standards-aligned content
+                  </li>
+                  <li className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
+                    Differentiation strategies included
+                  </li>
+                  <li className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
+                    Assessment tools integrated
+                  </li>
+                  <li className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
+                    Time-efficient planning
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Garden to Growth Model */}
+        {/* How to Use */}
         <section className="mb-16">
-          <div className="bg-white rounded-xl shadow-lg p-8 border-2" style={{ borderColor: '#3B523A' }}>
-            <h2 className="text-3xl font-bold mb-6" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>
-              Garden to Growth: The 4E Model
-            </h2>
-            <p className="text-lg mb-8" style={{ color: '#2B2B2B' }}>
-              Our lesson structure follows a natural learning progression, like tending a garden from seed to harvest.
-            </p>
-            
-            <div className="space-y-8">
-              <div className="flex items-start space-x-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-2xl font-bold" style={{ color: '#082A19' }}>E</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3" style={{ color: '#082A19' }}>ENGAGE (10-15 minutes)</h3>
-                  <p className="text-lg mb-2" style={{ color: '#2B2B2B' }}><strong>Root Work Community Circle/Opening</strong></p>
-                  <p style={{ color: '#2B2B2B' }}>
-                    Build relationships and create psychological safety. Activate cultural assets and connect to prior knowledge through trauma-informed practices.
-                  </p>
-                </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+            How to Create Your First Lesson Plan
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Step 1 */}
+            <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-emerald-600 font-bold text-lg">1</span>
               </div>
-              
-              <div className="flex items-start space-x-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-2xl font-bold" style={{ color: '#082A19' }}>E</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3" style={{ color: '#082A19' }}>EXPLORE (15-20 minutes)</h3>
-                  <p className="text-lg mb-2" style={{ color: '#2B2B2B' }}><strong>Root Work Strength-Based Direct Instruction</strong></p>
-                  <p style={{ color: '#2B2B2B' }}>
-                    Teacher modeling with cultural responsiveness. Direct instruction builds on community knowledge and honors diverse ways of knowing.
-                  </p>
-                </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Input Your Requirements</h3>
+              <p className="text-gray-600 text-sm">
+                Provide basic information about your lesson: subject, grade level, topic, 
+                duration, and learning objectives.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-emerald-600 font-bold text-lg">2</span>
               </div>
-              
-              <div className="flex items-start space-x-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-2xl font-bold" style={{ color: '#082A19' }}>A</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3" style={{ color: '#082A19' }}>APPLY (25-40 minutes)</h3>
-                  <p className="text-lg mb-2" style={{ color: '#2B2B2B' }}><strong>Root Work Collaborative & Individual Practice</strong></p>
-                  <p style={{ color: '#2B2B2B' }}>
-                    "We do" collaborative practice with peer support, then "You do" independent practice with choice and voice. Multiple ways to demonstrate understanding.
-                  </p>
-                </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">AI Generates Your Plan</h3>
+              <p className="text-gray-600 text-sm">
+                Our AI analyzes your inputs and creates a comprehensive lesson plan 
+                with activities, timelines, and assessments.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-emerald-600 font-bold text-lg">3</span>
               </div>
-              
-              <div className="flex items-start space-x-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-2xl font-bold" style={{ color: '#082A19' }}>R</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-3" style={{ color: '#082A19' }}>REFLECT (5-10 minutes)</h3>
-                  <p className="text-lg mb-2" style={{ color: '#2B2B2B' }}><strong>Root Work Community Sharing & Closure</strong></p>
-                  <p style={{ color: '#2B2B2B' }}>
-                    Check for understanding through community dialogue. Student self-reflection, goal setting, and celebration of learning and cultural contributions.
-                  </p>
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Customize & Implement</h3>
+              <p className="text-gray-600 text-sm">
+                Review, customize, and download your lesson plan. Ready to use in 
+                your classroom immediately.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* How to Use the Generator */}
+        {/* Features Deep Dive */}
         <section className="mb-16">
-          <div className="bg-white rounded-xl shadow-lg p-8 border-2" style={{ borderColor: '#3B523A' }}>
-            <h2 className="text-3xl font-bold mb-6" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>
-              How to Use the Lesson Plan Generator
-            </h2>
-            
-            <div className="space-y-6">
-              <div className="border-l-4 pl-6" style={{ borderColor: '#D4C862' }}>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: '#082A19' }}>Step 1: Choose Your Subjects</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Select one or more subject areas. The generator excels at creating interdisciplinary lessons that connect learning across content areas.
-                </p>
-              </div>
-              
-              <div className="border-l-4 pl-6" style={{ borderColor: '#D4C862' }}>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: '#082A19' }}>Step 2: Specify Your Context</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Include grade level, duration (1-20 days), and any standards you need to address. Don't worry if you leave some fields blank - the AI will intelligently fill in appropriate content.
-                </p>
-              </div>
-              
-              <div className="border-l-4 pl-6" style={{ borderColor: '#D4C862' }}>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: '#082A19' }}>Step 3: Describe Your Students</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Share learning objectives and any special considerations. Mention cultural backgrounds, languages spoken, or specific needs to ensure lessons are truly responsive.
-                </p>
-              </div>
-              
-              <div className="border-l-4 pl-6" style={{ borderColor: '#D4C862' }}>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: '#082A19' }}>Step 4: Generate and Customize</h3>
-                <p style={{ color: '#2B2B2B' }}>
-                  Watch the progress bar as Root Work principles are woven into your lesson. The result includes working resource links, assessment strategies, and accommodations.
-                </p>
-              </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+            Comprehensive Lesson Plan Components
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Target className="h-5 w-5 text-emerald-600 mr-2" />
+                Learning Objectives & Standards
+              </h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Every lesson plan includes clear, measurable learning objectives aligned 
+                with educational standards and appropriate for your specified grade level.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Bloom's Taxonomy alignment</li>
+                <li>• Grade-appropriate language</li>
+                <li>• Measurable outcomes</li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Clock className="h-5 w-5 text-emerald-600 mr-2" />
+                Detailed Timeline & Activities
+              </h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Structured timelines with specific activities, ensuring optimal pacing 
+                and engagement throughout your lesson duration.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Warm-up activities</li>
+                <li>• Main instructional segments</li>
+                <li>• Closure and reflection</li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Users className="h-5 w-5 text-emerald-600 mr-2" />
+                Differentiation Strategies
+              </h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Built-in strategies to accommodate diverse learning needs, including 
+                special education considerations and English language learners.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Multiple learning modalities</li>
+                <li>• Scaffolding techniques</li>
+                <li>• Extension activities</li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <CheckCircle className="h-5 w-5 text-emerald-600 mr-2" />
+                Assessment & Evaluation
+              </h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Comprehensive assessment strategies including formative and summative 
+                evaluation methods to measure student understanding.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Formative assessment tools</li>
+                <li>• Performance indicators</li>
+                <li>• Rubric suggestions</li>
+              </ul>
             </div>
           </div>
         </section>
 
         {/* Best Practices */}
         <section className="mb-16">
-          <div className="rounded-xl p-8 text-white" style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 100%)' }}>
-            <h2 className="text-3xl font-bold mb-6" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
-              Best Practices for Root Work Lessons
+          <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Tips for Maximum Effectiveness
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: '#D4C862' }}>Cultural Responsiveness</h3>
-                <ul className="space-y-2 text-sm">
-                  <li>• Include student and family cultural knowledge in lessons</li>
-                  <li>• Use diverse examples and representation in materials</li>
-                  <li>• Connect learning to community issues and solutions</li>
-                  <li>• Honor multiple languages and communication styles</li>
+                <h3 className="font-semibold text-gray-900 mb-3">Before Creating Your Lesson:</h3>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li>• Review your curriculum standards and pacing guide</li>
+                  <li>• Consider your students' prior knowledge and needs</li>
+                  <li>• Identify available resources and materials</li>
+                  <li>• Think about learning objectives in specific, measurable terms</li>
                 </ul>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: '#D4C862' }}>Trauma-Informed Practice</h3>
-                <ul className="space-y-2 text-sm">
-                  <li>• Establish clear, consistent routines and expectations</li>
-                  <li>• Offer choice and voice in learning activities</li>
-                  <li>• Build in brain breaks and regulation strategies</li>
-                  <li>• Focus on growth and effort over perfection</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: '#D4C862' }}>Strength-Based Approach</h3>
-                <ul className="space-y-2 text-sm">
-                  <li>• Start with what students know and can do</li>
-                  <li>• Celebrate cultural and linguistic diversity as assets</li>
-                  <li>• Use assets-based language in lesson descriptions</li>
-                  <li>• Connect new learning to students' experiences</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold mb-4" style={{ color: '#D4C862' }}>Community Connection</h3>
-                <ul className="space-y-2 text-sm">
-                  <li>• Invite community members as expert voices</li>
-                  <li>• Connect learning to local issues and solutions</li>
-                  <li>• Include opportunities for family engagement</li>
-                  <li>• Design authentic, real-world applications</li>
+                <h3 className="font-semibold text-gray-900 mb-3">After Generating Your Plan:</h3>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li>• Review and customize content for your specific classroom</li>
+                  <li>• Adjust timing based on your students' pace</li>
+                  <li>• Add personal touches and examples</li>
+                  <li>• Prepare materials and resources in advance</li>
                 </ul>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Ready to Start */}
+        {/* Call to Action */}
         <section className="text-center">
-          <div className="bg-white rounded-xl shadow-lg p-8 border-2" style={{ borderColor: '#3B523A' }}>
-            <h2 className="text-3xl font-bold mb-6" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>
-              Ready to Start Growing?
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Ready to Transform Your Lesson Planning?
             </h2>
-            <p className="text-lg mb-8" style={{ color: '#2B2B2B' }}>
-              Now that you understand the Root Work Framework and Garden to Growth model, you're ready to create your first equity-centered lesson plan.
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Join thousands of educators who are saving time and creating better 
+              learning experiences with Root Work Framework.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
+              <a
                 href="/generate"
-                className="text-white px-8 py-3 rounded-lg font-semibold text-lg transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 100%)' }}
+                className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center"
               >
-                Create Your First Lesson Plan
+                <FileText className="h-5 w-5 mr-2" />
+                Generate Your First Lesson
               </a>
-              <a 
-                href="#"
-                className="border-2 px-8 py-3 rounded-lg font-semibold text-lg transition-all hover:opacity-90"
-                style={{ 
-                  borderColor: '#082A19', 
-                  color: '#082A19',
-                  backgroundColor: '#F2F4CA'
-                }}
+              
+              <a
+                href="/"
+                className="border border-emerald-600 text-emerald-600 px-8 py-3 rounded-lg font-medium hover:bg-emerald-50 transition-colors flex items-center justify-center"
               >
-                Download Quick Reference Guide
+                Learn More
+                <ArrowRight className="h-5 w-5 ml-2" />
               </a>
             </div>
           </div>
         </section>
       </div>
     </div>
-  )
+  );
 }
