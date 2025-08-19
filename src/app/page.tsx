@@ -1,3 +1,6 @@
+// File: src/app/page.tsx
+// Root Work Framework Homepage
+
 export default function HomePage() {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #F2F4CA, #ffffff)' }}>
@@ -8,7 +11,6 @@ export default function HomePage() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  {/* Logo placeholder - we can replace with actual logo */}
                   <svg className="w-6 h-6" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L13.09 6.26L18 7L13.09 7.74L12 12L10.91 7.74L6 7L10.91 6.26L12 2ZM4 17L5.09 19.26L8 20L5.09 20.74L4 23L2.91 20.74L0 20L2.91 19.26L4 17ZM20 17L21.09 19.26L24 20L21.09 20.74L20 23L18.91 20.74L16 20L18.91 19.26L20 17Z"/>
                   </svg>
@@ -126,64 +128,4 @@ export default function HomePage() {
             <div className="bg-white rounded-lg p-8 shadow-sm border-2 transition-all hover:shadow-lg" style={{ borderColor: '#D4C862' }}>
               <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F2F4CA' }}>
                 <svg className="w-8 h-8" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11,2V22C5.9,21.5 2,17.2 2,12S5.9,2.5 11,2M13,2V22C18.1,21.5 22,17.2 22,12S18.1,2.5 13,2M11,11.5V7.5C9.8,8.7 9,10.3 9,12S9.8,15.3 11,16.5V12.5H13V16.5C14.2,15.3 15,13.7 15,12S14.2,8.7 13,7.5V11.5H11Z"/>
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-4" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>Garden to Growth</h3>
-              <p style={{ color: '#2B2B2B' }}>
-                Learning progressions that honor natural development from seed to harvest through the 4E instructional model.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-8 shadow-sm border-2 transition-all hover:shadow-lg" style={{ borderColor: '#D4C862' }}>
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F2F4CA' }}>
-                <svg className="w-8 h-8" style={{ color: '#082A19' }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9,12L11,14L15,10L22,17L2,17L9,10L9,12Z"/>
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-4" style={{ color: '#082A19', fontFamily: 'Merriweather, Georgia, serif' }}>Compliance Built-In</h3>
-              <p style={{ color: '#2B2B2B' }}>
-                FERPA, IDEA, and accessibility considerations are integrated automatically, not added as afterthoughts.
-              </p>
-            </div>
-          </div>
-
-          {/* Framework Principles */}
-          <div className="rounded-xl p-8 text-white" style={{ background: 'linear-gradient(135deg, #082A19 0%, #3B523A 50%, #082A19 100%)' }}>
-            <h2 className="text-3xl font-bold mb-6" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Four Pillars of Root Work</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-xl font-bold" style={{ color: '#082A19' }}>1</span>
-                </div>
-                <h4 className="font-semibold mb-2">Equity First</h4>
-                <p className="text-sm opacity-90">Dismantling barriers and centering marginalized voices</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-xl font-bold" style={{ color: '#082A19' }}>2</span>
-                </div>
-                <h4 className="font-semibold mb-2">Trauma Informed</h4>
-                <p className="text-sm opacity-90">Creating safe, predictable learning environments</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-xl font-bold" style={{ color: '#082A19' }}>3</span>
-                </div>
-                <h4 className="font-semibold mb-2">Strength Based</h4>
-                <p className="text-sm opacity-90">Building on student and community assets</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D4C862' }}>
-                  <span className="text-xl font-bold" style={{ color: '#082A19' }}>4</span>
-                </div>
-                <h4 className="font-semibold mb-2">Community Connected</h4>
-                <p className="text-sm opacity-90">Authentic relationships and cultural relevance</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+                  <path d="M11,2V22C5.9,21.5 2,17.2 2,12S5.9,2.5 11,2M13,2V22C18.1,21.
