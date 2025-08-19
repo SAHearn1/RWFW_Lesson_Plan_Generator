@@ -130,12 +130,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for API key
+    // Check for API key - use your existing environment variable name
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       console.error('ANTHROPIC_API_KEY environment variable is not set');
       return NextResponse.json(
-        { error: 'API configuration error. Please set ANTHROPIC_API_KEY environment variable.' },
+        { error: 'API configuration error. Please check environment variables.' },
         { status: 500 }
       );
     }
