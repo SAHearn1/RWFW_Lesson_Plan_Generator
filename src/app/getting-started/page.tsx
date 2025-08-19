@@ -42,8 +42,9 @@ export default function GettingStartedPage() {
             Welcome to Root Work Framework
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Your comprehensive AI-powered lesson planning tool designed to create engaging, 
-            standards-aligned educational experiences for every classroom.
+            A trauma-informed, regenerative learning ecosystem developed by Dr. S.A. Hearn 
+            that creates engaging, culturally responsive educational experiences through 
+            Living Learning Labs and community-centered pedagogy.
           </p>
         </div>
 
@@ -57,34 +58,44 @@ export default function GettingStartedPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <p className="text-gray-600 mb-4">
-                  Root Work Framework is an innovative lesson planning platform that combines 
-                  educational best practices with AI technology to help teachers create 
-                  comprehensive, engaging lesson plans in minutes rather than hours.
+                  Root Work Framework is a comprehensive educational approach developed by 
+                  Dr. S.A. Hearn that integrates trauma-informed care, regenerative urban 
+                  homesteading, culturally responsive pedagogy, and project-based STEAM 
+                  education into unified Living Learning Labs.
+                </p>
+                <p className="text-gray-600 mb-4">
+                  Grounded in SAMHSA's trauma-informed principles, CASEL's SEL competencies, 
+                  and USDA regenerative agriculture guidelines, this framework addresses 
+                  the needs of urban youth impacted by intergenerational trauma and 
+                  systemic inequities.
                 </p>
                 <p className="text-gray-600">
-                  Built on research-based pedagogical principles and designed for compliance 
-                  with educational standards, Root Work ensures every lesson plan meets 
-                  professional teaching requirements while saving valuable preparation time.
+                  Each lesson plan created through this platform embeds evidence-based 
+                  practices for community transformation, healing, and environmental stewardship.
                 </p>
               </div>
               <div className="bg-emerald-50 rounded-lg p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Key Benefits:</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Research Foundation:</h3>
                 <ul className="space-y-2">
                   <li className="flex items-center text-sm text-gray-600">
                     <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
-                    Standards-aligned content
+                    SAMHSA Trauma-Informed Principles
                   </li>
                   <li className="flex items-center text-sm text-gray-600">
                     <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
-                    Differentiation strategies included
+                    CASEL SEL Competencies
                   </li>
                   <li className="flex items-center text-sm text-gray-600">
                     <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
-                    Assessment tools integrated
+                    MTSS and UDL Principles
                   </li>
                   <li className="flex items-center text-sm text-gray-600">
                     <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
-                    Time-efficient planning
+                    Place-based STEAM Education
+                  </li>
+                  <li className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
+                    Regenerative Agriculture Guidelines
                   </li>
                 </ul>
               </div>
@@ -140,71 +151,75 @@ export default function GettingStartedPage() {
         {/* Features Deep Dive */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">
-            Comprehensive Lesson Plan Components
+            Root Work Framework Components
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Target className="h-5 w-5 text-emerald-600 mr-2" />
-                Learning Objectives & Standards
+                Trauma-Informed Care Integration
               </h3>
               <p className="text-gray-600 text-sm mb-3">
-                Every lesson plan includes clear, measurable learning objectives aligned 
-                with educational standards and appropriate for your specified grade level.
+                Every lesson incorporates SAMHSA's six principles: safety, trustworthiness, 
+                peer support, collaboration, empowerment, and cultural responsiveness to 
+                create psychologically safe learning environments.
               </p>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Bloom's Taxonomy alignment</li>
-                <li>• Grade-appropriate language</li>
-                <li>• Measurable outcomes</li>
+                <li>• Community circles and restorative practices</li>
+                <li>• Student agency and choice in learning</li>
+                <li>• Culturally responsive teaching methods</li>
               </ul>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Clock className="h-5 w-5 text-emerald-600 mr-2" />
-                Detailed Timeline & Activities
+                Place-Based STEAM Learning
               </h3>
               <p className="text-gray-600 text-sm mb-3">
-                Structured timelines with specific activities, ensuring optimal pacing 
-                and engagement throughout your lesson duration.
+                Project-based learning through regenerative urban homesteading that 
+                integrates science, technology, engineering, arts, and mathematics 
+                with environmental stewardship.
               </p>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Warm-up activities</li>
-                <li>• Main instructional segments</li>
-                <li>• Closure and reflection</li>
+                <li>• Living Learning Labs (LLLs)</li>
+                <li>• Community-connected projects</li>
+                <li>• Environmental justice focus</li>
               </ul>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Users className="h-5 w-5 text-emerald-600 mr-2" />
-                Differentiation Strategies
+                Social-Emotional Learning (SEL)
               </h3>
               <p className="text-gray-600 text-sm mb-3">
-                Built-in strategies to accommodate diverse learning needs, including 
-                special education considerations and English language learners.
+                CASEL competencies embedded throughout lessons including emotional 
+                regulation, relationship building, and responsible decision-making 
+                through authentic, community-centered activities.
               </p>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Multiple learning modalities</li>
-                <li>• Scaffolding techniques</li>
-                <li>• Extension activities</li>
+                <li>• Peer support and collaboration</li>
+                <li>• Emotional regulation strategies</li>
+                <li>• Community stewardship mindset</li>
               </ul>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <CheckCircle className="h-5 w-5 text-emerald-600 mr-2" />
-                Assessment & Evaluation
+                Culturally Responsive Assessment
               </h3>
               <p className="text-gray-600 text-sm mb-3">
-                Comprehensive assessment strategies including formative and summative 
-                evaluation methods to measure student understanding.
+                Assessment strategies that honor diverse ways of knowing and 
+                expressing understanding, focusing on growth, community contribution, 
+                and authentic demonstration of learning.
               </p>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Formative assessment tools</li>
-                <li>• Performance indicators</li>
-                <li>• Rubric suggestions</li>
+                <li>• Multiple modalities for expression</li>
+                <li>• Asset-based evaluation approaches</li>
+                <li>• Peer and self-reflection practices</li>
               </ul>
             </div>
           </div>
