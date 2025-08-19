@@ -1,12 +1,29 @@
-// File: src/types/lesson.ts
+// Root Work Framework — shared types for request payloads and lesson plans
+
+// ---------- Input payload sent from the form to the API ----------
+export type LessonRequest = {
+  subject: string;
+  gradeLevel: string;
+  topic: string;
+  duration: string; // e.g., "60 minutes"
+  learningObjectives?: string;
+  specialNeeds?: string;
+  availableResources?: string;
+};
+
+// ---------- Core lesson plan types returned by the API ----------
 export type Dok = 1 | 2 | 3 | 4;
 
-export type FiveRsBlock = { label: string; minutes: number; purpose: string };
+export type FiveRsBlock = {
+  label: string;      // e.g., "Relationships", "Routines", etc.
+  minutes: number;    // time allocation
+  purpose: string;    // intent/context for this block
+};
 
 export type LessonFlowStep = {
   phase: 'I Do' | 'We Do' | 'You Do';
-  step: string;
-  details: string;
+  step: string;         // short action/title
+  details: string;      // what happens in this step
   /** Must include "[Teacher Note: ...]" in content */
   teacherNote: string;
   /** Must include "[Student Note: ...]" in content */
@@ -49,3 +66,4 @@ export type LessonPlan = {
   differentiation?: string;
   extensions?: string;
 };
+
