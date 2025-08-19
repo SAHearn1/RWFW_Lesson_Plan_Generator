@@ -1,8 +1,8 @@
-// File: src/app/generate/page.tsx
+// src/app/generate/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { Calendar, Clock, Users, Target, BookOpen, Download, Copy, Check } from 'lucide-react';
+import { Calendar, Clock, Users, Target, BookOpen, Download, Copy, Check, FileText } from 'lucide-react';
 
 interface LessonPlan {
   title: string;
@@ -21,11 +21,13 @@ interface LessonPlan {
 
 export default function GeneratePage() {
   const [formData, setFormData] = useState({
+    subject: '',
     gradeLevel: '',
-    numberOfDays: '',
-    minutes: '',
-    standards: '',
-    focusArea: ''
+    topic: '',
+    duration: '',
+    learningObjectives: '',
+    specialNeeds: '',
+    availableResources: ''
   });
   
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null);
@@ -47,9 +49,10 @@ export default function GeneratePage() {
 
     // Only validate the most essential fields
     const missingFields = [];
+    if (!formData.subject?.trim()) missingFields.push('Subject Area');
     if (!formData.gradeLevel?.trim()) missingFields.push('Grade Level');
-    if (!formData.numberOfDays?.trim()) missingFields.push('Number of Days');
-    if (!formData.minutes?.trim()) missingFields.push('Minutes');
+    if (!formData.topic?.trim()) missingFields.push('Lesson Topic');
+    if (!formData.duration?.trim()) missingFields.push('Duration');
 
     if (missingFields.length > 0) {
       setError(`Please fill in these required fields: ${missingFields.join(', ')}`);
@@ -57,13 +60,15 @@ export default function GeneratePage() {
       return;
     }
 
-    // Create a clean payload
+    // Create a clean payload with defaults
     const payload = {
+      subject: formData.subject.trim(),
       gradeLevel: formData.gradeLevel.trim(),
-      numberOfDays: formData.numberOfDays.trim(),
-      minutes: formData.minutes.trim(),
-      standards: formData.standards?.trim() || '',
-      focusArea: formData.focusArea?.trim() || ''
+      topic: formData.topic.trim(),
+      duration: formData.duration.trim(),
+      learningObjectives: formData.learningObjectives?.trim() || '',
+      specialNeeds: formData.specialNeeds?.trim() || '',
+      availableResources: formData.availableResources?.trim() || ''
     };
 
     console.log('Submitting payload:', payload);
@@ -123,9 +128,155 @@ export default function GeneratePage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadAsPDF = () => {
+    if (!lessonPlan) return;
+    
+    // Create a comprehensive HTML structure for PDF generation
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Root Work Framework - ${lessonPlan.title}</title>
+      <style>
+        body { 
+          font-family: 'Inter', Arial, sans-serif; 
+          line-height: 1.6; 
+          color: #2B2B2B; 
+          max-width: 800px; 
+          margin: 0 auto; 
+          padding: 40px 20px;
+        }
+        .header { 
+          text-align: center; 
+          border-bottom: 3px solid #D4C862; 
+          padding-bottom: 20px; 
+          margin-bottom: 30px;
+        }
+        .header h1 { 
+          color: #082A19; 
+          font-family: 'Merriweather', serif; 
+          font-size: 28px; 
+          margin: 0;
+        }
+        .header p { 
+          color: #3B523A; 
+          font-style: italic; 
+          margin: 5px 0 0 0;
+        }
+        .section { 
+          margin: 25px 0; 
+        }
+        .section h2 { 
+          color: #082A19; 
+          font-size: 20px; 
+          border-left: 4px solid #D4C862; 
+          padding-left: 15px;
+          margin-bottom: 15px;
+        }
+        .section h3 { 
+          color: #3B523A; 
+          font-size: 18px; 
+          margin-bottom: 10px;
+        }
+        ul, ol { 
+          padding-left: 25px; 
+        }
+        li { 
+          margin: 8px 0; 
+        }
+        .timeline-item { 
+          border-left: 3px solid #D4C862; 
+          padding-left: 15px; 
+          margin: 15px 0;
+        }
+        .timeline-time { 
+          font-weight: bold; 
+          color: #082A19;
+        }
+        .timeline-desc { 
+          color: #3B523A; 
+          margin-top: 5px;
+        }
+        .footer { 
+          text-align: center; 
+          margin-top: 40px; 
+          padding-top: 20px; 
+          border-top: 2px solid #F2F4CA; 
+          color: #3B523A; 
+          font-style: italic;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Root Work Framework</h1>
+        <p>Healing-Centered, Biophilic Lesson Plan</p>
+      </div>
+      
+      <div class="section">
+        <h2>${lessonPlan.title}</h2>
+        <p>${lessonPlan.overview}</p>
+      </div>
+
+      <div class="section">
+        <h3>Learning Objectives</h3>
+        <ul>
+          ${lessonPlan.objectives.map(obj => `<li>${obj}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Materials Needed</h3>
+        <ul>
+          ${lessonPlan.materials.map(material => `<li>${material}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Lesson Timeline</h3>
+        ${lessonPlan.timeline.map(item => `
+          <div class="timeline-item">
+            <div class="timeline-time">${item.time} - ${item.activity}</div>
+            <div class="timeline-desc">${item.description}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section">
+        <h3>Assessment Strategies</h3>
+        <p>${lessonPlan.assessment}</p>
+      </div>
+
+      <div class="section">
+        <h3>Differentiation & Accommodations</h3>
+        <p>${lessonPlan.differentiation}</p>
+      </div>
+
+      <div class="section">
+        <h3>Extension Activities</h3>
+        <p>${lessonPlan.extensions}</p>
+      </div>
+
+      <div class="footer">
+        <p>Generated by Root Work Framework Lesson Plan Generator</p>
+        <p>Weaving academic rigor with healing-centered, biophilic practice</p>
+      </div>
+    </body>
+    </html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${lessonPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_RWF_lesson_plan.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const formatLessonPlanText = (plan: LessonPlan) => {
     return `
-LESSON PLAN: ${plan.title}
+ROOT WORK FRAMEWORK LESSON PLAN: ${plan.title}
 
 OVERVIEW:
 ${plan.overview}
@@ -139,44 +290,47 @@ ${plan.materials.map(material => `• ${material}`).join('\n')}
 LESSON TIMELINE:
 ${plan.timeline.map(item => `${item.time} - ${item.activity}\n   ${item.description}`).join('\n\n')}
 
-ASSESSMENT:
+ASSESSMENT STRATEGIES:
 ${plan.assessment}
 
-DIFFERENTIATION STRATEGIES:
+DIFFERENTIATION & ACCOMMODATIONS:
 ${plan.differentiation}
 
 EXTENSION ACTIVITIES:
 ${plan.extensions}
 
 Generated by Root Work Framework
+Weaving academic rigor with healing-centered, biophilic practice
 `.trim();
   };
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #F2F4CA, #ffffff)' }}>
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+      <header className="border-b-2 border-[#D4C862] bg-white/90 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 bg-[#082A19] rounded-lg flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-[#D4C862]" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Root Work Framework</h1>
-                <p className="text-sm text-gray-600">Lesson Plan Generator</p>
+                <h1 className="text-xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Root Work Framework</h1>
+                <p className="text-sm text-[#3B523A]" style={{ fontFamily: 'Inter, sans-serif' }}>Lesson Plan Generator</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <a
                 href="/generate"
-                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                className="bg-[#082A19] text-[#D4C862] px-4 py-2 rounded-lg hover:bg-[#001C10] transition-colors border border-[#D4C862]"
+                style={{ fontFamily: 'Inter, sans-serif' }}
               >
                 Generate Lesson
               </a>
               <a
                 href="/"
-                className="text-emerald-600 hover:text-emerald-700 font-medium"
+                className="text-[#082A19] hover:text-[#3B523A] font-medium"
+                style={{ fontFamily: 'Inter, sans-serif' }}
               >
                 Back to Home
               </a>
@@ -270,24 +424,41 @@ Generated by Root Work Framework
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Form Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Lesson Plan</h2>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
+            <h2 className="text-2xl font-bold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Create Your Root Work Lesson Plan</h2>
+            <p className="text-sm text-[#3B523A] mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
               Fields marked with <span className="text-red-500">*</span> are required. 
-              The AI can intelligently interpret your narrative descriptions or fill in missing information.
+              Our AI generates comprehensive, healing-centered lesson plans with just the basics!
             </p>
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    Subject Area <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Mathematics, Science, English"
+                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
                     Grade Level <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="gradeLevel"
                     value={formData.gradeLevel}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
                     required
                   >
                     <option value="">Select Grade Level</option>
@@ -307,119 +478,140 @@ Generated by Root Work Framework
                     <option value="12">12th Grade</option>
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="inline h-4 w-4 mr-1" />
-                    Number of Days <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="numberOfDays"
-                    value={formData.numberOfDays}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    required
-                  >
-                    <option value="">Select Days</option>
-                    <option value="1">1 Day</option>
-                    <option value="2">2 Days</option>
-                    <option value="3">3 Days</option>
-                    <option value="4">4 Days</option>
-                    <option value="5">5 Days (1 Week)</option>
-                    <option value="10">10 Days (2 Weeks)</option>
-                    <option value="15">15 Days (3 Weeks)</option>
-                    <option value="20">20 Days (4 Weeks)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Clock className="inline h-4 w-4 mr-1" />
-                    Minutes per Day <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="minutes"
-                    value={formData.minutes}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    required
-                  >
-                    <option value="">Select Minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="45">45 minutes</option>
-                    <option value="50">50 minutes</option>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                    <option value="120">120 minutes</option>
-                  </select>
-                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Target className="inline h-4 w-4 mr-1" />
-                  Standards & Learning Objectives <span className="text-gray-400 text-xs">(Optional - AI will generate if blank)</span>
+                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Lesson Topic <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  name="standards"
-                  value={formData.standards}
+                <input
+                  type="text"
+                  name="topic"
+                  value={formData.topic}
                   onChange={handleInputChange}
-                  placeholder="Describe the standards, learning objectives, and desired outcomes for this lesson. Be as specific or general as you'd like - the AI will interpret your description and create appropriate objectives."
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="e.g., Photosynthesis, Quadratic Equations, Character Development"
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Users className="inline h-4 w-4 mr-1" />
-                  Focus Area & Special Considerations <span className="text-gray-400 text-xs">(Optional)</span>
+                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <Clock className="inline h-4 w-4 mr-1 text-[#D4C862]" />
+                  Duration <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                >
+                  <option value="">Select Duration</option>
+                  <option value="30 minutes">30 minutes</option>
+                  <option value="45 minutes">45 minutes</option>
+                  <option value="50 minutes">50 minutes</option>
+                  <option value="60 minutes">60 minutes</option>
+                  <option value="90 minutes">90 minutes</option>
+                  <option value="120 minutes">120 minutes</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <Target className="inline h-4 w-4 mr-1 text-[#D4C862]" />
+                  Learning Objectives <span className="text-[#3B523A] text-xs">(Optional - AI will generate if blank)</span>
                 </label>
                 <textarea
-                  name="focusArea"
-                  value={formData.focusArea}
+                  name="learningObjectives"
+                  value={formData.learningObjectives}
                   onChange={handleInputChange}
-                  placeholder="Describe your focus areas, special considerations, student needs, available resources, or any specific approach you want the AI to incorporate. Include details about differentiation, trauma-informed practices, or cultural responsiveness."
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="What should students be able to do by the end of this lesson? (Leave blank for AI-generated objectives)"
+                  rows={3}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <Users className="inline h-4 w-4 mr-1 text-[#D4C862]" />
+                  Special Considerations <span className="text-[#3B523A] text-xs">(Optional)</span>
+                </label>
+                <textarea
+                  name="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={handleInputChange}
+                  placeholder="ELL students, special education needs, differentiation requirements, trauma-informed considerations..."
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Available Resources <span className="text-[#3B523A] text-xs">(Optional)</span>
+                </label>
+                <textarea
+                  name="availableResources"
+                  value={formData.availableResources}
+                  onChange={handleInputChange}
+                  placeholder="Technology, materials, lab equipment, outdoor spaces, etc."
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-[#3B523A] rounded-lg focus:ring-2 focus:ring-[#D4C862] focus:border-[#D4C862]"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
                 />
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-                  {error}
+                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-red-800">
+                  <p style={{ fontFamily: 'Inter, sans-serif' }}>{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isGenerating}
-                className="w-full bg-emerald-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-[#082A19] text-[#D4C862] py-4 px-6 rounded-lg font-semibold hover:bg-[#001C10] disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-2 border-[#D4C862]"
+                style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                {isGenerating ? 'Generating Lesson Plan...' : 'Generate Root Work Lesson Plan'}
+                {isGenerating ? 'Generating Root Work Lesson Plan...' : 'Generate Root Work Lesson Plan'}
               </button>
             </form>
           </div>
 
           {/* Results Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#D4C862]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Generated Lesson Plan</h2>
+              <h2 className="text-2xl font-bold text-[#082A19]" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>Your Root Work Lesson Plan</h2>
               {lessonPlan && (
                 <div className="flex space-x-2">
                   <button
                     onClick={copyToClipboard}
-                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#F2F4CA] hover:bg-[#D4C862] text-[#082A19] rounded-lg transition-colors border border-[#3B523A]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
                   >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     <span>{copied ? 'Copied!' : 'Copy'}</span>
                   </button>
                   <button
                     onClick={downloadLessonPlan}
-                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors"
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#F2F4CA] hover:bg-[#D4C862] text-[#082A19] rounded-lg transition-colors border border-[#3B523A]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
                   >
                     <Download className="h-4 w-4" />
-                    <span>Download</span>
+                    <span>Download TXT</span>
+                  </button>
+                  <button
+                    onClick={downloadAsPDF}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm bg-[#082A19] hover:bg-[#001C10] text-[#D4C862] rounded-lg transition-colors border border-[#D4C862]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Download HTML/PDF</span>
                   </button>
                 </div>
               )}
@@ -427,19 +619,19 @@ Generated by Root Work Framework
 
             {!lessonPlan ? (
               <div className="text-center py-12">
-                <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Fill out the form to generate your Root Work lesson plan</p>
+                <BookOpen className="h-16 w-16 text-[#D4C862] mx-auto mb-4" />
+                <p className="text-[#3B523A]" style={{ fontFamily: 'Inter, sans-serif' }}>Fill out the form to generate your Root Work Framework lesson plan</p>
               </div>
             ) : (
               <div className="space-y-6 max-h-96 overflow-y-auto">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{lessonPlan.title}</h3>
-                  <p className="text-gray-600">{lessonPlan.overview}</p>
+                  <h3 className="text-lg font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>{lessonPlan.title}</h3>
+                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.overview}</p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Learning Objectives:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Learning Objectives:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>
                     {lessonPlan.objectives.map((objective, index) => (
                       <li key={index}>{objective}</li>
                     ))}
@@ -447,8 +639,8 @@ Generated by Root Work Framework
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Materials Needed:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Materials Needed:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>
                     {lessonPlan.materials.map((material, index) => (
                       <li key={index}>{material}</li>
                     ))}
@@ -456,30 +648,30 @@ Generated by Root Work Framework
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Lesson Timeline:</h4>
+                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Lesson Timeline:</h4>
                   <div className="space-y-3">
                     {lessonPlan.timeline.map((item, index) => (
-                      <div key={index} className="border-l-4 border-emerald-500 pl-4">
-                        <div className="font-medium text-gray-900">{item.time} - {item.activity}</div>
-                        <div className="text-gray-600 text-sm">{item.description}</div>
+                      <div key={index} className="border-l-4 border-[#D4C862] pl-4">
+                        <div className="font-medium text-[#082A19]" style={{ fontFamily: 'Inter, sans-serif' }}>{item.time} - {item.activity}</div>
+                        <div className="text-[#2B2B2B] text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>{item.description}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Assessment:</h4>
-                  <p className="text-gray-600">{lessonPlan.assessment}</p>
+                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Assessment:</h4>
+                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.assessment}</p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Differentiation:</h4>
-                  <p className="text-gray-600">{lessonPlan.differentiation}</p>
+                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Differentiation:</h4>
+                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.differentiation}</p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Extension Activities:</h4>
-                  <p className="text-gray-600">{lessonPlan.extensions}</p>
+                  <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>Extension Activities:</h4>
+                  <p className="text-[#2B2B2B]" style={{ fontFamily: 'Inter, sans-serif' }}>{lessonPlan.extensions}</p>
                 </div>
               </div>
             )}
