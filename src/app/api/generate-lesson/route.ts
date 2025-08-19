@@ -1,256 +1,214 @@
-// src/app/api/generate-lesson/route.ts
+// File: src/app/api/generate-lesson/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+/** -------- Types aligned to the new RWFW JSON contract -------- */
 
 interface LessonRequest {
   subject: string;
   gradeLevel: string;
   topic: string;
-  duration: string;
+  duration: string; // keep string to match your UI; we’ll also compute minutes
   learningObjectives?: string;
   specialNeeds?: string;
   availableResources?: string;
 }
 
+type FiveRsBlock = {
+  label: string;           // e.g., "Relationships/Regulate"
+  minutes: number;         // integer minutes
+  purpose: string;         // RWFW rationale
+};
+
+type LessonFlowStep = {
+  phase: "I Do" | "We Do" | "You Do";
+  step: string;
+  details: string;
+  teacherNote: string;     // must include [Teacher Note:]
+  studentNote: string;     // must include [Student Note:]
+};
+
 interface LessonPlan {
+  // Legacy fields kept for backward compatibility
   title: string;
   overview: string;
-  objectives: string[];
   materials: string[];
-  timeline: Array<{
-    time: string;
-    activity: string;
-    description: string;
-  }>;
-  assessment: string;
-  differentiation: string;
+
+  // New required sections (per teacher feedback)
+  iCanTargets: Array<{ text: string; dok: 1 | 2 | 3 | 4 }>;
+
+  fiveRsSchedule: FiveRsBlock[]; // must contain 5 items; minutes must sum to total
+
+  literacySkillsAndResources: {
+    skills: string[];          // reading/writing/speaking/listening skills
+    resources: string[];       // vetted links or “[Insert link here]”
+  };
+
+  bloomsAlignment: Array<{ task: string; bloom: "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"; rationale: string }>;
+
+  coTeachingIntegration: {
+    model: string;             // Station, Parallel, Team, etc.
+    roles: string[];           // concrete roles/responsibilities
+    grouping: string;          // how students rotate / group size
+  };
+
+  reteachingAndSpiral: {
+    sameDayQuickPivot: string; // 5–10 min reteach move
+    nextDayPlan: string;       // brief plan
+    spiralIdeas: string[];     // what to revisit later
+  };
+
+  mtssSupports: {
+    tier1: string[];           // universal supports
+    tier2: string[];           // small-group/targeted
+    tier3: string[];           // intensive/individualized
+    progressMonitoring: string[];
+  };
+
+  therapeuticRootworkContext: {
+    rationale: string;         // healing-centered why
+    regulationCue: string;     // at least one cue/ritual
+    restorativePractice: string;
+    communityAssets: string[]; // Savannah/Gullah-Geechee etc.
+  };
+
+  lessonFlowGRR: LessonFlowStep[]; // each step must have both notes
+
+  assessmentAndEvidence: {
+    formativeChecks: string[];
+    rubric: Array<{ criterion: string; developing: string; proficient: string; advanced: string }>;
+    exitTicket: string;
+  };
+
+  // Legacy fields your UI may still read
+  objectives: string[];
+  timeline: Array<{ time: string; activity: string; description: string }>;
+  differentiation: string; // keep, though MTSS now carries the structure
   extensions: string;
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const data: LessonRequest = await request.json();
-    
-    console.log('Received request data:', data);
+/** -------- Utility: env + model fallback + JSON cleaning -------- */
 
-    // Validate required fields (match your frontend validation exactly)
-    const missingFields = [];
-    if (!data.subject?.trim()) missingFields.push('subject');
-    if (!data.gradeLevel?.trim()) missingFields.push('gradeLevel');
-    if (!data.topic?.trim()) missingFields.push('topic');
-    if (!data.duration?.trim()) missingFields.push('duration');
+const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
+const modelOrderEnv = process.env.CLAUDE_MODEL_ORDER ?? ""; // e.g., "opus-id,sonnet-id,haiku-id"
+const MAX_TOKENS = Number(process.env.MAX_TOKENS ?? 4096);  // high default; API will clamp
+const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 90000);
 
-    if (missingFields.length > 0) {
-      console.log('Missing fields:', missingFields);
-      return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Check for API key
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      console.error('ANTHROPIC_API_KEY environment variable is not set');
-      return NextResponse.json(
-        { error: 'API configuration error' },
-        { status: 500 }
-      );
-    }
-
-    // Create Root Work Framework prompt that returns structured lesson plan
-    const prompt = `Create a comprehensive lesson plan using Root Work Framework principles. Return ONLY a valid JSON object with no markdown formatting.
-
-LESSON DETAILS:
-- Subject: ${data.subject}
-- Grade Level: ${data.gradeLevel}
-- Topic: ${data.topic}
-- Duration: ${data.duration}
-${data.learningObjectives ? `- Learning Objectives: ${data.learningObjectives}` : ''}
-${data.specialNeeds ? `- Special Considerations: ${data.specialNeeds}` : ''}
-${data.availableResources ? `- Available Resources: ${data.availableResources}` : ''}
-
-ROOT WORK FRAMEWORK REQUIREMENTS:
-Structure this lesson around the 5Rs:
-1. RELATIONSHIPS - Build authentic connections and community
-2. ROUTINES - Establish predictable, healing-centered structures  
-3. RELEVANCE - Connect learning to students' lives and experiences
-4. RIGOR - Maintain high academic expectations with support
-5. REFLECTION - Include metacognitive and restorative practices
-
-Return a JSON object with exactly these fields:
-{
-  "title": "Creative lesson title incorporating Root Work Framework",
-  "overview": "2-3 sentence description incorporating Root Work principles and healing-centered approach",
-  "objectives": ["Array of 3-5 specific learning objectives that integrate SEL and academic goals"],
-  "materials": ["Array of needed materials including culturally responsive and biophilic elements"],
-  "timeline": [{"time": "0-10 minutes", "activity": "Activity name", "description": "Detailed description with trauma-informed approaches"}],
-  "assessment": "Assessment strategies that honor multiple ways of knowing and include self-reflection",
-  "differentiation": "Comprehensive accommodations for diverse learners including trauma-informed practices and MTSS support",
-  "extensions": "Extension activities connecting to community, real-world applications, and family engagement"
+function modelOrder(): string[] {
+  return modelOrderEnv
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
 }
 
-Use warm, invitational language throughout. Focus on strengths-based, trauma-informed approaches. Ensure all activities are developmentally appropriate for ${data.gradeLevel}. Include healing-centered practices and cultural responsiveness.`;
+function stripFences(s: string) {
+  return s.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+}
 
-    console.log('Calling Claude API...');
-
-    // Call Claude API
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4000,
-        messages: [
-          { role: "user", content: prompt }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Claude API error:', response.status, response.statusText, errorText);
-      
-      // Return comprehensive fallback lesson plan
-      const fallbackPlan: LessonPlan = {
-        title: `Root Work Framework: ${data.topic} - Grade ${data.gradeLevel}`,
-        overview: `This ${data.duration} lesson integrates ${data.topic} with Root Work Framework's 5Rs, creating a healing-centered learning environment that builds relationships, establishes routines, ensures relevance, maintains rigor, and promotes reflection through culturally responsive, trauma-informed instruction.`,
-        objectives: [
-          `Students will understand key concepts in ${data.topic} through culturally responsive, trauma-informed instruction`,
-          'Students will engage in collaborative learning that builds authentic community connections',
-          'Students will connect new learning to their lived experiences and cultural knowledge',
-          'Students will demonstrate mastery through multiple assessment formats that honor diverse ways of knowing',
-          'Students will practice self-reflection and develop growth mindset within a healing-centered environment'
-        ],
-        materials: [
-          'Student reflection journals or digital portfolios',
-          'Community circle space with flexible seating options',
-          'Chart paper, markers, and collaborative workspace materials',
-          'Culturally relevant texts, images, and community connection resources',
-          'Natural elements for biophilic connection (plants, stones, etc.)',
-          'Regulation tools and sensory supports for diverse learners',
-          'Technology access for multiple modalities of expression'
-        ],
-        timeline: [
-          {
-            time: '0-10 minutes',
-            activity: 'Opening Circle & Community Building',
-            description: 'Begin with trauma-informed opening ritual. Students share cultural assets and prior knowledge related to the topic. Create psychological safety through predictable routine and community acknowledgment.'
-          },
-          {
-            time: '10-25 minutes', 
-            activity: 'Relevance Connection & Cultural Hook',
-            description: `Connect ${data.topic} to students' lives, communities, and cultural experiences. Use storytelling, real-world examples, and student voice to bridge prior knowledge with new learning.`
-          },
-          {
-            time: '25-45 minutes',
-            activity: 'Rigorous Learning with Healing-Centered Support',
-            description: `Engage in ${data.topic} instruction using multiple modalities and collaborative structures. Include hands-on exploration, peer learning, and scaffolded challenges that honor diverse learning styles while maintaining high expectations.`
-          },
-          {
-            time: '45-55 minutes',
-            activity: 'Collaborative Application & Practice',
-            description: 'Students apply new learning through partner or small group work with choice in demonstration method. Emphasize collective success, peer support, and culturally responsive problem-solving.'
-          },
-          {
-            time: '55-60 minutes',
-            activity: 'Reflection Circle & Community Closure',
-            description: 'Individual and collective reflection on learning growth. Students share insights, celebrate collective achievements, make connections to their communities, and set intentions for continued learning.'
-          }
-        ],
-        assessment: 'Multi-modal assessment honoring diverse ways of knowing: formative assessment through community sharing and peer feedback; self-reflection on learning process and cultural connections; authentic demonstration of understanding through student choice of expression (verbal, written, artistic, movement, community-based); growth-focused evaluation emphasizing process over product.',
-        differentiation: 'Comprehensive MTSS support: Tier 1 - Universal trauma-informed practices, multiple learning modalities, and culturally responsive instruction for all students. Tier 2 - Additional scaffolding, peer support, and regulation breaks for students needing more time. Tier 3 - Individualized accommodations, alternative assessment formats, and specialized support. Include visual supports, movement opportunities, choice in participation level, and strength-based feedback.',
-        extensions: 'Community Connections: Students interview family/community members about their knowledge of the topic. Real-World Applications: Explore how the topic appears in students\' neighborhoods and daily lives. Family Engagement: Create take-home materials that honor intergenerational knowledge. Environmental Stewardship: Connect learning to place-based education and care for local ecosystems. Peer Teaching: Opportunities for students to share learning with younger students or community members.'
-      };
-
-      return NextResponse.json({
-        lessonPlan: fallbackPlan,
-        fallback: true,
-        success: true
-      });
-    }
-
-    const claudeData = await response.json();
-    console.log('Claude API response received');
-
-    let rawLessonPlan = claudeData.content[0].text;
-    
-    // Clean up response - remove markdown if present
-    rawLessonPlan = rawLessonPlan.replace(/```json\s?/g, "").replace(/```\s?/g, "").trim();
-
-    let lessonPlan: LessonPlan;
-    try {
-      lessonPlan = JSON.parse(rawLessonPlan);
-      console.log('Successfully parsed lesson plan:', lessonPlan.title);
-    } catch (parseError) {
-      console.error('JSON parsing failed:', parseError);
-      console.log('Using fallback lesson plan due to parsing error');
-      
-      // Use comprehensive fallback if parsing fails
-      lessonPlan = {
-        title: `Root Work Framework: ${data.topic} - Grade ${data.gradeLevel}`,
-        overview: `A comprehensive ${data.duration} lesson plan designed using Root Work Framework principles, integrating trauma-informed care with academically rigorous ${data.topic} instruction for ${data.gradeLevel} students.`,
-        objectives: [
-          `Students will engage deeply with ${data.topic} concepts through culturally responsive, healing-centered instruction`,
-          'Students will practice collaboration and community building while learning',
-          'Students will connect academic content to their personal and cultural experiences',
-          'Students will demonstrate understanding through multiple, culturally responsive assessment methods',
-          'Students will develop self-awareness and reflection skills within a supportive learning community'
-        ],
-        materials: [
-          'Student journals for reflection and note-taking',
-          'Community circle space with flexible seating',
-          'Collaborative learning supplies (chart paper, markers, sticky notes)',
-          'Culturally relevant texts and visual resources',
-          'Technology tools for research and presentation',
-          'Sensory regulation tools and movement options'
-        ],
-        timeline: [
-          {
-            time: '0-15 minutes',
-            activity: 'Opening Circle & Cultural Asset Sharing',
-            description: 'Begin with community building ritual and cultural knowledge sharing related to the topic'
-          },
-          {
-            time: '15-35 minutes',
-            activity: 'Core Learning with Multiple Modalities',
-            description: `Engage in ${data.topic} instruction through visual, auditory, kinesthetic, and collaborative approaches`
-          },
-          {
-            time: '35-50 minutes',
-            activity: 'Collaborative Application & Practice',
-            description: 'Students work together to apply new learning with peer support and choice in demonstration methods'
-          },
-          {
-            time: '50-60 minutes',
-            activity: 'Reflection & Community Closure',
-            description: 'Individual and group reflection on learning, celebration of growth, and connection to ongoing community learning'
-          }
-        ],
-        assessment: 'Trauma-informed assessment using observation, student self-reflection, peer feedback, and authentic demonstration of learning through multiple modalities',
-        differentiation: 'Comprehensive support including visual aids, movement options, choice in participation, culturally responsive materials, and individualized accommodations following MTSS framework',
-        extensions: 'Community research projects, family knowledge integration, real-world applications in local context, and opportunities for peer teaching and mentorship'
-      };
-    }
-
-    return NextResponse.json({ 
-      lessonPlan,
-      success: true 
-    });
-
-  } catch (error) {
-    console.error('API Error:', error);
-    
-    return NextResponse.json(
-      { 
-        error: 'Failed to generate lesson plan',
-        success: false 
-      },
-      { status: 500 }
-    );
+function safeParse<T>(raw: string): T | null {
+  try {
+    return JSON.parse(stripFences(raw)) as T;
+  } catch {
+    return null;
   }
 }
+
+function minutesFromDuration(d: string): number | null {
+  // Accept "90", "90 min", "1:30", etc.
+  const num = Number(d);
+  if (!Number.isNaN(num) && num > 0) return Math.round(num);
+  const hhmmMatch = d.match(/^(\d{1,2}):(\d{2})$/);
+  if (hhmmMatch) {
+    const h = Number(hhmmMatch[1]);
+    const m = Number(hhmmMatch[2]);
+    if (!Number.isNaN(h) && !Number.isNaN(m)) return h * 60 + m;
+  }
+  return null;
+}
+
+/** -------- Validation for RWFW completeness -------- */
+
+function hasFiveRs(schedule: FiveRsBlock[], totalMinutes: number | null): string[] {
+  const issues: string[] = [];
+  if (!Array.isArray(schedule) || schedule.length !== 5) {
+    issues.push("fiveRsSchedule must contain exactly five blocks.");
+    return issues;
+  }
+  schedule.forEach((b, i) => {
+    if (!b.label || typeof b.minutes !== "number" || !b.purpose) {
+      issues.push(`fiveRsSchedule[${i}] is missing label, minutes, or purpose.`);
+    }
+  });
+  if (totalMinutes && schedule.reduce((sum, b) => sum + (b.minutes || 0), 0) !== totalMinutes) {
+    issues.push("fiveRsSchedule minutes do not sum to total duration.");
+  }
+  return issues;
+}
+
+function hasNotes(flow: LessonFlowStep[]): string[] {
+  const issues: string[] = [];
+  if (!Array.isArray(flow) || flow.length === 0) {
+    issues.push("lessonFlowGRR must include at least one step.");
+    return issues;
+  }
+  flow.forEach((s, i) => {
+    if (!s.teacherNote?.includes("[Teacher Note:")) {
+      issues.push(`lessonFlowGRR[${i}] missing [Teacher Note:].`);
+    }
+    if (!s.studentNote?.includes("[Student Note:")) {
+      issues.push(`lessonFlowGRR[${i}] missing [Student Note:].`);
+    }
+  });
+  return issues;
+}
+
+function hasKeySections(plan: LessonPlan): string[] {
+  const issues: string[] = [];
+  if (!plan.iCanTargets?.length) issues.push("iCanTargets missing or empty.");
+  if (!plan.literacySkillsAndResources?.skills?.length) issues.push("literacy skills missing.");
+  if (!plan.bloomsAlignment?.length) issues.push("Bloom's alignment missing.");
+  if (!plan.coTeachingIntegration?.model) issues.push("coTeachingIntegration.model missing.");
+  if (!plan.mtssSupports) issues.push("MTSS supports missing.");
+  if (!plan.therapeuticRootworkContext?.rationale) issues.push("Therapeutic Rootwork rationale missing.");
+  if (!plan.assessmentAndEvidence?.exitTicket) issues.push("Exit ticket missing.");
+  return issues;
+}
+
+/** -------- Anthropic call with fallback -------- */
+
+async function callAnthropic(model: string, prompt: string, signal: AbortSignal): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: MAX_TOKENS,
+      messages: [{ role: "user", content: prompt }],
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Anthropic ${res.status} on ${model}: ${text.slice(0, 400)}`);
+  }
+
+  const data = await res.json();
+  const output = (data?.content?.[0]?.text ?? "").trim();
+  if (!output) throw new Error(`Empty content from ${model}`);
+  return output;
+}
+
+/** -------- Prompt builder (JSON contract, RWFW strict) -------- */
+
+function buildPrompt(data: LessonRequest): string {
+  const baseMinutes = minutesFromDuration(data.duration) ?? 90;
+
+  return `
+You are an expert RWFW (Root Work Framework) lesson designer. Produce a trauma-informed, STEAM-aligne
