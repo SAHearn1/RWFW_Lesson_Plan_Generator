@@ -67,89 +67,129 @@ export async function POST(request: NextRequest) {
 
     console.log('Cleaned data for processing:', cleanData);
 
-    // Create intelligent prompt that can interpret narrative descriptions
+    // Create comprehensive Root Work Framework master prompt
     const prompt = `
-You are generating a lesson plan using the Root Work Framework, a trauma-informed, regenerative learning ecosystem 
-developed by Dr. S.A. Hearn. This framework integrates:
+🧑‍🏫 Persona to Assume: You are an expert curriculum designer with 20+ years of experience in:
+- K–12 education (general and special education)
+- Project-Based Learning (PBL)
+- Trauma-Informed Care (TIC) in schools
+- Living Learning Labs (LLLs) and STEAM integration
+- CASEL-aligned Social Emotional Learning (SEL)
+- MTSS design and classroom regulation
+- Student agency and equity-centered pedagogy
 
-FOUNDATIONAL PRINCIPLES:
-- SAMHSA's Six Trauma-Informed Principles: Safety, Trustworthiness, Peer Support, Collaboration, Empowerment, and Cultural Responsiveness
-- CASEL's SEL Competencies: Emotional regulation, relationship building, responsible decision-making
-- MTSS and UDL Principles for neurodiversity and behavioral health needs
-- Place-based, project-based STEAM education
-- Regenerative urban homesteading and environmental stewardship
-- Culturally responsive pedagogy
-- Living Learning Labs (LLLs) approach
+🎯 MANDATORY TEACHER & STUDENT NOTES PROTOCOL: Every lesson component MUST include both note types in this exact format:
+
+Teacher Notes Format:
+- Appear as [Teacher Note: ] immediately after each activity description
+- Include: pedagogical rationale, trauma-informed considerations, differentiation strategies, assessment insights, Rootwork Framework connections
+- Tone: Professional, supportive mentor to colleague
+- Length: 1-3 sentences maximum
+- Must address therapeutic context and trauma-informed facilitation
+
+Student Notes Format:
+- Appear as [Student Note: ] immediately after teacher notes
+- Include: coaching language, success strategies, self-advocacy prompts, growth mindset reinforcement, connection to personal growth
+- Tone: Warm, empowering, second-person voice aligned with Rootwork Framework
+- Length: 1-2 sentences maximum
+- Must support student agency and emotional regulation
 
 LESSON REQUIREMENTS:
 Grade Level: ${cleanData.gradeLevel}
 Number of Days: ${cleanData.numberOfDays}
 Minutes per Day: ${cleanData.minutes}
 
-TEACHER'S STANDARDS & OBJECTIVES DESCRIPTION:
-${cleanData.standards || 'No specific standards provided - please generate grade-appropriate learning objectives that align with Root Work Framework principles and common educational standards for this grade level.'}
+TEACHER'S STANDARDS & OBJECTIVES:
+${cleanData.standards || 'Generate grade-appropriate learning objectives that align with Root Work Framework principles and common educational standards for this grade level.'}
 
 TEACHER'S FOCUS AREA & CONSIDERATIONS:
-${cleanData.focusArea || 'No specific focus area provided - please incorporate trauma-informed practices, cultural responsiveness, and differentiation strategies appropriate for diverse learners.'}
+${cleanData.focusArea || 'Incorporate trauma-informed practices, cultural responsiveness, and differentiation strategies appropriate for diverse learners.'}
 
-INTELLIGENT INTERPRETATION INSTRUCTIONS:
-1. If the teacher provided standards/objectives description, interpret their intent and create specific, measurable learning objectives that align with their description while incorporating Root Work principles.
+🎯 Objective: Generate a ${cleanData.numberOfDays}-day, student-facing lesson plan that integrates:
+- Trauma-informed care (SAMHSA 6 Principles)
+- STEAM and Project-Based Learning
+- Living Learning Lab methodology
+- CASEL SEL competencies
+- MTSS scaffolding (Tier 1-3)
+- Student agency and differentiated learning modalities
+- Gradual Release of Responsibility (GRR)
 
-2. If the teacher provided focus area description, interpret their needs and incorporate those elements throughout the lesson plan (differentiation, special populations, available resources, pedagogical approaches, etc.).
+🧾 MANDATORY Output Format - Each Component Required:
 
-3. If either narrative box is empty, intelligently fill in appropriate content based on:
-   - Grade level expectations
-   - Root Work Framework principles
-   - Best practices for trauma-informed education
-   - Culturally responsive teaching methods
-   - SEL integration
+For each lesson day, provide in this exact order:
 
-4. Create a comprehensive ${cleanData.numberOfDays}-day lesson plan with each day being ${cleanData.minutes} minutes long.
+HEADER SECTION:
+- Day #, Lesson Title, Essential Question, "I Can" Learning Target, Standards, DOK Level
+- [Teacher Note: Pedagogical context for this lesson's objectives and trauma-informed considerations]
+- [Student Note: What you're building toward and why it matters for your growth]
 
-5. Ensure the lesson plan follows this structure for JSON response:
+STRUCTURED LESSON FLOW:
 
-{
-  "title": "Engaging lesson title that reflects trauma-informed, place-based learning",
-  "overview": "Brief overview emphasizing community connection, healing, and regenerative learning across ${cleanData.numberOfDays} days",
-  "objectives": ["3-5 learning objectives that integrate academic standards with SEL competencies"],
-  "materials": ["Materials that support hands-on, place-based learning when possible"],
-  "timeline": [
-    {
-      "time": "Day 1: Minutes 1-${cleanData.minutes}",
-      "activity": "Activity name reflecting trauma-informed practices",
-      "description": "Detailed description incorporating safety, collaboration, and empowerment"
-    },
-    {
-      "time": "Day 2: Minutes 1-${cleanData.minutes}",
-      "activity": "Next day's activity",
-      "description": "Detailed description building on previous day"
-    }
-    // Continue for all ${cleanData.numberOfDays} days
-  ],
-  "assessment": "Assessment strategies that honor diverse ways of knowing and cultural responsiveness",
-  "differentiation": "Trauma-informed differentiation strategies addressing diverse learning needs and cultural backgrounds",
-  "extensions": "Extension activities that connect to community, environmental stewardship, or intergenerational learning"
-}
+Opening/Hook (10-15 minutes):
+- Activity description with specific instructions
+- [Teacher Note: Facilitation tips, trauma-informed considerations, and Rootwork Framework connections]
+- [Student Note: Coaching language for engagement and self-regulation strategies]
 
-SPECIFIC ROOT WORK REQUIREMENTS:
-- Create psychologically safe learning environments
-- Build on students' cultural assets and community knowledge
-- Incorporate collaborative, peer-support structures
-- Include opportunities for student agency and empowerment
-- Connect learning to place, community, and environmental stewardship when possible
-- Address the whole child (academic, social, emotional, physical well-being)
-- Use restorative rather than punitive approaches
-- Honor diverse ways of learning and expressing knowledge
-- Include opportunities for reflection and meaning-making
-- Connect to broader systems of healing and community transformation
+I Do: Direct Instruction (15-20 minutes):
+- Content and modeling description
+- [Teacher Note: Key teaching points, differentiation strategies, and therapeutic facilitation approaches]
+- [Student Note: What to focus on during instruction and how this builds your skills]
 
-Respond only with valid JSON. Do not include any text outside of the JSON structure.
+Work Session (25-40 minutes):
+We Do: Collaborative exploration or modeling
+- Activity description
+- [Teacher Note: Scaffolding tips and trauma-informed group facilitation]
+- [Student Note: Success strategies and collaboration expectations]
+
+You Do Together: Partner or small group task
+- Activity description
+- [Teacher Note: Monitoring guidance and support indicators]
+- [Student Note: Partnership strategies and self-advocacy reminders]
+
+You Do Alone: Independent work or reflection
+- Activity description
+- [Teacher Note: Individual support strategies and regulation monitoring]
+- [Student Note: Self-management strategies and growth mindset reinforcement]
+
+Closing/Reflection (5-10 minutes):
+- Activity description with reflection components
+- [Teacher Note: Assessment insights, next steps, and trauma-informed closure]
+- [Student Note: Reflection prompts and growth recognition strategies]
+
+Additional Required Sections Per Day:
+- MTSS Tiered Supports (Tier 1, 2, 3 specific strategies)
+- SEL Competencies Addressed (specific CASEL domains)
+- Accommodation Categories:
+  * 504 Accommodations
+  * Gifted Learner Extensions
+  * SPED Modifications
+- Co-teaching Model Integration (specify model used)
+- Reteaching Plans (for students needing additional support)
+- Literacy Skills Integration (with specific components)
+- Assessment (formative and summative with Bloom's taxonomy alignment)
+- Student Choice Options
+- STEAM Integration Elements
+- Living Learning Lab Components
+
+🔍 MANDATORY NOTES QUALITY CHECK: Before finalizing any lesson component, verify it contains:
+- [Teacher Note: ] with specific pedagogical guidance addressing trauma-informed practice
+- [Student Note: ] with encouraging coaching language supporting student agency
+- Both notes align with Rootwork Framework therapeutic principles
+- Notes address the healing-centered educational context appropriately
+
+Respond with a detailed JSON structure that includes all these components for each day. Each lesson component must include both teacher and student notes in the specified format.
+
+CRITICAL: NEVER generate any lesson component without both [Teacher Note: ] and [Student Note: ]. If notes are missing from any section, regenerate that section completely.
+
+Create specific, actionable content that directly addresses the teacher's requirements while maintaining Root Work Framework principles throughout.
 `;
 
     let lessonPlan: LessonPlan;
 
-    // Try Claude API call
+    // Try Claude API call with comprehensive debugging
     try {
+      console.log('Attempting Claude API call with Root Work Framework master prompt...');
+      
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -157,42 +197,69 @@ Respond only with valid JSON. Do not include any text outside of the JSON struct
         },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 3000,
+          max_tokens: 8000,
           messages: [
             { role: "user", content: prompt }
           ]
         })
       });
 
+      console.log('Claude API response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`Claude API failed: ${response.status}`);
+        console.error('Claude API failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('Claude API error response:', errorText);
+        throw new Error(`Claude API failed: ${response.status} - ${errorText}`);
       }
 
       const apiData = await response.json();
+      console.log('Claude API response received, content length:', apiData.content?.[0]?.text?.length || 0);
       
       if (!apiData.content || !apiData.content[0] || !apiData.content[0].text) {
+        console.error('Invalid Claude API response structure:', apiData);
         throw new Error('Invalid API response structure');
       }
 
       let responseText = apiData.content[0].text;
+      console.log('Raw Claude response preview:', responseText.substring(0, 500) + '...');
 
       // Clean up response - remove markdown formatting if present
       responseText = responseText.replace(/```json\s?/g, "").replace(/```\s?/g, "").trim();
 
       try {
         lessonPlan = JSON.parse(responseText);
+        console.log('Successfully parsed JSON from Claude - lesson title:', lessonPlan.title);
         // Validate the parsed lesson plan
         lessonPlan = validateLessonPlan(lessonPlan, cleanData);
       } catch (parseError) {
         console.error("JSON parsing failed:", parseError);
-        throw new Error('Failed to parse AI response');
+        console.error("Failed to parse text preview:", responseText.substring(0, 200));
+        
+        // Try to extract JSON if it's embedded in text
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            lessonPlan = JSON.parse(jsonMatch[0]);
+            console.log('Successfully extracted and parsed JSON from response');
+            lessonPlan = validateLessonPlan(lessonPlan, cleanData);
+          } catch (extractError) {
+            console.error("JSON extraction also failed:", extractError);
+            throw new Error('Failed to parse AI response as JSON');
+          }
+        } else {
+          throw new Error('No JSON found in AI response');
+        }
       }
 
     } catch (aiError) {
-      console.error('AI generation failed:', aiError);
-      // Use fallback lesson plan if AI fails
-      lessonPlan = createFallbackLessonPlan(cleanData);
+      console.error('AI generation failed with error:', aiError);
+      console.log('Falling back to Root Work Framework template lesson plan');
+      // Use enhanced fallback lesson plan that follows Root Work Framework
+      lessonPlan = createRootWorkFallbackLessonPlan(cleanData);
     }
+
+    console.log('Returning lesson plan with title:', lessonPlan.title);
 
     return NextResponse.json({ 
       lessonPlan,
@@ -205,7 +272,7 @@ Respond only with valid JSON. Do not include any text outside of the JSON struct
     // Try to create fallback plan even on general error
     try {
       const requestData = await request.clone().json();
-      const fallbackPlan = createFallbackLessonPlan(requestData);
+      const fallbackPlan = createRootWorkFallbackLessonPlan(requestData);
       
       return NextResponse.json({ 
         lessonPlan: fallbackPlan,
@@ -223,60 +290,101 @@ Respond only with valid JSON. Do not include any text outside of the JSON struct
   }
 }
 
-function createFallbackLessonPlan(data: LessonRequest): LessonPlan {
+function createRootWorkFallbackLessonPlan(data: LessonRequest): LessonPlan {
   const numDays = parseInt(data.numberOfDays) || 1;
-  const minutesPerDay = parseInt(data.minutes) || 45;
+  const minutesPerDay = parseInt(data.minutes) || 90;
   
-  // Create timeline for multiple days
+  // Create structured timeline following Root Work Framework GRR model
   const timeline = [];
+  
   for (let day = 1; day <= numDays; day++) {
-    const warmUpTime = Math.min(10, Math.floor(minutesPerDay * 0.15));
-    const mainTime = Math.floor(minutesPerDay * 0.65);
-    const wrapUpTime = Math.floor(minutesPerDay * 0.2);
-
+    const topic = data.standards ? extractTopicFromStandards(data.standards) : `Day ${day} Learning Focus`;
+    
     timeline.push({
-      time: `Day ${day}: Opening Community Circle (${warmUpTime} min)`,
+      time: `Day ${day}: Opening/Hook (10-15 min)`,
       activity: "Community Circle and Cultural Asset Building",
-      description: `Begin Day ${day} with a community circle to create psychological safety. Connect to previous learning and build on students' cultural assets and community knowledge.`
+      description: `Begin Day ${day} with trauma-informed opening circle. Students share prior knowledge about ${topic} from personal/cultural experiences. [Teacher Note: Create psychological safety through predictable routine and cultural validation. Monitor for emotional regulation needs.] [Student Note: This is your space to connect what you already know to new learning. Take deep breaths and share what feels comfortable.]`
     });
 
     timeline.push({
-      time: `Day ${day}: Main Learning Activity (${mainTime} min)`,
-      activity: "Collaborative Exploration and Application",
-      description: `Day ${day} core learning activities incorporating trauma-informed practices, hands-on engagement, and Root Work Framework principles. Emphasize peer support, collaboration, and multiple ways of engaging with content.`
+      time: `Day ${day}: I Do - Direct Instruction (15-20 min)`,
+      activity: "Modeling and Demonstration",
+      description: `Teacher models key concepts related to ${topic} using multiple modalities and culturally responsive examples. [Teacher Note: Use think-aloud strategy and provide visual, auditory, and kinesthetic input. Watch for signs of overwhelm and adjust pacing.] [Student Note: Focus on the learning process being modeled. Notice how experts think through problems and strategies you can use.]`
     });
 
     timeline.push({
-      time: `Day ${day}: Reflection and Connection (${wrapUpTime} min)`,
+      time: `Day ${day}: We Do - Collaborative Exploration (10-15 min)`,
+      activity: "Guided Practice Together",
+      description: `Collaborative exploration of ${topic} with teacher guidance and peer support. [Teacher Note: Facilitate rather than direct. Use proximity and positive narration to support student engagement. Provide choice in participation level.] [Student Note: This is practice time with support. Ask questions, share ideas, and learn from your classmates' perspectives.]`
+    });
+
+    timeline.push({
+      time: `Day ${day}: You Do Together - Partner/Small Group (15-20 min)`,
+      activity: "Partner Application and Exploration",
+      description: `Students work in partnerships or small groups to apply learning about ${topic}. [Teacher Note: Use intentional grouping strategies. Circulate to provide just-in-time support. Honor different communication styles and collaboration preferences.] [Student Note: Work together to deepen understanding. Use your partnership skills and remember everyone learns differently.]`
+    });
+
+    timeline.push({
+      time: `Day ${day}: You Do Alone - Independent Practice (15-20 min)`,
+      activity: "Individual Reflection and Application",
+      description: `Independent work allowing students to demonstrate understanding of ${topic} through chosen modality. [Teacher Note: Provide multiple options for demonstrating learning. Use regulation check-ins and offer movement breaks. Support self-advocacy skills.] [Student Note: Show what you know in the way that works best for you. Use your self-regulation strategies and ask for support when needed.]`
+    });
+
+    timeline.push({
+      time: `Day ${day}: Closing/Reflection (5-10 min)`,
       activity: "Reflection Circle and Community Connection",
-      description: `Close Day ${day} with reflection and meaning-making. Connect learning to students' lives, communities, and future applications of knowledge.`
+      description: `Close Day ${day} with reflection on learning and connections to community/life experiences. [Teacher Note: Use restorative closure practices. Celebrate growth and effort. Preview next day to reduce anxiety.] [Student Note: Reflect on your learning growth today. Think about how this connects to your life and goals.]`
     });
   }
 
   return {
-    title: `Root Work Framework Multi-Day Learning Experience - Grade ${data.gradeLevel}`,
-    overview: `This ${numDays}-day trauma-informed lesson sequence (${minutesPerDay} minutes per day) connects students to learning through place-based education, cultural responsiveness, and community connection. Students will engage in collaborative exploration while building on their cultural assets and prior knowledge in psychologically safe environments.`,
+    title: `Root Work Framework ${numDays}-Day Learning Experience: ${data.standards ? extractTopicFromStandards(data.standards) : 'Student-Centered Learning'} - Grade ${data.gradeLevel}`,
+    overview: `This ${numDays}-day trauma-informed lesson sequence (${minutesPerDay} minutes per day) integrates SAMHSA trauma-informed principles, CASEL SEL competencies, and Root Work Framework methodology. Students engage in culturally responsive, place-based learning that honors their assets while building academic skills through STEAM integration and Living Learning Lab approaches.`,
     objectives: [
-      `Students will engage in culturally responsive, hands-on learning over ${numDays} days`,
-      `Students will practice SEL competencies including collaboration, responsible decision-making, and emotional regulation`,
-      `Students will make meaningful connections between learning content and their community experiences`,
+      `Students will engage in trauma-informed, culturally responsive learning experiences over ${numDays} days`,
+      `Students will practice CASEL SEL competencies including self-awareness, social awareness, and responsible decision-making`,
       `Students will demonstrate learning through multiple modalities that honor diverse ways of knowing`,
-      `Students will engage in daily reflection and meaning-making about their learning journey`
+      `Students will make meaningful connections between academic content and their cultural/community experiences`,
+      `Students will develop self-regulation and self-advocacy skills within a healing-centered learning environment`
     ],
     materials: [
-      'Chart paper and markers for collaborative work',
-      'Student reflection journals',
-      'Community connection materials (photos, maps, stories)',
-      'Hands-on manipulatives or real-world materials',
-      data.focusArea ? 'Materials specific to focus area considerations' : 'Culturally relevant resources and materials'
+      'Community circle space with flexible seating options',
+      'Student reflection journals with choice of formats',
+      'Chart paper, markers, and collaborative work materials',
+      'Culturally relevant texts, images, and community connection resources',
+      'STEAM integration materials (science tools, art supplies, technology access)',
+      'Regulation tools (fidgets, movement options, quiet space access)',
+      data.focusArea ? `Specific materials for: ${data.focusArea}` : 'Materials responsive to student interests and needs'
     ],
     timeline: timeline,
-    assessment: `Use culturally responsive assessment that honors diverse ways of knowing and expressing understanding. Include daily peer feedback, self-reflection, and authentic demonstration of learning across ${numDays} days. Focus on growth, effort, and community contribution rather than deficit-based evaluation. Document student engagement, collaboration, and connection-making throughout the sequence.`,
-    differentiation: data.focusArea ? 
-      `Address specific considerations: ${data.focusArea}. Provide trauma-informed supports including choice, movement, sensory breaks, and multiple communication modalities. Use MTSS and UDL principles to ensure all students can access and demonstrate learning across ${numDays} days. Build on cultural assets and honor neurodiversity.` :
-      `Implement trauma-informed practices including flexible seating, movement breaks, and multiple communication options across all ${numDays} days. Honor diverse learning styles, cultural backgrounds, and neurodiversity. Provide scaffolding and peer support systems. Use restorative rather than punitive approaches to behavior.`,
-    extensions: `Advanced learners can become peer mentors, investigate community connections to learning content, research environmental or cultural applications, or develop projects that contribute to community healing and transformation. Connect to intergenerational learning opportunities and real-world stewardship activities that extend beyond the ${numDays}-day sequence.`
+    assessment: `MTSS-aligned assessment using multiple modalities: Tier 1 - Universal formative assessment through observation, student self-reflection, and peer feedback. Tier 2 - Additional check-ins and scaffolded support for students needing more time. Tier 3 - Individualized assessment accommodations and alternative demonstration methods. All assessment honors cultural responsiveness and trauma-informed principles, focusing on growth rather than deficit-based evaluation.`,
+    differentiation: `Comprehensive differentiation following Root Work Framework: 504 Accommodations - Extended time, preferred seating, movement breaks, alternative formats. Gifted Extensions - Complex problem-solving, peer mentoring, independent research projects. SPED Modifications - Visual supports, chunked instructions, sensory accommodations, communication alternatives. Co-teaching Model: ${getRandomCoTeachingModel()} with shared responsibility for trauma-informed facilitation. ${data.focusArea ? `Specific considerations: ${data.focusArea}` : 'Standard trauma-informed practices with cultural responsiveness.'}`,
+    extensions: `Reteaching Plans: For students needing additional support - use alternative modalities, peer tutoring, and additional practice with trauma-informed approaches. Extension Activities: Advanced learners can engage in community research projects, mentor younger students, create resources for families, or develop environmental stewardship initiatives. Literacy Integration: Include vocabulary development, reading comprehension strategies, and writing across curriculum. STEAM Connections: ${generateSTEAMConnections(data.standards || 'interdisciplinary learning')}. Living Learning Lab opportunities for hands-on, place-based learning that extends beyond the ${numDays}-day sequence.`
   };
+}
+
+function extractTopicFromStandards(standards: string): string {
+  // Simple extraction of likely topic from standards text
+  const keywords = standards.toLowerCase().match(/\b(genetics|literature|math|science|history|writing|reading|analysis|investigation|research|study|exploration)\b/g);
+  if (keywords && keywords.length > 0) {
+    return keywords[0].charAt(0).toUpperCase() + keywords[0].slice(1);
+  }
+  return 'Interdisciplinary Learning';
+}
+
+function getRandomCoTeachingModel(): string {
+  const models = [
+    'One Teach, One Support',
+    'Parallel Teaching',
+    'Alternative Teaching',
+    'Station Teaching',
+    'Team Teaching'
+  ];
+  return models[Math.floor(Math.random() * models.length)];
+}
+
+function generateSTEAMConnections(topic: string): string {
+  return `Science - observation and hypothesis formation; Technology - digital tools for research and presentation; Engineering - problem-solving and design thinking; Arts - creative expression and cultural representation; Mathematics - data analysis and pattern recognition related to ${topic}`;
 }
 
 function validateLessonPlan(plan: any, data: LessonRequest): LessonPlan {
@@ -293,21 +401,11 @@ function validateLessonPlan(plan: any, data: LessonRequest): LessonPlan {
         {
           time: `Day 1: Community Circle Opening (10 min)`,
           activity: "Community Circle Opening",
-          description: `Create psychological safety and connect to learning content`
-        },
-        {
-          time: `Day 1: Main Learning Activity (${parseInt(data.minutes) - 20} min)`, 
-          activity: "Collaborative Exploration",
-          description: `Engage in trauma-informed, culturally responsive learning activities`
-        },
-        {
-          time: `Day 1: Reflection Circle (10 min)`,
-          activity: "Reflection Circle",
-          description: "Share insights and make community connections"
+          description: `Create psychological safety and connect to learning content [Teacher Note: Use trauma-informed facilitation] [Student Note: This is your safe space to learn and grow]`
         }
       ],
     assessment: plan.assessment || "Use culturally responsive assessment methods that honor diverse ways of knowing",
-    differentiation: plan.differentiation || "Implement trauma-informed practices and support diverse learning needs",
-    extensions: plan.extensions || "Connect learning to community stewardship and intergenerational knowledge sharing"
+    differentiation: plan.differentiation || "Implement trauma-informed practices and support diverse learning needs with MTSS framework",
+    extensions: plan.extensions || "Connect learning to community stewardship and intergenerational knowledge sharing with STEAM integration"
   };
 }
