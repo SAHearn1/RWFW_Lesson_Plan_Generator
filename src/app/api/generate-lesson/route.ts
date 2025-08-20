@@ -1,4 +1,4 @@
-// src/app/api/generate-lesson/route.ts - Enhanced Visual Formatting
+// src/app/api/generate-lesson/route.ts - Enhanced Visual Formatting with TypeScript Fixes
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -126,7 +126,7 @@ function processTopicForReadability(topic: string): string {
     }
   }
   
-  return cleanTopic.split(' ').map(word => 
+  return cleanTopic.split(' ').map((word: string) => 
     word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
   ).join(' ');
 }
@@ -144,7 +144,7 @@ function cleanContent(content: string): string {
     .replace(/â€¦/g, '...')
     .replace(/Â/g, ' ')
     .replace(/\u00A0/g, ' ')
-    .replace(/[^\x00-\x7F]/g, function(char) {
+    .replace(/[^\x00-\x7F]/g, function(char: string): string {
       const charMap: {[key: string]: string} = {
         'â€"': '—',
         'â€œ': '"',
@@ -161,8 +161,7 @@ function cleanContent(content: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/`{1,3}([^`]+)`{1,3}/g, '$1')
     .replace(/^\s*[-*+]\s+/gm, '• ')
-    .replace(/^\s*\d+\.\s+/gm, function(match, offset, string) {
-      const lineStart = string.lastIndexOf('\n', offset) + 1;
+    .replace(/^\s*\d+\.\s+/gm, function(match: string, offset: number, string: string): string {
       const lineNumber = string.substring(0, offset).split('\n').length;
       return lineNumber + '. ';
     })
@@ -810,27 +809,27 @@ function processContentForEnhancedHTML(content: string): string {
     .replace(/REFLECTION \((\d+) minutes\)/g, '</div><div class="rs-section"><div class="rs-header">REFLECTION ($1 minutes)</div>')
     
     // Process notes
-    .replace(/Teacher Note: ([^\n]+)/g, '<div class="note teacher-note"><div class="note-label">👩‍🏫 Teacher Note:</div>$1</div>')
-    .replace(/Student Note: ([^\n]+)/g, '<div class="note student-note"><div class="note-label">🎓 Student Note:</div>$1</div>')
+    .replace(/Teacher Note: ([^\n]+)/g, '<div class="note teacher-note"><div class="note-label">Teacher Note:</div>$1</div>')
+    .replace(/Student Note: ([^\n]+)/g, '<div class="note student-note"><div class="note-label">Student Note:</div>$1</div>')
     
     // Process tables
-    .replace(/CREATE TABLE:\s*\n((?:[^\n]+\s*\|\s*[^\n]+\s*\|\s*[^\n]+\s*\n?)+)/g, function(match, tableContent) {
+    .replace(/CREATE TABLE:\s*\n((?:[^\n]+\s*\|\s*[^\n]+\s*\|\s*[^\n]+\s*\n?)+)/g, function(match: string, tableContent: string): string {
       const lines = tableContent.trim().split('\n');
       const headerLine = lines[0];
       const dataLines = lines.slice(1);
       
-      const headers = headerLine.split('|').map(h => h.trim());
+      const headers = headerLine.split('|').map((h: string) => h.trim());
       let tableHTML = '<table><thead><tr>';
-      headers.forEach(header => {
+      headers.forEach((header: string) => {
         tableHTML += `<th>${header}</th>`;
       });
       tableHTML += '</tr></thead><tbody>';
       
-      dataLines.forEach(line => {
+      dataLines.forEach((line: string) => {
         if (line.trim()) {
-          const cells = line.split('|').map(c => c.trim());
+          const cells = line.split('|').map((c: string) => c.trim());
           tableHTML += '<tr>';
-          cells.forEach(cell => {
+          cells.forEach((cell: string) => {
             tableHTML += `<td>${cell}</td>`;
           });
           tableHTML += '</tr>';
@@ -877,7 +876,7 @@ function generateDownloadableResources(content: string, data: MasterPromptReques
   const resourceMatches = content.match(/COMPLETE CONTENT:([\s\S]*?)(?=File:|$)/g) || [];
   
   return {
-    textResources: resourceMatches.map((match, index) => ({
+    textResources: resourceMatches.map((match: string, index: number) => ({
       filename: `${lessonCode}_${data.gradeLevel}${subjectAbbr}_Resource${index + 1}.txt`,
       content: cleanContent(match.replace('COMPLETE CONTENT:', '').trim()),
       type: 'text/plain'
