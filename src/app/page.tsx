@@ -1,254 +1,251 @@
-// src/app/page.tsx
+// src/app/page.tsx - Root Work Framework Landing Page
 
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 
-interface FormData {
-  unitTitle: string;
-  gradeLevel: string;
-  numberOfDays: string;
-  minutes: string;
-  standards?: string;
-  focusArea?: string;
-}
-
-export default function LessonPlanGenerator() {
-  const [formData, setFormData] = useState<FormData>({
-    unitTitle: '',
-    gradeLevel: '',
-    numberOfDays: '',
-    minutes: '',
-    standards: '',
-    focusArea: ''
-  });
-  
-  const [isLoading, setIsLoading] = useState(false);
-  const [lessonPlan, setLessonPlan] = useState('');
-  const [error, setError] = useState('');
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      // Validate required fields
-      const missingFields = [];
-      if (!formData.unitTitle?.trim()) missingFields.push('Unit Title');
-      if (!formData.gradeLevel?.trim()) missingFields.push('Grade Level');
-      if (!formData.numberOfDays?.trim()) missingFields.push('Number of Days');
-      if (!formData.minutes?.trim()) missingFields.push('Minutes per Day');
-
-      if (missingFields.length > 0) {
-        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-      }
-
-      console.log('Submitting payload:', formData);
-
-      const response = await fetch('/api/generate-lesson', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log('Response data:', errorData);
-        throw new Error(errorData.error || 'Failed to generate lesson plan');
-      }
-
-      const data = await response.json();
-      setLessonPlan(data.lessonPlan);
-    } catch (err) {
-      console.error('Form submission error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+export default function RootWorkFrameworkLanding() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-            Professional Lesson Plan Generator
-          </h1>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Unit Title - New Field */}
-            <div>
-              <label htmlFor="unitTitle" className="block text-sm font-medium text-gray-700 mb-2">
-                Unit Title *
-              </label>
-              <input
-                type="text"
-                id="unitTitle"
-                name="unitTitle"
-                value={formData.unitTitle}
-                onChange={handleInputChange}
-                placeholder="e.g., Civil Rights Movement, Ecosystems, Algebraic Expressions"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Enter the main topic or theme for this unit of study
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-emerald-800 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <div className="bg-emerald-600 p-2 rounded-lg">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Root Work Framework</h1>
+                <p className="text-emerald-200 text-sm">AI-Powered Lesson Planning</p>
+              </div>
+            </div>
+            <nav className="flex items-center space-x-6">
+              <Link 
+                href="#how-it-works" 
+                className="text-emerald-200 hover:text-white transition-colors"
+              >
+                Getting Started
+              </Link>
+              <Link 
+                href="/generate" 
+                className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Generate Lesson
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-yellow-50 to-green-50 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-5xl font-bold text-gray-900 mb-6">
+            Transform Your Teaching with{' '}
+            <span className="text-emerald-600">Root Work Framework</span>
+          </h2>
+          <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
+            A trauma-informed, regenerative learning ecosystem that integrates project-based 
+            STEAM education, culturally responsive pedagogy, and place-based learning. 
+            Designed by Dr. S.A. Hearn for urban schools and community transformation.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link 
+              href="/generate"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+              </svg>
+              Start Creating Lessons
+            </Link>
+            <Link 
+              href="#how-it-works"
+              className="border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center"
+            >
+              Learn How It Works
+              <svg className="w-5 h-5 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-3xl font-bold text-center text-gray-900 mb-4">
+            Trauma-Informed, Regenerative Learning Ecosystem
+          </h3>
+          <p className="text-lg text-gray-600 text-center mb-16 max-w-4xl mx-auto">
+            Root Work Framework integrates SAMHSA trauma-informed principles, CASEL 
+            SEL competencies, and regenerative agriculture into comprehensive Living 
+            Learning Labs.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Trauma-Informed Care */}
+            <div className="text-center">
+              <div className="bg-emerald-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                </svg>
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">Trauma-Informed Care</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Lessons embed SAMHSA's six principles: safety, trustworthiness, 
+                peer support, collaboration, empowerment, and cultural responsiveness.
               </p>
             </div>
 
-            {/* Grade Level */}
-            <div>
-              <label htmlFor="gradeLevel" className="block text-sm font-medium text-gray-700 mb-2">
-                Grade Level *
-              </label>
-              <select
-                id="gradeLevel"
-                name="gradeLevel"
-                value={formData.gradeLevel}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                required
-              >
-                <option value="">Select Grade Level</option>
-                <option value="K">Kindergarten</option>
-                <option value="1st">1st Grade</option>
-                <option value="2nd">2nd Grade</option>
-                <option value="3rd">3rd Grade</option>
-                <option value="4th">4th Grade</option>
-                <option value="5th">5th Grade</option>
-                <option value="6th">6th Grade</option>
-                <option value="7th">7th Grade</option>
-                <option value="8th">8th Grade</option>
-                <option value="9th">9th Grade</option>
-                <option value="10th">10th Grade</option>
-                <option value="11th">11th Grade</option>
-                <option value="12th">12th Grade</option>
-                <option value="Mixed">Mixed Ages</option>
-              </select>
-            </div>
-
-            {/* Number of Days and Minutes per Day */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="numberOfDays" className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Days *
-                </label>
-                <input
-                  type="number"
-                  id="numberOfDays"
-                  name="numberOfDays"
-                  value={formData.numberOfDays}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="30"
-                  placeholder="5"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
-                />
+            {/* Place-Based STEAM */}
+            <div className="text-center">
+              <div className="bg-emerald-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
+                </svg>
               </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">Place-Based STEAM</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Project-based learning through regenerative urban homesteading, 
+                integrating science, technology, engineering, arts, and mathematics.
+              </p>
+            </div>
 
-              <div>
-                <label htmlFor="minutes" className="block text-sm font-medium text-gray-700 mb-2">
-                  Minutes per Day *
-                </label>
-                <input
-                  type="number"
-                  id="minutes"
-                  name="minutes"
-                  value={formData.minutes}
-                  onChange={handleInputChange}
-                  min="15"
-                  max="180"
-                  placeholder="50"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
-                />
+            {/* Cultural Responsiveness */}
+            <div className="text-center">
+              <div className="bg-emerald-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                </svg>
               </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">Cultural Responsiveness</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Culturally responsive pedagogy that honors student backgrounds while 
+                building intergenerational stewardship and community connections.
+              </p>
             </div>
 
-            {/* Standards */}
-            <div>
-              <label htmlFor="standards" className="block text-sm font-medium text-gray-700 mb-2">
-                Academic Standards (Optional)
-              </label>
-              <textarea
-                id="standards"
-                name="standards"
-                value={formData.standards}
-                onChange={handleInputChange}
-                rows={3}
-                placeholder="e.g., CCSS.ELA-LITERACY.RST.9-10.7, NGSS 5-ESS2-1"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-vertical"
-              />
-            </div>
-
-            {/* Focus Area */}
-            <div>
-              <label htmlFor="focusArea" className="block text-sm font-medium text-gray-700 mb-2">
-                Special Focus Area (Optional)
-              </label>
-              <input
-                type="text"
-                id="focusArea"
-                name="focusArea"
-                value={formData.focusArea}
-                onChange={handleInputChange}
-                placeholder="e.g., ELL support, special education accommodations, project-based learning"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Generating Lesson Plan...
-                </>
-              ) : (
-                'Generate Lesson Plan'
-              )}
-            </button>
-          </form>
-
-          {/* Error Display */}
-          {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 font-medium">Error:</p>
-              <p className="text-red-600">{error}</p>
-            </div>
-          )}
-
-          {/* Lesson Plan Display */}
-          {lessonPlan && (
-            <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Generated Lesson Plan</h2>
-              <div className="prose max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
-                  {lessonPlan}
-                </pre>
+            {/* Living Learning Labs */}
+            <div className="text-center">
+              <div className="bg-emerald-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                </svg>
               </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">Living Learning Labs</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Evidence-based practices creating hubs for healing, learning, 
+                innovation, and community transformation through regenerative systems.
+              </p>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-3xl font-bold text-center text-gray-900 mb-16">
+            How Root Work Framework Works
+          </h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="bg-emerald-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-bold">
+                1
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">Input Your Requirements</h4>
+              <p className="text-gray-600">
+                Specify your subject, grade level, topic, and duration. Add any special 
+                considerations for your students and available resources.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-emerald-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-bold">
+                2
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">AI Generates Framework-Based Lessons</h4>
+              <p className="text-gray-600">
+                Our AI creates comprehensive lesson plans using the 5 Rs (Relationships, 
+                Routines, Relevance, Rigor, Reflection) with built-in trauma-informed practices.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-emerald-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-bold">
+                3
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">Implement & Transform</h4>
+              <p className="text-gray-600">
+                Receive detailed lesson plans with MTSS supports, co-teaching strategies, 
+                and community-centered approaches ready for immediate classroom use.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-emerald-800 text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-3xl font-bold mb-6">
+            Ready to Transform Your Teaching Practice?
+          </h3>
+          <p className="text-xl mb-8 text-emerald-100">
+            Join educators creating trauma-informed, culturally responsive learning 
+            experiences that honor student backgrounds and build community connections.
+          </p>
+          <Link 
+            href="/generate"
+            className="bg-white text-emerald-800 hover:bg-emerald-50 px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+            </svg>
+            Create Your First Lesson Plan
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Root Work Framework</h4>
+              <p className="text-gray-400">
+                Transforming education through trauma-informed, regenerative learning 
+                ecosystems designed for urban schools and community transformation.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Framework Elements</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li>The 5 Rs Structure</li>
+                <li>SAMHSA Trauma-Informed Principles</li>
+                <li>CASEL SEL Competencies</li>
+                <li>Place-Based STEAM Integration</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">About</h4>
+              <p className="text-gray-400">
+                Developed by Dr. S.A. Hearn, combining expertise in education law, 
+                special education, trauma-informed care, and regenerative practices.
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 Root Work Framework. Designed for educational transformation.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
