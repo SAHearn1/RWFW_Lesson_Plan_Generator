@@ -1,12 +1,12 @@
-// src/app/api/generate-lesson/route.ts - Enhanced Visual Formatting with TypeScript Fixes
+// File: src/app/generate/page.tsx - Professional Full-Screen Generator with Tolerant Renderer
 
-import { NextRequest, NextResponse } from 'next/server';
+'use client';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+import { useState } from 'react';
+import Link from 'next/link';
 
-type MasterPromptRequest = {
-  subject: string;
+interface FormData {
+  subjects: string[];
   gradeLevel: string;
   topic: string;
   duration: string;
@@ -16,1264 +16,1035 @@ type MasterPromptRequest = {
   availableResources?: string;
   location?: string;
   unitContext?: string;
-  lessonType?: string;
-  specialInstructions?: string;
-};
-
-type GeneratedResource = {
-  filename: string;
-  content: string;
-  type: string;
-};
-
-type ImagePrompt = {
-  filename: string;
-  prompt: string;
-  type: string;
-};
-
-function okJson(data: unknown, init: ResponseInit = {}) {
-  return NextResponse.json(data, { ...init, headers: { 'Cache-Control': 'no-store' } });
 }
 
-function normalizeShape(input: any): Partial<MasterPromptRequest> {
-  if (!input || typeof input !== 'object') return input;
-  if (input.payload && typeof input.payload === 'object') return input.payload;
-  if (typeof input.body === 'string') {
-    try {
-      const parsed = JSON.parse(input.body);
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch { /* ignore */ }
-  }
-  if (input.data && typeof input.data === 'object') return input.data;
-  return input;
-}
+type RWFWPlan = {
+  title?: string;
+  overview?: string;
+  materials?: string[];
 
-async function parseLessonRequest(req: NextRequest): Promise<Partial<MasterPromptRequest> | null> {
-  const ct = req.headers.get('content-type') || '';
-
-  if (ct.includes('application/json')) {
-    try {
-      const json = await req.json();
-      return normalizeShape(json);
-    } catch { /* fall through */ }
-  }
-
-  try {
-    const raw = await req.text();
-    if (raw && raw.trim().startsWith('{')) {
-      const json = JSON.parse(raw);
-      return normalizeShape(json);
-    }
-  } catch { /* fall through */ }
-
-  if (ct.includes('application/x-www-form-urlencoded')) {
-    try {
-      const form = await req.formData();
-      const o: Record<string, string> = {};
-      for (const [k, v] of form.entries()) if (typeof v === 'string') o[k] = v;
-      return normalizeShape(o);
-    } catch { /* ignore */ }
-  }
-
-  return null;
-}
-
-function getSubjectAbbreviation(subject: string): string {
-  const abbreviations: Record<string, string> = {
-    'English Language Arts': 'ELA',
-    'Mathematics': 'MATH',
-    'Science': 'SCI',
-    'Social Studies': 'SOC',
-    'STEAM (Integrated)': 'STEAM',
-    'Special Education': 'SPED',
-    'Agriculture': 'AGSCI',
-    'Environmental Science': 'ENVSCI',
-    'Life Skills': 'LIFE',
-    'Social-Emotional Learning': 'SEL',
-    'Art': 'ART',
-    'Music': 'MUS',
-    'Physical Education': 'PE',
-    'Career & Technical Education': 'CTE',
-    'World Languages': 'WL'
+  iCanTargets?: Array<{ text: string; dok: 1 | 2 | 3 | 4 }>;
+  fiveRsSchedule?: Array<{ label: string; minutes: number; purpose: string }>;
+  literacySkillsAndResources?: { skills: string[]; resources: string[] };
+  bloomsAlignment?: Array<{
+    task: string;
+    bloom: 'Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create';
+    rationale: string;
+  }>;
+  coTeachingIntegration?: { model: string; roles: string[]; grouping: string };
+  reteachingAndSpiral?: { sameDayQuickPivot: string; nextDayPlan: string; spiralIdeas: string[] };
+  mtssSupports?: { tier1: string[]; tier2: string[]; tier3: string[]; progressMonitoring: string[] };
+  therapeuticRootworkContext?: {
+    rationale: string;
+    regulationCue: string;
+    restorativePractice: string;
+    communityAssets: string[];
   };
-  
-  return abbreviations[subject] || 'GEN';
-}
+  lessonFlowGRR?: Array<{
+    phase: 'I Do' | 'We Do' | 'You Do' | string;
+    step: string;
+    details: string;
+    teacherNote: string;
+    studentNote: string;
+  }>;
+  assessmentAndEvidence?: {
+    formativeChecks: string[];
+    rubric: Array<{ criterion: string; developing: string; proficient: string; advanced: string }>;
+    exitTicket: string;
+  };
 
-function processTopicForReadability(topic: string): string {
-  let cleanTopic = topic.trim();
-  
-  if (cleanTopic.length > 60) {
-    const patterns = [
-      /^(.*?)\s+(?:A Two-Week|Research Project|That Will Change)/i,
-      /^(.*?)\s+(?:Understanding|Exploring|Learning|Studying)/i,
-      /^(?:Understanding|Exploring|Learning|Studying)\s+(.*?)(?:\s+(?:A|The|Research|Project))/i,
-      /^(.*?)\s+(?:Impact|Effect|Influence)/i
-    ];
+  // Legacy compatibility
+  objectives?: string[];
+  timeline?: Array<{ time: string; activity: string; description: string }>;
+  assessment?: string;
+  differentiation?: string;
+  extensions?: string;
+};
+
+const SUBJECTS = [
+  'English Language Arts',
+  'Mathematics', 
+  'Science',
+  'Social Studies',
+  'STEAM (Integrated)',
+  'Special Education',
+  'Agriculture',
+  'Environmental Science',
+  'Life Skills',
+  'Social-Emotional Learning',
+  'Art',
+  'Music',
+  'Physical Education',
+  'Career & Technical Education',
+  'World Languages',
+  'Other'
+];
+
+const STANDARDS_SHORTCUTS: Record<string, string> = {
+  'georgia standards': 'Georgia Standards of Excellence (GSE)',
+  'common core': 'Common Core State Standards (CCSS)',
+  'ngss': 'Next Generation Science Standards (NGSS)',
+  'casel': 'CASEL Social-Emotional Learning Standards',
+  'national standards': 'Relevant National Content Standards',
+  'state standards': 'State Academic Standards for selected grade level and subject'
+};
+
+const LOADING_STAGES = [
+  { stage: 'initializing', message: 'Initializing Root Work Framework protocol...', duration: 2000 },
+  { stage: 'standards', message: 'Integrating academic standards and DOK levels...', duration: 3000 },
+  { stage: 'trauma-informed', message: 'Applying trauma-informed pedagogy principles...', duration: 4000 },
+  { stage: 'steam', message: 'Designing STEAM integration and project-based components...', duration: 5000 },
+  { stage: 'mtss', message: 'Creating MTSS scaffolding and differentiation strategies...', duration: 3000 },
+  { stage: 'assessment', message: 'Developing assessment tools and rubrics...', duration: 2000 },
+  { stage: 'finalizing', message: 'Finalizing comprehensive lesson plan structure...', duration: 2000 }
+];
+
+export default function GeneratePage() {
+  const [formData, setFormData] = useState<FormData>({
+    subjects: [],
+    gradeLevel: '',
+    topic: '',
+    duration: '',
+    numberOfDays: '',
+    learningObjectives: '',
+    specialNeeds: '',
+    availableResources: '',
+    location: 'Savannah, Georgia',
+    unitContext: ''
+  });
+
+  const [lessonPlan, setLessonPlan] = useState<RWFWPlan | string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const [currentStage, setCurrentStage] = useState(0);
+  const [showForm, setShowForm] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubjectChange = (subject: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subjects: prev.subjects.includes(subject)
+        ? prev.subjects.filter(s => s !== subject)
+        : [...prev.subjects, subject]
+    }));
+  };
+
+  const simulateLoadingStages = () => {
+    let stageIndex = 0;
+    const progressStage = () => {
+      if (stageIndex < LOADING_STAGES.length) {
+        setCurrentStage(stageIndex);
+        setTimeout(() => {
+          stageIndex++;
+          progressStage();
+        }, LOADING_STAGES[stageIndex]?.duration || 2000);
+      }
+    };
+    progressStage();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    setError('');
+    setCurrentStage(0);
+    simulateLoadingStages();
+
+    // Enhanced validation
+    const missing: string[] = [];
+    if (!formData.subjects.length) missing.push('Subject Area(s)');
+    if (!formData.gradeLevel?.trim()) missing.push('Grade Level');
+    if (!formData.topic?.trim()) missing.push('Lesson Topic');
+    if (!formData.duration?.trim()) missing.push('Duration');
+    if (!formData.numberOfDays?.trim()) missing.push('Number of Days');
     
-    for (const pattern of patterns) {
-      const match = cleanTopic.match(pattern);
-      if (match && match[1] && match[1].length > 10 && match[1].length < 50) {
-        cleanTopic = match[1].trim();
-        break;
+    if (missing.length) {
+      setError(`Please complete these required fields: ${missing.join(', ')}`);
+      setIsGenerating(false);
+      return;
+    }
+
+    try {
+      // Enhanced payload (keeps API happy while enabling multi-day + RWFW richness)
+      const enhancedPayload = {
+        subject: formData.subjects.join(', '),
+        gradeLevel: formData.gradeLevel.trim(),
+        topic: formData.topic.trim(),
+        duration: formData.duration.trim(),
+        numberOfDays: formData.numberOfDays.trim(),
+        learningObjectives: processLearningObjectives(
+          formData.learningObjectives || '',
+          formData.subjects,
+          formData.gradeLevel
+        ),
+        specialNeeds: processSpecialNeeds(formData.specialNeeds || ''),
+        availableResources: formData.availableResources?.trim() || '',
+        location: formData.location || 'Savannah, Georgia',
+        unitContext: formData.unitContext || '',
+        lessonType: 'comprehensive_multi_day',
+        requireTeacherNotes: true,
+        requireStudentNotes: true,
+        includeTraumaInformed: true,
+        includeSTEAM: true,
+        includeMTSS: true,
+        includeAssessment: true,
+        includeResources: true,
+        gradualRelease: true,
+        specialInstructions: `Generate a comprehensive ${formData.numberOfDays}-day lesson plan following the Root Work Framework master prompt structure. Include mandatory [Teacher Note:] and [Student Note:] for every lesson component. Structure each day with: Opening, I Do, We Do, You Do Together, You Do Alone, Closing. Include STEAM integration, trauma-informed practices, MTSS supports, assessment tools, and resource appendix. Use healing-centered, second-person voice for students.`
+      };
+
+      // Send
+      const response = await fetch('/api/generate-lesson', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(enhancedPayload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Request failed with status ${response.status}`);
+      }
+      if (!data?.lessonPlan) {
+        throw new Error('No lesson plan generated. Please try again.');
+      }
+
+      setLessonPlan(data.lessonPlan as RWFWPlan | string);
+      setShowForm(false);
+      
+    } catch (err: any) {
+      console.error('Generation error:', err);
+      setError(err?.message || 'Failed to generate lesson plan. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const processLearningObjectives = (objectives: string, subjects: string[], gradeLevel: string): string => {
+    if (!objectives.trim()) return '';
+    let processed = objectives;
+    const lower = objectives.toLowerCase();
+    for (const [shortcut, full] of Object.entries(STANDARDS_SHORTCUTS)) {
+      if (lower.includes(shortcut)) {
+        processed += `\n\nINTEGRATE: Include specific ${full} for ${subjects.join(' and ')} at grade ${gradeLevel}. Provide actual standard codes and descriptions.`;
       }
     }
-    
-    if (cleanTopic.length > 60) {
-      const words = cleanTopic.split(' ');
-      cleanTopic = words.slice(0, Math.min(6, words.length)).join(' ');
+    return processed;
+  };
+
+  const processSpecialNeeds = (specialNeeds: string): string => {
+    if (!specialNeeds.trim()) return '';
+    let processed = specialNeeds;
+    const lower = specialNeeds.toLowerCase();
+    const expansions: Record<string, string> = {
+      'ell': 'English Language Learners',
+      'sped': 'Special Education',
+      'iep': 'Individualized Education Program',
+      '504': 'Section 504 accommodations',
+      'adhd': 'Attention Deficit Hyperactivity Disorder',
+      'asd': 'Autism Spectrum Disorder',
+      'ptsd': 'Post-Traumatic Stress Disorder'
+    };
+    for (const [abbrev, full] of Object.entries(expansions)) {
+      if (lower.includes(abbrev)) {
+        processed += `\n\nPROVIDE: Specific evidence-based accommodations and supports for ${full}.`;
+      }
     }
-  }
-  
-  return cleanTopic.split(' ').map((word: string) => 
-    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-  ).join(' ');
-}
-
-function cleanContent(content: string): string {
-  return content
-    .replace(/â€"/g, '—')
-    .replace(/â€œ/g, '"')
-    .replace(/â€/g, '"')
-    .replace(/â€™/g, "'")
-    .replace(/Ã—/g, '×')
-    .replace(/Ã¢â‚¬â€/g, '—')
-    .replace(/Ã¢â‚¬Å"/g, '"')
-    .replace(/Ã¢â‚¬â„¢/g, "'")
-    .replace(/â€¦/g, '...')
-    .replace(/Â/g, ' ')
-    .replace(/\u00A0/g, ' ')
-    .replace(/[^\x00-\x7F]/g, function(char: string): string {
-      const charMap: {[key: string]: string} = {
-        'â€"': '—',
-        'â€œ': '"',
-        'â€': '"',
-        'â€™': "'",
-        'â€¦': '...',
-        'Ã—': '×',
-        'Â': ' '
-      };
-      return charMap[char] || char;
-    })
-    .replace(/#{1,6}\s*/g, '')
-    .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/`{1,3}([^`]+)`{1,3}/g, '$1')
-    .replace(/^\s*[-*+]\s+/gm, '• ')
-    .replace(/^\s*\d+\.\s+/gm, function(match: string, offset: number, string: string): string {
-      const lineNumber = string.substring(0, offset).split('\n').length;
-      return lineNumber + '. ';
-    })
-    .replace(/\n\s*\n\s*\n/g, '\n\n')
-    .trim();
-}
-
-function buildEnhancedMasterPrompt(data: MasterPromptRequest): string {
-  const numberOfDays = parseInt(data.numberOfDays || '5');
-  const durationMinutes = parseInt(data.duration?.match(/\d+/)?.[0] || '90');
-  const cleanTopic = processTopicForReadability(data.topic);
-  const lessonCode = `RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}`;
-  const subjectAbbr = getSubjectAbbreviation(data.subject);
-  
-  return `
-PROFESSIONAL LESSON PLAN GENERATOR - STRUCTURED OUTPUT
-
-Create a comprehensive ${numberOfDays}-day lesson plan with clear content hierarchy and professional formatting.
-
-LESSON PARAMETERS:
-- Subject: ${data.subject}
-- Grade Level: ${data.gradeLevel}
-- Topic: ${cleanTopic}
-- Duration: ${data.duration} per day
-- Location: ${data.location || 'Savannah, Georgia'}
-- Days: ${numberOfDays}
-
-CRITICAL OUTPUT REQUIREMENTS:
-1. Use clear heading hierarchy (Level I, II, III)
-2. Each day must have UNIQUE, SPECIFIC content that builds progressively  
-3. Activities must be detailed and actionable for teachers
-4. Generate ACTUAL resource content, not placeholders
-5. Structure content for tables and visual organization where appropriate
-
-DAILY PROGRESSION:
-Day 1: Introduction and Foundation Building
-Day 2: Exploration and Investigation  
-Day 3: Analysis and Critical Thinking
-Day 4: Application and Creation
-Day 5: Synthesis and Reflection
-
-OUTPUT FORMAT WITH CLEAR HIERARCHY:
-
-LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
-Grade: ${data.gradeLevel}
-Subject: ${data.subject}
-Topic: ${cleanTopic}
-Duration: ${data.duration} per day over ${numberOfDays} days
-Location: ${data.location || 'Savannah, Georgia'}
-Unit Title: [Create compelling 4-6 word title using "${cleanTopic}"]
-
-LEVEL I HEADING: LESSON OVERVIEW
-[Write 2-3 sentences describing the unit's purpose and student outcomes]
-
-LEVEL I HEADING: UNIT ESSENTIAL QUESTION
-[One overarching question that spans all ${numberOfDays} days]
-
-LEVEL I HEADING: UNIT LEARNING TARGETS
-- I can [specific measurable outcome 1] (DOK 2)
-- I can [specific measurable outcome 2] (DOK 3) 
-- I can [specific measurable outcome 3] (DOK 4)
-
-${Array.from({length: numberOfDays}, (_, dayIndex) => {
-  const dayNumber = dayIndex + 1;
-  const dayFoci = [
-    'Introduction and Foundation Building',
-    'Exploration and Investigation', 
-    'Analysis and Critical Thinking',
-    'Application and Creation',
-    'Synthesis and Reflection'
-  ];
-  const dayFocus = dayFoci[dayIndex] || `Advanced Application ${dayNumber}`;
-  
-  return `
-LEVEL I HEADING: DAY ${dayNumber}: ${dayFocus}
-
-LEVEL II HEADING: Daily Essential Question
-[Specific question for Day ${dayNumber} that builds toward unit question]
-
-LEVEL II HEADING: Daily Learning Target
-I can [specific skill for Day ${dayNumber} related to ${cleanTopic}] (DOK ${dayNumber === 1 ? 2 : dayNumber === 2 ? 2 : dayNumber === 3 ? 3 : dayNumber === 4 ? 3 : 4})
-
-LEVEL II HEADING: Standards Alignment
-CREATE TABLE:
-Standard Type | Standard Code | Description
-Primary Standard | [Specific ${data.subject} standard] | [Brief description]
-SEL Integration | CASEL | [Specific competency for Day ${dayNumber}]
-Cross-Curricular | [Subject areas] | [Integration description]
-
-LEVEL II HEADING: Materials Needed
-[Specific bulleted list of materials for Day ${dayNumber} activities]
-
-LEVEL II HEADING: Root Work Framework 5 Rs Structure
-
-LEVEL III HEADING: RELATIONSHIPS (${Math.round(durationMinutes * 0.15)} minutes)
-Community Building and Belonging
-
-Opening Activity for Day ${dayNumber}:
-[Specific community-building activity related to ${cleanTopic} and Day ${dayNumber} focus]
-
-Teacher Note: [Specific guidance for Day ${dayNumber} community building that establishes safety while connecting to ${dayFocus}]
-
-Student Note: [Day ${dayNumber} specific encouragement that relates to ${dayFocus} and builds confidence]
-
-LEVEL III HEADING: ROUTINES (${Math.round(durationMinutes * 0.1)} minutes)
-Predictable Structure and Safety
-
-Day ${dayNumber} Agenda:
-[Specific bulleted agenda items for this day's ${dayFocus}]
-
-Success Criteria:
-[Specific bulleted success indicators students will achieve by end of Day ${dayNumber}]
-
-Teacher Note: [Day ${dayNumber} specific routine guidance that reduces anxiety and supports executive function]
-
-Student Note: [Day ${dayNumber} organization tips that help students prepare for ${dayFocus}]
-
-LEVEL III HEADING: RELEVANCE (${Math.round(durationMinutes * 0.25)} minutes)
-Connecting to Student Experience
-
-Day ${dayNumber} Connection Activity:
-[Specific activity connecting ${cleanTopic} to student lives, appropriate for ${dayFocus}]
-
-Real-World Bridge:
-[Specific examples of how Day ${dayNumber} content connects to current events, local community, or student interests]
-
-Teacher Note: [Day ${dayNumber} guidance for honoring diverse perspectives while making ${cleanTopic} personally meaningful]
-
-Student Note: [Day ${dayNumber} encouragement for sharing personal connections and valuing diverse experiences]
-
-LEVEL III HEADING: RIGOR (${Math.round(durationMinutes * 0.35)} minutes)
-Academic Challenge and Growth
-
-I Do: Teacher Modeling (${Math.round(durationMinutes * 0.1)} minutes)
-[Specific demonstration for Day ${dayNumber} that models ${dayFocus} thinking about ${cleanTopic}]
-
-Think-Aloud Script:
-"Today I'm going to show you how to [specific skill for Day ${dayNumber}] when analyzing ${cleanTopic}. Watch how I..."
-
-Teacher Note: [Day ${dayNumber} modeling guidance that makes expert thinking visible for ${dayFocus}]
-
-Student Note: [Day ${dayNumber} listening strategies that help students capture key thinking processes]
-
-We Do: Guided Practice (${Math.round(durationMinutes * 0.15)} minutes)
-[Specific collaborative activity for Day ${dayNumber} that practices ${dayFocus} with ${cleanTopic}]
-
-Scaffolding Supports:
-[Bulleted list of specific supports for Day ${dayNumber} that help students engage with ${dayFocus}]
-
-Teacher Note: [Day ${dayNumber} guidance for providing just-right support during ${dayFocus} practice]
-
-Student Note: [Day ${dayNumber} collaboration strategies that support peer learning during ${dayFocus}]
-
-You Do Together: Collaborative Application (${Math.round(durationMinutes * 0.1)} minutes)
-[Specific partner/group task for Day ${dayNumber} that applies ${dayFocus} to ${cleanTopic}]
-
-Choice Options:
-[Bulleted list of specific options for how students can demonstrate Day ${dayNumber} learning]
-
-Teacher Note: [Day ${dayNumber} guidance for monitoring group dynamics and ensuring equitable participation]
-
-Student Note: [Day ${dayNumber} teamwork strategies that honor different learning styles and perspectives]
-
-LEVEL III HEADING: REFLECTION (${Math.round(durationMinutes * 0.15)} minutes)
-Growth Recognition and Forward Planning
-
-Day ${dayNumber} Processing:
-[Specific reflection activity that helps students process ${dayFocus} learning about ${cleanTopic}]
-
-Tomorrow's Preview:
-[Brief preview of Day ${dayNumber + 1} that builds excitement and connection]
-
-Teacher Note: [Day ${dayNumber} reflection guidance that supports metacognition and celebrates growth in ${dayFocus}]
-
-Student Note: [Day ${dayNumber} reflection prompts that help students recognize their progress in ${dayFocus}]
-
-LEVEL II HEADING: Day ${dayNumber} Implementation Supports
-
-CREATE TABLE FOR MTSS SUPPORTS:
-Support Tier | Target Population | Specific Strategies
-Tier 1 Universal | All Students | [3 specific supports for Day ${dayNumber} ${dayFocus}]
-Tier 2 Targeted | Students Needing Additional Support | [3 specific interventions for Day ${dayNumber} ${dayFocus}]
-Tier 3 Intensive | Students Needing Significant Support | [3 specific modifications for Day ${dayNumber} ${dayFocus}]
-504 Accommodations | Students with Disabilities | [Specific accommodations for Day ${dayNumber} activities]
-Gifted Extensions | Advanced Learners | [Advanced opportunities for Day ${dayNumber} ${dayFocus}]
-SPED Modifications | Students with IEPs | [Specific modifications for Day ${dayNumber} ${dayFocus}]
-
-LEVEL II HEADING: Day ${dayNumber} Assessment
-CREATE TABLE:
-Assessment Type | Method | Purpose
-Formative | [Specific check for understanding during Day ${dayNumber}] | Monitor learning progress
-Summative | [How Day ${dayNumber} contributes to unit assessment] | Evaluate mastery
-
-LEVEL II HEADING: SEL Integration
-[Specific social-emotional learning embedded in Day ${dayNumber} ${dayFocus}]
-
-LEVEL II HEADING: Trauma-Informed Considerations
-[Specific considerations for Day ${dayNumber} that support student emotional safety]
-
-PAGE BREAK
-
-`;
-}).join('')}
-
-LEVEL I HEADING: COMPREHENSIVE RESOURCE GENERATION
-
-File Naming Convention: ${lessonCode}_${data.gradeLevel}${subjectAbbr}_[ResourceName]
-
-LEVEL II HEADING: 1. Student Workbook
-File: ${lessonCode}_${data.gradeLevel}${subjectAbbr}_StudentWorkbook.pdf
-
-COMPLETE CONTENT:
-
-${cleanTopic} Student Learning Guide
-Grade ${data.gradeLevel} - ${numberOfDays} Day Unit
-Name: _________________________ Class Period: _________
-
-Unit Overview:
-This ${numberOfDays}-day exploration of ${cleanTopic} will help you develop critical thinking skills while connecting academic learning to your personal experiences and community.
-
-Unit Essential Question:
-[Insert the unit essential question here]
-
-My Learning Targets:
-By the end of this unit, I will be able to:
-- Target 1: [knowledge/comprehension related to ${cleanTopic}]
-- Target 2: [application/analysis related to ${cleanTopic}] 
-- Target 3: [synthesis/evaluation related to ${cleanTopic}]
-
-${Array.from({length: parseInt(data.numberOfDays || '5')}, (_, i) => `
-DAY ${i + 1} LEARNING PAGE
-
-Today's Focus: ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]}
-
-Daily Essential Question: _________________________________
-
-What I Already Know About ${cleanTopic}:
-_____________________________________________________________
-_____________________________________________________________
-
-New Learning - Key Concepts:
-1. ____________________________________________________________
-2. ____________________________________________________________  
-3. ____________________________________________________________
-
-Real-World Connections:
-How does ${cleanTopic} connect to my life or community?
-_____________________________________________________________
-_____________________________________________________________
-
-Analysis Activity:
-[Specific activity prompt for Day ${i + 1} related to ${cleanTopic}]
-
-Reflection:
-What surprised me today? ___________________________________
-What questions do I still have? ____________________________
-How did I grow as a learner? _______________________________
-
-Preparation for Tomorrow:
-One thing I want to explore further: _________________________
-`).join('')}
-
-Unit Reflection Portfolio:
-[Instructions for final reflection and portfolio compilation related to ${cleanTopic}]
-
-LEVEL II HEADING: 2. Teacher Implementation Guide
-File: ${lessonCode}_${data.gradeLevel}${subjectAbbr}_TeacherGuide.pdf
-
-COMPLETE CONTENT:
-
-TEACHER IMPLEMENTATION GUIDE: ${cleanTopic}
-Grade ${data.gradeLevel} Professional Development Resource
-
-UNIT OVERVIEW:
-This ${numberOfDays}-day unit engages students in exploring ${cleanTopic} through trauma-informed, culturally responsive pedagogy using the Root Work Framework.
-
-PREPARATION CHECKLIST:
-Before Day 1:
-- Review all student materials and make copies
-- Prepare community circle space with comfortable seating
-- Gather materials for hands-on activities related to ${cleanTopic}
-- Review student IEPs and 504 plans for accommodations
-- Set up digital tools and resources
-
-${Array.from({length: parseInt(data.numberOfDays || '5')}, (_, i) => `
-DAY ${i + 1} TEACHER PREP:
-Focus: ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]}
-
-Key Teaching Points:
-- Content point 1 for Day ${i + 1} related to ${cleanTopic}
-- Content point 2 for Day ${i + 1} related to ${cleanTopic}
-- Content point 3 for Day ${i + 1} related to ${cleanTopic}
-
-Anticipated Student Challenges:
-- Challenge 1: Common misconception about ${cleanTopic}
-  Solution: Specific teaching strategy
-- Challenge 2: Engagement concern for Day ${i + 1}
-  Solution: Specific intervention
-
-Differentiation Strategies:
-- Below Grade Level: Specific supports for Day ${i + 1}
-- On Grade Level: Core instruction adaptations for Day ${i + 1}
-- Above Grade Level: Extension activities for Day ${i + 1}
-
-Assessment Indicators:
-Students successfully demonstrate understanding when they:
-- Observable behavior 1 for Day ${i + 1}
-- Observable behavior 2 for Day ${i + 1}
-- Observable behavior 3 for Day ${i + 1}
-`).join('')}
-
-TROUBLESHOOTING GUIDE:
-- Low Engagement: Specific strategies for re-engaging students with ${cleanTopic}
-- Behavior Concerns: Trauma-informed responses for challenging behaviors
-- Academic Struggles: Scaffolding strategies for complex concepts
-- Technology Issues: Backup plans for digital components
-
-FAMILY COMMUNICATION:
-Template for communicating unit goals and home extension activities related to ${cleanTopic}
-
-Generated by Root Work Framework - Professional Trauma-Informed Learning Design
-Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-`.trim();
-}
-
-function formatAsEnhancedHTML(content: string, data: MasterPromptRequest): string {
-  const cleanedContent = cleanContent(content);
-  const cleanTopic = processTopicForReadability(data.topic);
-  
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${cleanTopic} - Grade ${data.gradeLevel} Lesson Plan</title>
+    return processed;
+  };
+
+  /** ---------- EXPORTS use the formatted HTML ---------- */
+  const buildPrintableHTMLFromRendered = (innerHTML: string, planTitle: string) => `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${planTitle}</title>
 <style>
-@page { 
-  margin: 0.75in; 
-  @bottom-center {
-    content: "Page " counter(page) " of " counter(pages);
-    font-size: 10pt;
-    color: #666;
-  }
-}
-
-body { 
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-  font-size: 11pt; 
-  line-height: 1.4; 
-  color: #2B2B2B; 
-  background: #FFFFFF;
-  margin: 0;
-  padding: 0;
-}
-
-/* HEADING HIERARCHY */
-.level-1-heading { 
-  font-size: 18pt; 
-  font-weight: bold; 
-  color: #1B365D; 
-  margin: 24pt 0 12pt 0; 
-  padding: 8pt 12pt;
-  background: linear-gradient(135deg, #1B365D 0%, #2E86AB 100%);
-  color: white;
-  border-radius: 6pt;
-  page-break-after: avoid;
-}
-
-.level-2-heading { 
-  font-size: 14pt; 
-  font-weight: bold; 
-  color: #2E86AB; 
-  margin: 18pt 0 9pt 0; 
-  padding: 6pt 0;
-  border-bottom: 2pt solid #2E86AB;
-  page-break-after: avoid;
-}
-
-.level-3-heading { 
-  font-size: 12pt; 
-  font-weight: bold; 
-  color: #3B523A; 
-  margin: 12pt 0 6pt 0;
-  padding: 4pt 8pt;
-  background: #F2F4CA;
-  border-left: 4pt solid #3B523A;
-  page-break-after: avoid;
-}
-
-/* LAYOUT STRUCTURE */
-.header { 
-  text-align: center; 
-  margin-bottom: 36pt; 
-  padding: 24pt;
-  background: linear-gradient(135deg, #F2F4CA 0%, #E8ECBF 100%);
-  border-radius: 12pt;
-  border: 2pt solid #D4C862;
-}
-
-.header h1 {
-  font-size: 24pt;
-  font-weight: bold;
-  color: #1B365D;
-  margin-bottom: 12pt;
-}
-
-.meta-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 12pt; 
-  margin: 18pt 0;
-}
-
-.meta-item { 
-  padding: 9pt; 
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 6pt;
-  border-left: 3pt solid #2E86AB;
-}
-
-.meta-label { 
-  font-weight: bold; 
-  color: #1B365D; 
-}
-
-/* DAY SECTIONS */
-.day-section { 
-  margin: 36pt 0; 
-  padding: 18pt; 
-  background: #FEFEFE;
-  border: 1pt solid #E0E0E0;
-  border-radius: 12pt;
-  box-shadow: 0 4pt 12pt rgba(0,0,0,0.1);
-  page-break-inside: avoid;
-}
-
-.page-break { 
-  page-break-before: always; 
-}
-
-/* 5 Rs SECTIONS */
-.rs-section { 
-  margin: 18pt 0; 
-  padding: 12pt; 
-  border-left: 6pt solid #D4C862;
-  background: linear-gradient(135deg, #FEFEFE 0%, #F8F9FA 100%);
-  border-radius: 0 8pt 8pt 0;
-}
-
-.rs-header {
-  font-size: 12pt;
-  font-weight: bold;
-  color: #1B365D;
-  margin-bottom: 9pt;
-  padding: 6pt 12pt;
-  background: #F2F4CA;
-  border-radius: 6pt;
-}
-
-/* NOTES STYLING */
-.note { 
-  margin: 12pt 0; 
-  padding: 12pt; 
-  border-radius: 8pt; 
-  font-size: 10pt;
-  border-left: 4pt solid;
-}
-
-.teacher-note { 
-  background: linear-gradient(135deg, #E8F4FD 0%, #F0F8FF 100%);
-  border-left-color: #2E86AB; 
-  color: #1B365D;
-}
-
-.student-note { 
-  background: linear-gradient(135deg, #F0F9E8 0%, #F8FFF8 100%);
-  border-left-color: #28A745; 
-  color: #155724;
-}
-
-.note-label { 
-  font-weight: bold; 
-  margin-bottom: 6pt;
-}
-
-/* TABLES */
-table { 
-  width: 100%; 
-  border-collapse: collapse; 
-  margin: 12pt 0; 
-  background: white;
-  border-radius: 8pt;
-  overflow: hidden;
-  box-shadow: 0 2pt 8pt rgba(0,0,0,0.1);
-}
-
-th, td { 
-  border: 1pt solid #E0E0E0; 
-  padding: 8pt 12pt; 
-  text-align: left; 
-  vertical-align: top;
-}
-
-th { 
-  background: linear-gradient(135deg, #1B365D 0%, #2E86AB 100%);
-  color: white; 
-  font-weight: bold; 
-  font-size: 10pt;
-}
-
-tr:nth-child(even) { 
-  background: #F8F9FA; 
-}
-
-tr:hover { 
-  background: #E8F4FD; 
-}
-
-/* LISTS */
-ul, ol { 
-  margin: 9pt 0; 
-  padding-left: 24pt; 
-}
-
-li { 
-  margin-bottom: 4pt; 
-}
-
-ul li {
-  list-style-type: disc;
-}
-
-.bulleted-list {
-  background: #F8F9FA;
-  padding: 12pt;
-  border-radius: 6pt;
-  border-left: 3pt solid #D4C862;
-}
-
-/* CONTENT SECTIONS */
-.content-block {
-  margin: 12pt 0;
-  padding: 12pt;
-  background: #FEFEFE;
-  border-radius: 6pt;
-  border: 1pt solid #E9ECEF;
-}
-
-.activity-block {
-  margin: 12pt 0;
-  padding: 15pt;
-  background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
-  border-radius: 8pt;
-  border-left: 5pt solid #28A745;
-}
-
-.resource-section {
-  background: linear-gradient(135deg, #F2F4CA 0%, #E8ECBF 100%);
-  padding: 18pt;
-  border-radius: 12pt;
-  border: 2pt solid #D4C862;
-  margin: 24pt 0;
-}
-
-/* FOOTER */
-.footer { 
-  margin-top: 36pt; 
-  padding: 18pt;
-  border-top: 3pt solid #F2F4CA;
-  text-align: center; 
-  font-size: 9pt; 
-  color: #666;
-  background: #F8F9FA;
-  border-radius: 6pt;
-}
-
-/* RESPONSIVE DESIGN */
-@media screen and (max-width: 768px) {
-  .meta-grid { grid-template-columns: 1fr; }
-  .day-section { margin: 18pt 0; padding: 12pt; }
-  .level-1-heading { font-size: 16pt; }
-  .level-2-heading { font-size: 13pt; }
-  .level-3-heading { font-size: 11pt; }
-}
-
-/* PRINT OPTIMIZATION */
-@media print {
-  body { font-size: 10pt; }
-  .day-section { page-break-inside: avoid; }
-  .level-1-heading, .level-2-heading, .level-3-heading { page-break-after: avoid; }
-  .rs-section { page-break-inside: avoid; }
-  table { page-break-inside: avoid; }
-}
+  *{box-sizing:border-box} body{font-family:Inter,system-ui,Arial; color:#2B2B2B; max-width:8.5in; margin:0 auto; padding:1in;}
+  h1,h2,h3{font-family:Merriweather, Georgia, serif; color:#082A19}
+  h1{font-size:32px; border-bottom:3px solid #D4C862; padding-bottom:.5rem; margin-bottom:1rem}
+  h2{font-size:24px; margin-top:1.5rem}
+  h3{font-size:18px; margin-top:1rem}
+  .header{background:#F2F4CA; padding:1rem; margin:-1in -1in 1rem -1in; border-bottom:4px solid #D4C862}
+  .meta{display:grid; grid-template-columns:1fr 1fr; gap:.5rem; color:#3B523A}
+  table{width:100%; border-collapse:collapse; margin:.5rem 0}
+  th,td{border:1px solid #e5e7eb; padding:.5rem; text-align:left; vertical-align:top}
+  th{background:#F6F7E6}
+  ul{padding-left:1.25rem}
+  .box{border-left:4px solid #D4C862; padding-left:.75rem; margin:.5rem 0}
 </style>
 </head>
 <body>
 <div class="header">
-<h1>Root Work Framework Lesson Plan</h1>
-<div class="meta-grid">
-<div class="meta-item">
-<div class="meta-label">Topic:</div>
-<div>${cleanTopic}</div>
+  <h1>Root Work Framework — Lesson Plan</h1>
+  <div class="meta">
+    <div><strong>Topic:</strong> ${escapeHtml(formData.topic)}</div>
+    <div><strong>Grade Level:</strong> ${escapeHtml(formData.gradeLevel)}</div>
+    <div><strong>Subject(s):</strong> ${escapeHtml(formData.subjects.join(', '))}</div>
+    <div><strong>Duration:</strong> ${escapeHtml(formData.duration)} × ${escapeHtml(formData.numberOfDays)} days</div>
+  </div>
 </div>
-<div class="meta-item">
-<div class="meta-label">Grade Level:</div>
-<div>${data.gradeLevel}</div>
-</div>
-<div class="meta-item">
-<div class="meta-label">Subject:</div>
-<div>${data.subject}</div>
-</div>
-<div class="meta-item">
-<div class="meta-label">Duration:</div>
-<div>${data.duration} × ${data.numberOfDays} days</div>
-</div>
-</div>
-</div>
+${innerHTML}
+</body></html>`;
 
-${processContentForEnhancedHTML(cleanedContent)}
-
-<div class="footer">
-<p><strong>Generated by Root Work Framework</strong></p>
-<p>Professional Trauma-Informed Learning Design</p>
-<p>Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-</div>
-</body>
-</html>`;
-}
-
-function processContentForEnhancedHTML(content: string): string {
-  return content
-    // Process heading hierarchy
-    .replace(/LEVEL I HEADING: (.+)/g, '<h1 class="level-1-heading">$1</h1>')
-    .replace(/LEVEL II HEADING: (.+)/g, '<h2 class="level-2-heading">$2</h2>')
-    .replace(/LEVEL III HEADING: (.+)/g, '<h3 class="level-3-heading">$3</h3>')
-    
-    // Process day sections
-    .replace(/DAY (\d+): (.+)/g, '<div class="day-section page-break"><h1 class="level-1-heading">DAY $1: $2</h1>')
-    
-    // Process 5 Rs sections
-    .replace(/RELATIONSHIPS \((\d+) minutes\)/g, '<div class="rs-section"><div class="rs-header">RELATIONSHIPS ($1 minutes)</div>')
-    .replace(/ROUTINES \((\d+) minutes\)/g, '</div><div class="rs-section"><div class="rs-header">ROUTINES ($1 minutes)</div>')
-    .replace(/RELEVANCE \((\d+) minutes\)/g, '</div><div class="rs-section"><div class="rs-header">RELEVANCE ($1 minutes)</div>')
-    .replace(/RIGOR \((\d+) minutes\)/g, '</div><div class="rs-section"><div class="rs-header">RIGOR ($1 minutes)</div>')
-    .replace(/REFLECTION \((\d+) minutes\)/g, '</div><div class="rs-section"><div class="rs-header">REFLECTION ($1 minutes)</div>')
-    
-    // Process notes
-    .replace(/Teacher Note: ([^\n]+)/g, '<div class="note teacher-note"><div class="note-label">Teacher Note:</div>$1</div>')
-    .replace(/Student Note: ([^\n]+)/g, '<div class="note student-note"><div class="note-label">Student Note:</div>$1</div>')
-    
-    // Process tables
-    .replace(/CREATE TABLE:\s*\n((?:[^\n]+\s*\|\s*[^\n]+\s*\|\s*[^\n]+\s*\n?)+)/g, function(match: string, tableContent: string): string {
-      const lines = tableContent.trim().split('\n');
-      const headerLine = lines[0];
-      const dataLines = lines.slice(1);
-      
-      const headers = headerLine.split('|').map((h: string) => h.trim());
-      let tableHTML = '<table><thead><tr>';
-      headers.forEach((header: string) => {
-        tableHTML += `<th>${header}</th>`;
-      });
-      tableHTML += '</tr></thead><tbody>';
-      
-      dataLines.forEach((line: string) => {
-        if (line.trim()) {
-          const cells = line.split('|').map((c: string) => c.trim());
-          tableHTML += '<tr>';
-          cells.forEach((cell: string) => {
-            tableHTML += `<td>${cell}</td>`;
-          });
-          tableHTML += '</tr>';
-        }
-      });
-      
-      tableHTML += '</tbody></table>';
-      return tableHTML;
-    })
-    
-    // Process activities
-    .replace(/Opening Activity for Day \d+:/g, '<div class="activity-block"><strong>Opening Activity:</strong>')
-    .replace(/Day \d+ Connection Activity:/g, '<div class="activity-block"><strong>Connection Activity:</strong>')
-    .replace(/I Do: Teacher Modeling/g, '<div class="activity-block"><strong>I Do: Teacher Modeling</strong>')
-    .replace(/We Do: Guided Practice/g, '<div class="activity-block"><strong>We Do: Guided Practice</strong>')
-    .replace(/You Do Together: Collaborative Application/g, '<div class="activity-block"><strong>You Do Together: Collaborative Application</strong>')
-    
-    // Process bulleted lists
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(\n<li>[\s\S]*?<\/li>\n)/g, '<div class="bulleted-list"><ul>$1</ul></div>')
-    
-    // Process page breaks
-    .replace(/PAGE BREAK/g, '<div class="page-break"></div>')
-    
-    // Process resource sections
-    .replace(/COMPREHENSIVE RESOURCE GENERATION/g, '<div class="resource-section"><h1 class="level-1-heading">COMPREHENSIVE RESOURCE GENERATION</h1>')
-    .replace(/COMPLETE CONTENT:/g, '<div class="content-block"><h4>Generated Content:</h4>')
-    
-    // Clean up and wrap paragraphs
-    .replace(/^([^<\n].+)$/gm, '<p>$1</p>')
-    .replace(/<\/div>\s*<p>/g, '</div><p>')
-    .replace(/<\/p>\s*<h/g, '</p><h')
-    .replace(/\n\n/g, '\n')
-    
-    // Close any open divs
-    + '</div>';
-}
-
-function generateDownloadableResources(content: string, data: MasterPromptRequest): {textResources: GeneratedResource[], imagePrompts: ImagePrompt[]} {
-  const cleanTopic = processTopicForReadability(data.topic);
-  const lessonCode = `RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}`;
-  const subjectAbbr = getSubjectAbbreviation(data.subject);
-  
-  const resourceMatches = content.match(/COMPLETE CONTENT:([\s\S]*?)(?=File:|$)/g) || [];
-  
-  return {
-    textResources: resourceMatches.map((match: string, index: number) => ({
-      filename: `${lessonCode}_${data.gradeLevel}${subjectAbbr}_Resource${index + 1}.txt`,
-      content: cleanContent(match.replace('COMPLETE CONTENT:', '').trim()),
-      type: 'text/plain'
-    })),
-    imagePrompts: []
+  const downloadAsHTML = () => {
+    if (!lessonPlan) return;
+    const rendered = renderPlanToHTML(lessonPlan);
+    const title = (typeof lessonPlan === 'object' && lessonPlan?.title) ? lessonPlan.title : `Root Work Framework: ${formData.topic}`;
+    const html = buildPrintableHTMLFromRendered(rendered, title);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RWFW_${formData.topic.replace(/[^a-z0-9]/gi, '_')}_Grade${formData.gradeLevel}_${formData.numberOfDays}days.html`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
-}
 
-function validateLessonPlan(content: string, data: MasterPromptRequest): {isValid: boolean, missingComponents: string[]} {
-  const missing: string[] = [];
-  
-  const teacherNoteCount = (content.match(/Teacher Note:/g) || []).length;
-  const studentNoteCount = (content.match(/Student Note:/g) || []).length;
-  const expectedNotes = parseInt(data.numberOfDays || '5') * 6;
-  
-  if (teacherNoteCount < expectedNotes) missing.push(`Teacher Notes (found ${teacherNoteCount}, need ${expectedNotes})`);
-  if (studentNoteCount < expectedNotes) missing.push(`Student Notes (found ${studentNoteCount}, need ${expectedNotes})`);
-  
-  if (!content.includes('RELATIONSHIPS')) missing.push('Relationships Component');
-  if (!content.includes('ROUTINES')) missing.push('Routines Component');
-  if (!content.includes('RELEVANCE')) missing.push('Relevance Component');
-  if (!content.includes('RIGOR')) missing.push('Rigor Component');
-  if (!content.includes('REFLECTION')) missing.push('Reflection Component');
-  if (!content.includes('Essential Question:')) missing.push('Essential Questions');
-  if (!content.includes('CREATE TABLE')) missing.push('Structured Tables');
-  if (!content.includes('COMPLETE CONTENT:')) missing.push('Generated Resource Content');
-  
-  return {
-    isValid: missing.length === 0,
-    missingComponents: missing
+  const downloadAsRTF = () => {
+    if (!lessonPlan) return;
+    const rendered = stripHtml(renderPlanToHTML(lessonPlan));
+    const rtf = toRTF(rendered);
+    const blob = new Blob([rtf], { type: 'application/rtf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RWFW_${formData.topic.replace(/[^a-z0-9]/gi, '_')}_Grade${formData.gradeLevel}_${formData.numberOfDays}days.rtf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
-}
 
-function buildEnhancedFallback(data: MasterPromptRequest): {content: string, htmlVersion: string, cleanVersion: string} {
-  const cleanTopic = processTopicForReadability(data.topic);
-  const numberOfDays = parseInt(data.numberOfDays || '5');
-  const durationMinutes = parseInt(data.duration?.match(/\d+/)?.[0] || '90');
-  
-  const content = `
-LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
-Grade: ${data.gradeLevel}
-Subject: ${data.subject}
-Topic: ${cleanTopic}
-Duration: ${data.duration} per day over ${numberOfDays} days
-Location: ${data.location || 'Savannah, Georgia'}
-Unit Title: Exploring ${cleanTopic} Through Root Work Framework
-
-LEVEL I HEADING: LESSON OVERVIEW
-This ${numberOfDays}-day exploration of ${cleanTopic} will help students develop critical thinking skills while connecting academic learning to their personal experiences and community.
-
-LEVEL I HEADING: UNIT ESSENTIAL QUESTION
-How does understanding ${cleanTopic} help us grow as learners and community members?
-
-LEVEL I HEADING: UNIT LEARNING TARGETS
-- I can analyze key concepts related to ${cleanTopic} (DOK 2)
-- I can apply understanding of ${cleanTopic} to real-world situations (DOK 3)
-- I can evaluate the impact of ${cleanTopic} on my community (DOK 4)
-
-${Array.from({length: numberOfDays}, (_, dayIndex) => {
-  const dayNumber = dayIndex + 1;
-  const dayFoci = [
-    'Introduction and Foundation Building',
-    'Exploration and Investigation', 
-    'Analysis and Critical Thinking',
-    'Application and Creation',
-    'Synthesis and Reflection'
-  ];
-  const dayFocus = dayFoci[dayIndex] || `Advanced Application ${dayNumber}`;
-  
-  return `
-LEVEL I HEADING: DAY ${dayNumber}: ${dayFocus}
-
-LEVEL II HEADING: Daily Essential Question
-How does ${cleanTopic} connect to our daily experiences and community?
-
-LEVEL II HEADING: Daily Learning Target
-I can demonstrate understanding of ${cleanTopic} through ${dayFocus.toLowerCase()} (DOK ${dayNumber <= 2 ? 2 : dayNumber <= 4 ? 3 : 4})
-
-LEVEL II HEADING: Standards Alignment
-CREATE TABLE:
-Standard Type | Standard Code | Description
-Primary Standard | ${data.subject} Standards | Students analyze and apply concepts related to ${cleanTopic}
-SEL Integration | CASEL | Self-Awareness and Social Awareness
-Cross-Curricular | STEAM | Science, Technology, Arts, Mathematics integration
-
-LEVEL II HEADING: Materials Needed
-- Student worksheets and reflection journals
-- Visual aids and graphic organizers
-- Technology tools for research and creation
-- Community connection resources
-
-LEVEL II HEADING: Root Work Framework 5 Rs Structure
-
-LEVEL III HEADING: RELATIONSHIPS (${Math.round(durationMinutes * 0.15)} minutes)
-Community Building and Belonging
-
-Opening Activity for Day ${dayNumber}:
-Students engage in a community circle focused on ${dayFocus.toLowerCase()} related to ${cleanTopic}, sharing one personal connection or question.
-
-Teacher Note: Establish psychological safety through consistent trauma-informed practices that honor student identities while connecting to ${dayFocus}
-
-Student Note: This is your time to connect with classmates and ground yourself in our learning community before exploring ${cleanTopic}
-
-LEVEL III HEADING: ROUTINES (${Math.round(durationMinutes * 0.1)} minutes)
-Predictable Structure and Safety
-
-Day ${dayNumber} Agenda:
-- Review the day's ${dayFocus} activities
-- Establish success criteria
-- Prepare materials for ${cleanTopic} exploration
-
-Success Criteria:
-- I can identify key aspects of ${cleanTopic}
-- I can engage in ${dayFocus.toLowerCase()} activities
-- I can reflect on my learning progress
-
-Teacher Note: Provide predictable structure that reduces anxiety and builds executive function skills while previewing ${dayFocus}
-
-Student Note: Use this time to organize yourself mentally and understand what success looks like in today's ${dayFocus}
-
-LEVEL III HEADING: RELEVANCE (${Math.round(durationMinutes * 0.25)} minutes)
-Connecting to Student Experience
-
-Day ${dayNumber} Connection Activity:
-Students explore personal and community connections to ${cleanTopic} through ${dayFocus} lens, sharing diverse perspectives and experiences.
-
-Real-World Bridge:
-Local examples of ${cleanTopic} in ${data.location || 'Savannah, Georgia'} and connections to current events.
-
-Teacher Note: Draw explicit connections between ${cleanTopic} and student cultural assets while facilitating ${dayFocus} thinking
-
-Student Note: Your experiences with ${cleanTopic} are valuable - share authentically and listen for connections to others' stories
-
-LEVEL III HEADING: RIGOR (${Math.round(durationMinutes * 0.35)} minutes)
-Academic Challenge and Growth
-
-I Do: Teacher Modeling (${Math.round(durationMinutes * 0.1)} minutes)
-Demonstrate ${dayFocus} thinking about ${cleanTopic} using think-aloud strategies and culturally relevant examples.
-
-Think-Aloud Script:
-"Today I'm going to show you how to engage in ${dayFocus.toLowerCase()} when exploring ${cleanTopic}. Watch how I..."
-
-Teacher Note: Model complex thinking processes while making connections to student experiences and ${dayFocus} goals
-
-Student Note: Watch for strategies and thinking processes you can use when engaging in ${dayFocus} about ${cleanTopic}
-
-We Do: Guided Practice (${Math.round(durationMinutes * 0.15)} minutes)
-Collaborative exploration of ${cleanTopic} using ${dayFocus} approaches with teacher scaffolding and peer support.
-
-Scaffolding Supports:
-- Visual aids and graphic organizers
-- Think-pair-share opportunities
-- Sentence starters for discussions
-
-Teacher Note: Provide just-right support while encouraging productive struggle and honoring different approaches to ${dayFocus}
-
-Student Note: Engage actively in shared learning about ${cleanTopic} - ask questions and build on others' ${dayFocus} ideas
-
-You Do Together: Collaborative Application (${Math.round(durationMinutes * 0.1)} minutes)
-Partner or small group application of ${dayFocus} skills to analyze or create something related to ${cleanTopic}.
-
-Choice Options:
-- Written analysis or reflection
-- Visual representation or diagram
-- Verbal presentation or discussion
-
-Teacher Note: Monitor for equitable participation while offering multiple pathways for demonstrating ${dayFocus} understanding
-
-Student Note: Work collaboratively to apply your ${dayFocus} learning about ${cleanTopic}, drawing on everyone's unique strengths
-
-LEVEL III HEADING: REFLECTION (${Math.round(durationMinutes * 0.15)} minutes)
-Growth Recognition and Forward Planning
-
-Day ${dayNumber} Processing:
-Individual reflection on ${dayFocus} learning about ${cleanTopic}, followed by community sharing of insights and questions.
-
-Tomorrow's Preview:
-Brief preview of Day ${dayNumber + 1} that builds excitement and connection.
-
-Teacher Note: Support various reflection styles while building metacognitive awareness about ${dayFocus} and ${cleanTopic}
-
-Student Note: Take time to recognize your growth in ${dayFocus} and consider how today's insights about ${cleanTopic} connect to your goals
-
-LEVEL II HEADING: Day ${dayNumber} Implementation Supports
-
-CREATE TABLE:
-Support Tier | Target Population | Specific Strategies
-Tier 1 Universal | All Students | Visual supports, choice in expression format, clear success criteria
-Tier 2 Targeted | Students Needing Additional Support | Graphic organizers, extended processing time, guided practice
-Tier 3 Intensive | Students Needing Significant Support | One-on-one conferencing, modified expectations, alternative assessment formats
-504 Accommodations | Students with Disabilities | Extended time, assistive technology access, preferential seating
-Gifted Extensions | Advanced Learners | Independent research projects, leadership roles, accelerated content
-SPED Modifications | Students with IEPs | Simplified language, visual supports, individualized goals
-
-LEVEL II HEADING: Day ${dayNumber} Assessment
-CREATE TABLE:
-Assessment Type | Method | Purpose
-Formative | Exit ticket about ${dayFocus} understanding of ${cleanTopic} | Monitor learning progress
-Summative | Portfolio development showing ${dayFocus} growth with ${cleanTopic} | Evaluate mastery
-
-LEVEL II HEADING: SEL Integration
-CASEL competencies integrated through ${dayFocus} activities and community building around ${cleanTopic}
-
-LEVEL II HEADING: Trauma-Informed Considerations
-Consistent routines, student choice, cultural responsiveness, and strength-based approach to ${dayFocus} and ${cleanTopic}
-
-PAGE BREAK
-
-`;
-}).join('')}
-
-LEVEL I HEADING: COMPREHENSIVE RESOURCE GENERATION
-
-LEVEL II HEADING: 1. Student Workbook
-File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}_StudentWorkbook.pdf
-
-COMPLETE CONTENT:
-
-${cleanTopic} Student Learning Guide
-Grade ${data.gradeLevel} - ${numberOfDays} Day Unit
-
-This ${numberOfDays}-day exploration of ${cleanTopic} will help you develop critical thinking skills while connecting academic learning to your personal experiences and community.
-
-Unit Essential Question: How does understanding ${cleanTopic} help us grow as learners and community members?
-
-My Learning Targets:
-- I can analyze key concepts related to ${cleanTopic}
-- I can apply understanding of ${cleanTopic} to real-world situations  
-- I can evaluate the impact of ${cleanTopic} on my community
-
-${Array.from({length: numberOfDays}, (_, i) => `
-DAY ${i + 1} LEARNING PAGE
-Today's Focus: ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]}
-
-What I Know About ${cleanTopic}:
-_________________________________________________
-
-New Learning - Key Concepts:
-1. _____________________________________________
-2. _____________________________________________
-3. _____________________________________________
-
-Real-World Connections:
-How does ${cleanTopic} connect to my life?
-_________________________________________________
-
-Daily Reflection:
-What surprised me? _____________________________
-What questions do I have? _____________________
-How did I grow? _______________________________
-`).join('')}
-
-Generated by Root Work Framework - Professional Trauma-Informed Learning Design
-Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-`;
-
-  const cleanVersion = cleanContent(content);
-  const htmlVersion = formatAsEnhancedHTML(content, data);
-  
-  return { content, htmlVersion, cleanVersion };
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const parsed = await parseLessonRequest(request);
-    const received = parsed ?? {};
-    
-    const warnings: string[] = [];
-    const subject = (received as any).subject?.trim?.() || (warnings.push('Defaulted subject to "General Studies"'), 'General Studies');
-    const gradeLevel = (received as any).gradeLevel?.trim?.() || (warnings.push('Defaulted gradeLevel to "6"'), '6');
-    const topic = (received as any).topic?.trim?.() || (warnings.push('Defaulted topic to "Core Concept"'), 'Core Concept');
-    const duration = (received as any).duration?.trim?.() || (warnings.push('Defaulted duration to "90 minutes"'), '90 minutes');
-    const numberOfDays = (received as any).numberOfDays?.trim?.() || (warnings.push('Defaulted numberOfDays to "5"'), '5');
-
-    const data: MasterPromptRequest = {
-      subject,
-      gradeLevel,  
-      topic,
-      duration,
-      numberOfDays,
-      learningObjectives: (received as any).learningObjectives ?? '',
-      specialNeeds: (received as any).specialNeeds ?? '',
-      availableResources: (received as any).availableResources ?? '',
-      location: (received as any).location ?? 'Savannah, Georgia',
-      unitContext: (received as any).unitContext ?? '',
-      lessonType: (received as any).lessonType ?? 'comprehensive_multi_day',
-      specialInstructions: (received as any).specialInstructions ?? ''
-    };
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      const fallback = buildEnhancedFallback(data);
-      return okJson({ 
-        lessonPlan: fallback.cleanVersion,
-        htmlVersion: fallback.htmlVersion,
-        plainText: fallback.content,
-        fallback: true, 
-        success: true, 
-        warnings: [...warnings, 'Used enhanced fallback due to missing API key']
-      });
-    }
-
-    const prompt = buildEnhancedMasterPrompt(data);
-    
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 8000,
-        temperature: 0.3,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!resp.ok) {
-      const fallback = buildEnhancedFallback(data);
-      return okJson({ 
-        lessonPlan: fallback.cleanVersion,
-        htmlVersion: fallback.htmlVersion,
-        plainText: fallback.content,
-        fallback: true, 
-        success: true, 
-        warnings: [...warnings, `API error ${resp.status}, used enhanced fallback`]
-      });
-    }
-
-    const payload = await resp.json();
-    let lessonContent = '';
-
-    if (Array.isArray(payload?.content) && payload.content[0]?.type === 'text') {
-      lessonContent = String(payload.content[0].text || '');
-    }
-
-    lessonContent = lessonContent.replace(/```markdown\s*/gi, '').replace(/```\s*$/gi, '').trim();
-
-    if (!lessonContent || lessonContent.length < 3000) {
-      const fallback = buildEnhancedFallback(data);
-      return okJson({ 
-        lessonPlan: fallback.cleanVersion,
-        htmlVersion: fallback.htmlVersion,
-        plainText: fallback.content,
-        fallback: true, 
-        success: true, 
-        warnings: [...warnings, 'Generated content too short, used enhanced fallback']
-      });
-    }
-
-    const validation = validateLessonPlan(lessonContent, data);
-    if (!validation.isValid && validation.missingComponents.length > 5) {
-      const fallback = buildEnhancedFallback(data);
-      return okJson({ 
-        lessonPlan: fallback.cleanVersion,
-        htmlVersion: fallback.htmlVersion,
-        plainText: fallback.content,
-        fallback: true, 
-        success: true, 
-        warnings: [...warnings, 'Too many missing components, used enhanced fallback']
-      });
-    }
-
-    const cleanedContent = cleanContent(lessonContent);
-    const htmlVersion = formatAsEnhancedHTML(lessonContent, data);
-    const resources = generateDownloadableResources(lessonContent, data);
-
-    return okJson({ 
-      lessonPlan: cleanedContent,
-      htmlVersion: htmlVersion,
-      plainText: cleanedContent,
-      resources: resources,
-      success: true, 
-      warnings,
-      validation: validation
-    });
-
-  } catch (err) {
-    const fallbackData: MasterPromptRequest = {
-      subject: 'General Studies',
-      gradeLevel: '6',
-      topic: 'Learning Together',
-      duration: '90 minutes',
-      numberOfDays: '5'
-    };
-    
-    const fallback = buildEnhancedFallback(fallbackData);
-    return okJson({ 
-      lessonPlan: fallback.cleanVersion,
-      htmlVersion: fallback.htmlVersion,
-      plainText: fallback.content,
-      fallback: true,
-      success: true,
-      warnings: ['Emergency fallback due to system error'],
-      error: err instanceof Error ? err.message : 'Unknown error'
-    });
+  const copyToClipboard = () => {
+    if (!lessonPlan) return;
+    const plain = stripHtml(renderPlanToHTML(lessonPlan));
+    navigator.clipboard.writeText(plain);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  /** ---------- LOADING SCREEN ---------- */
+  if (isGenerating) {
+    const currentLoadingStage = LOADING_STAGES[currentStage] || LOADING_STAGES[0];
+    const progress = ((currentStage + 1) / LOADING_STAGES.length) * 100;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F4CA] to-[#082A19] flex items-center justify-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full mx-6 border-4 border-[#D4C862]">
+          <div className="text-center mb-8">
+            <div className="w-24 h-24 bg-[#082A19] rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="animate-spin">
+                <svg className="w-12 h-12 text-[#D4C862]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-[#082A19] mb-3" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+              Generating Your Lesson Plan
+            </h2>
+            <p className="text-[#3B523A] text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Creating comprehensive {formData.numberOfDays}-day lesson using Root Work Framework
+            </p>
+          </div>
+
+          <div className="mb-8">
+            <div className="w-full bg-[#F2F4CA] rounded-full h-4 border-2 border-[#3B523A]">
+              <div 
+                className="bg-gradient-to-r from-[#D4C862] to-[#082A19] h-full rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-sm text-[#3B523A]" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <span>Progress</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="bg-[#F2F4CA] border-2 border-[#D4C862] rounded-xl p-6 mb-6">
+              <h3 className="text-xl font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                Current Stage: {currentStage + 1} of {LOADING_STAGES.length}
+              </h3>
+              <p className="text-[#2B2B2B] text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {currentLoadingStage.message}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+              {LOADING_STAGES.map((stage, index) => (
+                <div 
+                  key={stage.stage}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    index <= currentStage 
+                      ? 'bg-[#D4C862] border-[#082A19] text-[#082A19]' 
+                      : 'bg-white border-[#3B523A] text-[#3B523A]'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${
+                      index <= currentStage ? 'bg-[#082A19] text-[#D4C862]' : 'bg-[#F2F4CA] text-[#3B523A]'
+                    }`}>
+                      {index < currentStage ? '✓' : index + 1}
+                    </div>
+                    <span className="text-sm font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
+                      {stage.message.split(':')[0]}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-8 p-4 bg-[#F2F4CA]/50 rounded-xl border border-[#3B523A]">
+            <h4 className="font-semibold text-[#082A19] mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+              Generating:
+            </h4>
+            <div className="text-sm text-[#2B2B2B] space-y-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <div><strong>Topic:</strong> {formData.topic}</div>
+              <div><strong>Subjects:</strong> {formData.subjects.join(', ')}</div>
+              <div><strong>Grade:</strong> {formData.gradeLevel}</div>
+              <div><strong>Duration:</strong> {formData.numberOfDays} days × {formData.duration}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  /** ---------- FULL-SCREEN RENDER ---------- */
+  if (lessonPlan && !showForm) {
+    const title = (typeof lessonPlan === 'object' && lessonPlan?.title)
+      ? lessonPlan.title
+      : `Root Work Framework: ${formData.topic}`;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F4CA] to-white">
+        <header className="bg-[#082A19] text-white shadow-xl">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-[#D4C862] rounded-full flex items-center justify-center">
+                  <svg className="w-7 h-7 text-[#082A19]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                    {title}
+                  </h1>
+                  <p className="text-[#D4C862] text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    {formData.subjects.join(' + ')} • Grade {formData.gradeLevel} • {formData.numberOfDays} days
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-[#3B523A] hover:bg-[#001C10] text-white rounded-lg transition-colors font-medium"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd"/>
+                  </svg>
+                  <span>New Lesson</span>
+                </button>
+                <button
+                  onClick={copyToClipboard}
+                  className="flex items-center space-x-2 px-4 py-2 bg-[#3B523A] hover:bg-[#001C10] text-white rounded-lg transition-colors font-medium"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                  </svg>
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                </button>
+                <button
+                  onClick={downloadAsHTML}
+                  className="flex items-center space-x-2 px-4 py-2 bg-[#D4C862] hover:bg-[#96812A] text-[#082A19] rounded-lg transition-colors font-semibold"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd"/>
+                  </svg>
+                  <span>Download HTML/PDF</span>
+                </button>
+                <button
+                  onClick={downloadAsRTF}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white text-[#082A19] border-2 border-[#D4C862] hover:bg-[#F2F4CA] rounded-lg transition-colors font-medium"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd"/>
+                  </svg>
+                  <span>Word Doc</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-5xl mx-auto px-6 py-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-[#D4C862]">
+            {/* Rendered plan */}
+            <div
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: renderPlanToHTML(lessonPlan) }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /** ---------- FORM VIEW ---------- */
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#F2F4CA] to-white">
+      <header className="bg-[#082A19] text-white shadow-xl">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <Link href="/" className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-[#D4C862] rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-[#082A19]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Root Work Framework
+                </h1>
+                <p className="text-[#D4C862] text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Professional Lesson Planning
+                </p>
+              </div>
+            </Link>
+            <nav>
+              <Link 
+                href="/" 
+                className="text-[#D4C862] hover:text-white transition-colors font-medium"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                ← Back to Home
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 border-4 border-[#D4C862]">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+              Create Comprehensive Lesson Plan
+            </h2>
+            <p className="text-xl text-[#3B523A] leading-relaxed max-w-3xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Generate multi-day, trauma-informed lesson plans with STEAM integration, MTSS scaffolding, 
+              and comprehensive assessment tools using the Root Work Framework.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-10">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Subjects */}
+              <div className="lg:col-span-2">
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Subject Area(s) <span className="text-red-600">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-6 border-3 border-[#3B523A] rounded-2xl bg-[#F2F4CA]/30">
+                  {SUBJECTS.map(subject => (
+                    <label key={subject} className="flex items-center space-x-3 text-sm cursor-pointer hover:bg-white/70 p-3 rounded-lg transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.subjects.includes(subject)}
+                        onChange={() => handleSubjectChange(subject)}
+                        className="w-5 h-5 rounded border-[#3B523A] text-[#D4C862] focus:ring-[#D4C862] focus:ring-2"
+                      />
+                      <span className="text-[#2B2B2B] font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
+                        {subject}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[#3B523A] mt-3 text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <span className="font-bold text-[#082A19]">{formData.subjects.length}</span> selected
+                  {formData.subjects.length > 0 && `: ${formData.subjects.join(', ')}`}
+                </p>
+              </div>
+
+              {/* Grade Level */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Grade Level <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="gradeLevel" 
+                  value={formData.gradeLevel} 
+                  onChange={handleInputChange}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]" 
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                >
+                  <option value="">Choose Grade Level</option>
+                  <option value="PreK">Pre-K</option>
+                  <option value="K">Kindergarten</option>
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i+1} value={String(i+1)}>Grade {i+1}</option>
+                  ))}
+                  <option value="Mixed">Mixed Ages</option>
+                </select>
+              </div>
+
+              {/* Number of Days */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Number of Days <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="numberOfDays" 
+                  value={formData.numberOfDays} 
+                  onChange={handleInputChange}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]" 
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                >
+                  <option value="">Select Days</option>
+                  {[3,4,5,6,7,8,9,10,15,20].map(days => (
+                    <option key={days} value={String(days)}>{days} {days === 1 ? 'day' : 'days'}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Topic */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Lesson Topic <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text" 
+                  name="topic" 
+                  value={formData.topic} 
+                  onChange={handleInputChange}
+                  placeholder="e.g., Photosynthesis and Plant Growth, Civil Rights Movement"
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]" 
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                />
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Duration per Day <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="duration" 
+                  value={formData.duration} 
+                  onChange={handleInputChange}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]" 
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                  required
+                >
+                  <option value="">Select Duration</option>
+                  <option value="45 minutes">45 minutes</option>
+                  <option value="50 minutes">50 minutes</option>
+                  <option value="60 minutes">60 minutes</option>
+                  <option value="75 minutes">75 minutes</option>
+                  <option value="90 minutes">90 minutes (Block)</option>
+                  <option value="120 minutes">120 minutes (Extended)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Enhanced fields */}
+            <div className="space-y-8">
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Learning Objectives & Standards
+                  <span className="text-[#3B523A] text-lg font-normal ml-3">(Optional but recommended)</span>
+                </label>
+                <textarea
+                  name="learningObjectives" 
+                  value={formData.learningObjectives} 
+                  onChange={handleInputChange}
+                  placeholder="Smart shortcuts: Type 'Georgia Standards', 'Common Core', 'NGSS' for automatic integration. Or specify learning objectives directly."
+                  rows={5}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Unit Context
+                  <span className="text-[#3B523A] text-lg font-normal ml-3">(Optional)</span>
+                </label>
+                <textarea
+                  name="unitContext" 
+                  value={formData.unitContext} 
+                  onChange={handleInputChange}
+                  placeholder="What larger unit or theme does this lesson connect to? What have students learned previously?"
+                  rows={3}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Special Considerations & Accommodations
+                  <span className="text-[#3B523A] text-lg font-normal ml-3">(Optional)</span>
+                </label>
+                <textarea
+                  name="specialNeeds" 
+                  value={formData.specialNeeds} 
+                  onChange={handleInputChange}
+                  placeholder="Smart shortcuts: 'ELL', 'IEP', 'ADHD', 'autism', 'trauma-informed' - will auto-expand with evidence-based supports"
+                  rows={4}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Available Resources & Materials
+                  <span className="text-[#3B523A] text-lg font-normal ml-3">(Optional)</span>
+                </label>
+                <textarea
+                  name="availableResources" 
+                  value={formData.availableResources} 
+                  onChange={handleInputChange}
+                  placeholder="Garden space, technology lab, manipulatives, community partners, field trip opportunities, specific materials..."
+                  rows={4}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-[#F2F4CA] to-[#D4C862]/40 p-10 rounded-3xl border-4 border-[#D4C862]">
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="w-full bg-[#082A19] hover:bg-[#001C10] disabled:bg-[#3B523A] text-white font-bold py-6 px-10 rounded-2xl transition-all duration-300 flex items-center justify-center text-2xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-1"
+                style={{ fontFamily: 'Merriweather, Georgia, serif' }}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-3 border-[#D4C862] mr-4" />
+                    Generating Professional Lesson Plan...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-8 h-8 mr-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+                    </svg>
+                    Generate Comprehensive Lesson Plan
+                  </>
+                )}
+              </button>
+              <p className="text-[#082A19] mt-4 text-center text-lg font-semibold" style={{ fontFamily: 'Inter, sans-serif' }}>
+                Includes: Multi-day structure • Teacher & Student Notes • STEAM Integration • Trauma-informed practices • MTSS Scaffolding • Assessment tools
+              </p>
+            </div>
+          </form>
+
+          {error && (
+            <div className="mt-10 p-8 bg-red-50 border-4 border-red-200 rounded-2xl">
+              <div className="flex items-start">
+                <svg className="w-8 h-8 text-red-500 mr-4 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                </svg>
+                <div>
+                  <p className="text-red-800 font-bold text-xl mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                    Unable to Generate Lesson Plan
+                  </p>
+                  <p className="text-red-700 text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    {error}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** ===================== RENDERER HELPERS ===================== **/
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function stripHtml(html: string) {
+  const tmp = typeof window !== 'undefined' ? document.createElement('div') : null as any;
+  if (!tmp) return html.replace(/<[^>]+>/g, '');
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || '').trim();
+}
+function toRTF(text: string) {
+  const safe = text
+    .replace(/\\/g, '\\\\')
+    .replace(/{/g, '\\{')
+    .replace(/}/g, '\\}')
+    .replace(/\n/g, '\\par\n');
+  return `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fswiss Arial;}{\\f1\\froman Times New Roman;}}\\f0\\fs22 ${safe}}`;
+}
+
+/** Main renderer: accepts RWFWPlan object OR narrative string */
+function renderPlanToHTML(plan: RWFWPlan | string): string {
+  if (typeof plan === 'string') {
+    return renderNarrativeText(plan);
+  }
+  // If it looks like a structured plan, render sections
+  const hasRWFWShape =
+    !!(plan.iCanTargets || plan.fiveRsSchedule || plan.lessonFlowGRR || plan.mtssSupports || plan.assessmentAndEvidence);
+
+  if (!hasRWFWShape) {
+    // fallback to pretty JSON
+    return `<pre style="white-space:pre-wrap; background:#F2F4CA20; border:1px solid #e5e7eb; border-left:4px solid #D4C862; padding:16px; border-radius:8px;">${escapeHtml(
+      JSON.stringify(plan, null, 2)
+    )}</pre>`;
+  }
+
+  const sections: string[] = [];
+
+  if (plan.title) sections.push(`<h2>${escapeHtml(plan.title)}</h2>`);
+  if (plan.overview) sections.push(`<p>${escapeHtml(plan.overview)}</p>`);
+
+  if (plan.iCanTargets?.length) {
+    sections.push('<h3>I Can Targets (with DOK)</h3><ul>');
+    sections.push(
+      ...plan.iCanTargets.map(t => `<li>${escapeHtml(t.text)} <span style="color:#3B523A;">(DOK ${t.dok})</span></li>`)
+    );
+    sections.push('</ul>');
+  }
+
+  if (plan.fiveRsSchedule?.length) {
+    sections.push('<h3>5 Rs Schedule</h3><ul>');
+    sections.push(
+      ...plan.fiveRsSchedule.map(b =>
+        `<li><strong>${escapeHtml(b.label)}</strong> — ${b.minutes} min<br/><span style="color:#3B523A;">${escapeHtml(b.purpose)}</span></li>`
+      )
+    );
+    sections.push('</ul>');
+  }
+
+  if (plan.literacySkillsAndResources) {
+    sections.push('<h3>Literacy Skills & Resources</h3>');
+    if (plan.literacySkillsAndResources.skills?.length) {
+      sections.push('<p><strong>Skills:</strong></p><ul>');
+      sections.push(...plan.literacySkillsAndResources.skills.map(s => `<li>${escapeHtml(s)}</li>`));
+      sections.push('</ul>');
+    }
+    if (plan.literacySkillsAndResources.resources?.length) {
+      sections.push('<p><strong>Resources:</strong></p><ul>');
+      sections.push(...plan.literacySkillsAndResources.resources.map(r => `<li>${escapeHtml(r)}</li>`));
+      sections.push('</ul>');
+    }
+  }
+
+  if (plan.bloomsAlignment?.length) {
+    sections.push('<h3>Bloom’s Alignment</h3><table><thead><tr><th>Task</th><th>Level</th><th>Rationale</th></tr></thead><tbody>');
+    sections.push(
+      ...plan.bloomsAlignment.map(b =>
+        `<tr><td>${escapeHtml(b.task)}</td><td>${escapeHtml(b.bloom)}</td><td>${escapeHtml(b.rationale)}</td></tr>`
+      )
+    );
+    sections.push('</tbody></table>');
+  }
+
+  if (plan.coTeachingIntegration) {
+    sections.push('<h3>Co-Teaching Integration</h3>');
+    sections.push(`<div class="box"><strong>Model:</strong> ${escapeHtml(plan.coTeachingIntegration.model)}</div>`);
+    sections.push(`<div class="box"><strong>Grouping:</strong> ${escapeHtml(plan.coTeachingIntegration.grouping)}</div>`);
+    if (plan.coTeachingIntegration.roles?.length) {
+      sections.push('<p><strong>Roles:</strong></p><ul>');
+      sections.push(...plan.coTeachingIntegration.roles.map(r => `<li>${escapeHtml(r)}</li>`));
+      sections.push('</ul>');
+    }
+  }
+
+  if (plan.reteachingAndSpiral) {
+    sections.push('<h3>Reteaching & Spiral Review</h3>');
+    sections.push(`<div class="box"><strong>Same-Day Quick Pivot:</strong> ${escapeHtml(plan.reteachingAndSpiral.sameDayQuickPivot)}</div>`);
+    sections.push(`<div class="box"><strong>Next-Day Plan:</strong> ${escapeHtml(plan.reteachingAndSpiral.nextDayPlan)}</div>`);
+    if (plan.reteachingAndSpiral.spiralIdeas?.length) {
+      sections.push('<p><strong>Spiral Ideas:</strong></p><ul>');
+      sections.push(...plan.reteachingAndSpiral.spiralIdeas.map(s => `<li>${escapeHtml(s)}</li>`));
+      sections.push('</ul>');
+    }
+  }
+
+  if (plan.mtssSupports) {
+    sections.push('<h3>MTSS (Tier 1–3) & Monitoring</h3>');
+    if (plan.mtssSupports.tier1?.length) {
+      sections.push('<p><strong>Tier 1:</strong></p><ul>');
+      sections.push(...plan.mtssSupports.tier1.map(s => `<li>${escapeHtml(s)}</li>`));
+      sections.push('</ul>');
+    }
+    if (plan.mtssSupports.tier2?.length) {
+      sections.push('<p><strong>Tier 2:</strong></p><ul>');
+      sections.push(...plan.mtssSupports.tier2.map(s => `<li>${escapeHtml(s)}</li>`));
+      sections.push('</ul>');
+    }
+    if (plan.mtssSupports.tier3?.length) {
+      sections.push('<p><strong>Tier 3:</strong></p><ul>');
+      sections.push(...plan.mtssSupports.tier3.map(s => `<li>${escapeHtml(s)}</li>`));
+      sections.push('</ul>');
+    }
+    if (plan.mtssSupports.progressMonitoring?.length) {
+      sections.push('<p><strong>Progress Monitoring:</strong></p><ul>');
+      sections.push(...plan.mtssSupports.progressMonitoring.map(s => `<li>${escapeHtml(s)}</li>`));
+      sections.push('</ul>');
+    }
+  }
+
+  if (plan.therapeuticRootworkContext) {
+    sections.push('<h3>Therapeutic Rootwork Context</h3>');
+    sections.push(`<div class="box"><strong>Rationale:</strong> ${escapeHtml(plan.therapeuticRootworkContext.rationale)}</div>`);
+    sections.push(`<div class="box"><strong>Regulation Cue:</strong> ${escapeHtml(plan.therapeuticRootworkContext.regulationCue)}</div>`);
+    sections.push(`<div class="box"><strong>Restorative Practice:</strong> ${escapeHtml(plan.therapeuticRootworkContext.restorativePractice)}</div>`);
+    if (plan.therapeuticRootworkContext.communityAssets?.length) {
+      sections.push('<p><strong>Community Assets:</strong></p><ul>');
+      sections.push(...plan.therapeuticRootworkContext.communityAssets.map(a => `<li>${escapeHtml(a)}</li>`));
+      sections.push('</ul>');
+    }
+  }
+
+  if (plan.lessonFlowGRR?.length) {
+    sections.push('<h3>Lesson Flow — GRR</h3>');
+    sections.push(
+      ...plan.lessonFlowGRR.map(s => `
+        <div class="box">
+          <strong>${escapeHtml(s.phase)}:</strong> ${escapeHtml(s.step)}<br/>
+          ${escapeHtml(s.details)}<br/>
+          ${escapeHtml(s.teacherNote)}<br/>
+          ${escapeHtml(s.studentNote)}
+        </div>
+      `)
+    );
+  }
+
+  if (plan.assessmentAndEvidence) {
+    sections.push('<h3>Assessment & Evidence</h3>');
+    if (plan.assessmentAndEvidence.formativeChecks?.length) {
+      sections.push('<p><strong>Formative Checks:</strong></p><ul>');
+      sections.push(...plan.assessmentAndEvidence.formativeChecks.map(f => `<li>${escapeHtml(f)}</li>`));
+      sections.push('</ul>');
+    }
+    if (plan.assessmentAndEvidence.rubric?.length) {
+      sections.push('<p><strong>Rubric:</strong></p><table><thead><tr><th>Criterion</th><th>Developing</th><th>Proficient</th><th>Advanced</th></tr></thead><tbody>');
+      sections.push(
+        ...plan.assessmentAndEvidence.rubric.map(r =>
+          `<tr><td>${escapeHtml(r.criterion)}</td><td>${escapeHtml(r.developing)}</td><td>${escapeHtml(r.proficient)}</td><td>${escapeHtml(r.advanced)}</td></tr>`
+        )
+      );
+      sections.push('</tbody></table>');
+    }
+    if (plan.assessmentAndEvidence.exitTicket) {
+      sections.push(`<div class="box"><strong>Exit Ticket:</strong> ${escapeHtml(plan.assessmentAndEvidence.exitTicket)}</div>`);
+    }
+  }
+
+  // Legacy sections if present
+  if (plan.objectives?.length) {
+    sections.push('<h3>Legacy: Learning Objectives</h3><ul>');
+    sections.push(...plan.objectives.map(o => `<li>${escapeHtml(o)}</li>`));
+    sections.push('</ul>');
+  }
+  if (plan.timeline?.length) {
+    sections.push('<h3>Legacy: Timeline</h3>');
+    sections.push(
+      ...plan.timeline.map(t =>
+        `<div class="box"><strong>${escapeHtml(t.time)}</strong> — ${escapeHtml(t.activity)}<br/>${escapeHtml(t.description)}</div>`
+      )
+    );
+  }
+  if (plan.assessment) {
+    sections.push('<h3>Legacy: Assessment</h3>');
+    sections.push(`<p>${escapeHtml(plan.assessment)}</p>`);
+  }
+  if (plan.differentiation) {
+    sections.push('<h3>Legacy: Differentiation</h3>');
+    sections.push(`<p>${escapeHtml(plan.differentiation)}</p>`);
+  }
+  if (plan.extensions) {
+    sections.push('<h3>Legacy: Extensions</h3>');
+    sections.push(`<p>${escapeHtml(plan.extensions)}</p>`);
+  }
+
+  return sections.join('\n');
+}
+
+/** Narrative string → formatted HTML (handles headings, bullets, simple tables, encoding fixes) */
+function renderNarrativeText(raw: string): string {
+  // Fix common encoding artifacts
+  let text = raw
+    .replace(/â€¢/g, '•')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r\n/g, '\n');
+
+  // Headings like "LEVEL I HEADING: Title"
+  text = text
+    .replace(/^LEVEL\s*I\s*HEADING:\s*(.+)$/gim, '<h2>$1</h2>')
+    .replace(/^LEVEL\s*II\s*HEADING:\s*(.+)$/gim, '<h3>$1</h3>')
+    .replace(/^LEVEL\s*III\s*HEADING:\s*(.+)$/gim, '<h4>$1</h4>');
+
+  // Simple "CREATE TABLE:" blocks: lines with pipes => table
+  text = text.replace(/CREATE TABLE:[\s\S]*?(\n{2,}|$)/gim, (block) => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    // find first line with pipes as header, then rows
+    const rows = lines
+      .map(l => l.replace(/^CREATE TABLE:\s*/i, ''))
+      .filter(l => /\|/.test(l));
+    if (!rows.length) return block;
+
+    const cells = rows.map(r =>
+      r.split('|').map(c => c.trim()).filter(c => c.length > 0)
+    );
+    const header = cells[0] || [];
+    const body = cells.slice(1);
+
+    const thead = `<thead><tr>${header.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>`;
+    const tbody = `<tbody>${body.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+    return `<table>${thead}${tbody}</table>\n`;
+  });
+
+  // Bullets: lines starting with • / - / *
+  const htmlLines: string[] = [];
+  const lines = text.split('\n');
+  let inList = false;
+  for (const line of lines) {
+    const bullet = /^[\s]*([•\-*])\s+(.+)$/.exec(line);
+    if (bullet) {
+      if (!inList) {
+        inList = true;
+        htmlLines.push('<ul>');
+      }
+      htmlLines.push(`<li>${escapeHtml(bullet[2])}</li>`);
+    } else {
+      if (inList) {
+        htmlLines.push('</ul>');
+        inList = false;
+      }
+      if (line.match(/^<h[2-4]>/)) {
+        htmlLines.push(line);
+      } else if (line.trim() === '') {
+        htmlLines.push('<br/>');
+      } else {
+        htmlLines.push(`<p>${escapeHtml(line)}</p>`);
+      }
+    }
+  }
+  if (inList) htmlLines.push('</ul>');
+
+  return htmlLines.join('\n');
 }
