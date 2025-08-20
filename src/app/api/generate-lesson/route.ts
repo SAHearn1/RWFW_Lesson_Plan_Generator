@@ -1,4 +1,4 @@
-// src/app/api/generate-lesson/route.ts - Professional Lesson Plan Generator
+// src/app/api/generate-lesson/route.ts - Enhanced Professional Lesson Plan Generator
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -101,347 +101,412 @@ function getSubjectAbbreviation(subject: string): string {
   return abbreviations[subject] || 'GEN';
 }
 
-function buildImprovedMasterPrompt(data: MasterPromptRequest): string {
-  const numberOfDays = parseInt(data.numberOfDays || '3');
+function processTopicForReadability(topic: string): string {
+  // Clean up overly long or malformed topics
+  let cleanTopic = topic.trim();
+  
+  // If topic is longer than 60 characters, try to extract the core concept
+  if (cleanTopic.length > 60) {
+    // Look for key educational terms and extract the main concept
+    const patterns = [
+      /^(.*?)\s+(?:A Two-Week|Research Project|That Will Change)/i,
+      /^(.*?)\s+(?:Understanding|Exploring|Learning|Studying)/i,
+      /^(?:Understanding|Exploring|Learning|Studying)\s+(.*?)(?:\s+(?:A|The|Research|Project))/i,
+      /^(.*?)\s+(?:Impact|Effect|Influence)/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = cleanTopic.match(pattern);
+      if (match && match[1] && match[1].length > 10 && match[1].length < 50) {
+        cleanTopic = match[1].trim();
+        break;
+      }
+    }
+    
+    // If still too long, take first meaningful chunk
+    if (cleanTopic.length > 60) {
+      const words = cleanTopic.split(' ');
+      cleanTopic = words.slice(0, Math.min(6, words.length)).join(' ');
+    }
+  }
+  
+  // Ensure it's properly capitalized
+  return cleanTopic.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+}
+
+function buildEnhancedMasterPrompt(data: MasterPromptRequest): string {
+  const numberOfDays = parseInt(data.numberOfDays || '5');
   const durationMinutes = parseInt(data.duration?.match(/\d+/)?.[0] || '90');
-  const lessonCode = `RootedIn${data.topic.replace(/[^a-zA-Z]/g, '')}`;
+  const cleanTopic = processTopicForReadability(data.topic);
+  const lessonCode = `RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}`;
   const subjectAbbr = getSubjectAbbreviation(data.subject);
   
   return `
-PROFESSIONAL TRAUMA-INFORMED STEAM LESSON PLAN GENERATOR
+ENHANCED PROFESSIONAL TRAUMA-INFORMED STEAM LESSON PLAN GENERATOR
 
-Generate a comprehensive ${numberOfDays}-day lesson plan for:
+Create a comprehensive ${numberOfDays}-day lesson plan with the following specifications:
+
+**LESSON PARAMETERS:**
 - Subject: ${data.subject}
-- Grade Level: ${data.gradeLevel}  
-- Topic: ${data.topic}
+- Grade Level: ${data.gradeLevel}
+- Topic: ${cleanTopic}
 - Duration: ${data.duration} per day
 - Location: ${data.location || 'Savannah, Georgia'}
-${data.learningObjectives ? `- Learning Objectives: ${data.learningObjectives}` : ''}
-${data.specialNeeds ? `- Special Considerations: ${data.specialNeeds}` : ''}
-${data.availableResources ? `- Available Resources: ${data.availableResources}` : ''}
+- Days: ${numberOfDays}
 
-CRITICAL OUTPUT REQUIREMENTS:
-1. Professional formatting without decorative icons or emojis
-2. Actual resource content generation (not placeholders)
-3. Detailed AI image generation instructions
-4. Eliminate content redundancy
-5. Include mandatory Teacher Notes and Student Notes for every activity
-6. Teacher-ready implementation focus
+**CRITICAL QUALITY REQUIREMENTS:**
+1. Each day must have UNIQUE, SPECIFIC content that builds progressively
+2. Activities must be detailed and actionable for teachers
+3. Generate ACTUAL resource content, not placeholders
+4. Use ONLY the clean topic "${cleanTopic}" throughout (never repeat long topic names)
+5. Include specific, grade-appropriate examples and scenarios
+6. Provide detailed facilitation guidance for every activity
 
-LESSON STRUCTURE FORMAT:
+**DAILY PROGRESSION STRUCTURE:**
+Day 1: Introduction and Foundation Building
+Day 2: Exploration and Investigation  
+Day 3: Analysis and Critical Thinking
+Day 4: Application and Creation
+Day 5: Synthesis and Reflection
+
+**ENHANCED OUTPUT FORMAT:**
 
 **TRAUMA-INFORMED STEAM LESSON PLAN**
 **Grade:** ${data.gradeLevel}
-**Duration:** ${data.duration} per day
+**Subject:** ${data.subject}
+**Topic:** ${cleanTopic}
+**Duration:** ${data.duration} per day over ${numberOfDays} days
 **Location:** ${data.location || 'Savannah, Georgia'}
-**Unit Title:** [Creative title connecting topic to place and learning goals]
+**Unit Title:** [Create compelling 4-6 word title using "${cleanTopic}"]
 
-${Array.from({length: numberOfDays}, (_, dayIndex) => `
-## **DAY ${dayIndex + 1}: [Specific Daily Focus Title]**
+**LESSON OVERVIEW:**
+[Write 2-3 sentences describing the unit's purpose and student outcomes]
 
-### **Essential Question:**
-[Daily essential question connecting to unit themes and student experience]
+**UNIT ESSENTIAL QUESTION:**
+[One overarching question that spans all ${numberOfDays} days]
 
-### **Learning Target:**
-I can [specific, measurable skill statement] (DOK Level ${Math.floor(Math.random() * 4) + 1})
+**UNIT LEARNING TARGETS:**
+- I can [specific measurable outcome 1] (DOK 2)
+- I can [specific measurable outcome 2] (DOK 3) 
+- I can [specific measurable outcome 3] (DOK 4)
+
+---
+
+${Array.from({length: numberOfDays}, (_, dayIndex) => {
+  const dayNumber = dayIndex + 1;
+  const dayFoci = [
+    'Introduction and Foundation Building',
+    'Exploration and Investigation', 
+    'Analysis and Critical Thinking',
+    'Application and Creation',
+    'Synthesis and Reflection'
+  ];
+  const dayFocus = dayFoci[dayIndex] || `Advanced Application ${dayNumber}`;
+  
+  return `
+## **DAY ${dayNumber}: ${dayFocus}**
+
+### **Daily Essential Question:**
+[Specific question for Day ${dayNumber} that builds toward unit question]
+
+### **Daily Learning Target:**
+I can [specific skill for Day ${dayNumber} related to ${cleanTopic}] (DOK ${dayNumber === 1 ? 2 : dayNumber === 2 ? 2 : dayNumber === 3 ? 3 : dayNumber === 4 ? 3 : 4})
 
 ### **Standards Alignment:**
-* ${data.subject} Standard: [Specific state standard code and description]
-* SEL Competency: [CASEL domain alignment]
-* Cross-curricular Connection: [Integration with other subjects]
+- **Primary Standard:** [Specific ${data.subject} standard for Grade ${data.gradeLevel}]
+- **SEL Integration:** [Specific CASEL competency for Day ${dayNumber}]
+- **Cross-Curricular Connections:** [Other subject areas integrated]
 
-### **Root Work Framework 5 Rs Lesson Structure:**
+### **Materials Needed:**
+[Specific list of materials for Day ${dayNumber} activities]
+
+---
+
+### **Root Work Framework 5 Rs Structure:**
 
 **RELATIONSHIPS (${Math.round(durationMinutes * 0.15)} minutes)**
-*Building Community and Belonging*
-[Specific community-building activity focused on ${data.topic}]
+*Community Building and Belonging*
 
-[Teacher Note: Establish psychological safety through consistent trauma-informed practices that honor student identities and cultural backgrounds while building classroom community]
+**Opening Ritual for Day ${dayNumber}:**
+[Specific community-building activity related to ${cleanTopic} and Day ${dayNumber} focus]
 
-[Student Note: This is your time to connect with classmates and ground yourself in our learning community before diving into new content]
+**Facilitation Notes:**
+[Teacher Note: Specific guidance for Day ${dayNumber} community building that establishes safety while connecting to ${dayFocus}]
+
+[Student Note: Day ${dayNumber} specific encouragement that relates to ${dayFocus} and builds confidence]
 
 **ROUTINES (${Math.round(durationMinutes * 0.1)} minutes)**
-*Establishing Predictable Structure*
-[Clear agenda review, success criteria presentation, and materials preparation]
+*Predictable Structure and Safety*
 
-[Teacher Note: Provide predictable structure that reduces anxiety and builds executive function skills through visual supports and clear expectations]
+**Day ${dayNumber} Agenda Preview:**
+[Specific agenda items for this day's ${dayFocus}]
 
-[Student Note: Use this time to organize yourself mentally and physically for learning, understanding what success looks like today]
+**Success Criteria Review:**
+[Specific success indicators students will achieve by end of Day ${dayNumber}]
+
+[Teacher Note: Day ${dayNumber} specific routine guidance that reduces anxiety and supports executive function]
+
+[Student Note: Day ${dayNumber} organization tips that help students prepare for ${dayFocus}]
 
 **RELEVANCE (${Math.round(durationMinutes * 0.25)} minutes)**
-*Connecting to Lived Experience and Community*
-[Activity connecting ${data.topic} to student experiences and community context]
+*Connecting to Student Experience*
 
-[Teacher Note: Draw explicit connections between academic content and student cultural assets, validating diverse perspectives and lived experiences]
+**Day ${dayNumber} Connection Activity:**
+[Specific activity connecting ${cleanTopic} to student lives, appropriate for ${dayFocus}]
 
-[Student Note: Your experiences and knowledge are valuable resources for our learning - share authentically and listen for connections to others' stories]
+**Real-World Bridge:**
+[Specific examples of how Day ${dayNumber} content connects to current events, local community, or student interests]
+
+[Teacher Note: Day ${dayNumber} guidance for honoring diverse perspectives while making ${cleanTopic} personally meaningful]
+
+[Student Note: Day ${dayNumber} encouragement for sharing personal connections and valuing diverse experiences]
 
 **RIGOR (${Math.round(durationMinutes * 0.35)} minutes)**
-*Engaging in Challenging, Scaffolded Learning*
+*Academic Challenge and Growth*
 
 **I Do: Teacher Modeling (${Math.round(durationMinutes * 0.1)} minutes)**
-[Specific demonstration of key concepts with think-aloud strategy]
+[Specific demonstration for Day ${dayNumber} that models ${dayFocus} thinking about ${cleanTopic}]
 
-[Teacher Note: Model complex thinking processes explicitly while connecting to student experiences and providing multiple entry points for understanding]
+**Think-Aloud Script Sample:**
+"Today I'm going to show you how to [specific skill for Day ${dayNumber}] when analyzing ${cleanTopic}. Watch how I..."
 
-[Student Note: Watch for strategies and thinking processes you can use in your own learning - notice how expert thinking works]
+[Teacher Note: Day ${dayNumber} modeling guidance that makes expert thinking visible for ${dayFocus}]
+
+[Student Note: Day ${dayNumber} listening strategies that help students capture key thinking processes]
 
 **We Do: Guided Practice (${Math.round(durationMinutes * 0.15)} minutes)**
-[Collaborative exploration with teacher scaffolding]
+[Specific collaborative activity for Day ${dayNumber} that practices ${dayFocus} with ${cleanTopic}]
 
-[Teacher Note: Provide just-right support while encouraging productive struggle and honoring different cultural approaches to collaboration]
+**Scaffolding Supports:**
+[Specific supports for Day ${dayNumber} that help students engage with ${dayFocus}]
 
-[Student Note: Engage actively in shared learning - ask questions, build on others' ideas, and contribute your unique perspective]
+[Teacher Note: Day ${dayNumber} guidance for providing just-right support during ${dayFocus} practice]
+
+[Student Note: Day ${dayNumber} collaboration strategies that support peer learning during ${dayFocus}]
 
 **You Do Together: Collaborative Application (${Math.round(durationMinutes * 0.1)} minutes)**
-[Partner or small group application with choice in approach]
+[Specific partner/group task for Day ${dayNumber} that applies ${dayFocus} to ${cleanTopic}]
 
-[Teacher Note: Monitor for equitable participation while offering multiple pathways for demonstrating understanding and honoring different learning styles]
+**Choice Options:**
+[Specific options for how students can demonstrate Day ${dayNumber} learning]
 
-[Student Note: Work collaboratively to apply your learning, drawing on everyone's strengths and supporting each other's growth]
+[Teacher Note: Day ${dayNumber} guidance for monitoring group dynamics and ensuring equitable participation]
+
+[Student Note: Day ${dayNumber} teamwork strategies that honor different learning styles and perspectives]
 
 **REFLECTION (${Math.round(durationMinutes * 0.15)} minutes)**
-*Metacognitive Processing and Growth Recognition*
+*Growth Recognition and Forward Planning*
 
-**Individual Processing:**
-[Personal reflection connecting learning to growth and experience]
+**Day ${dayNumber} Processing:**
+[Specific reflection activity that helps students process ${dayFocus} learning about ${cleanTopic}]
 
-[Teacher Note: Support various reflection styles while building metacognitive awareness and honoring different processing needs and trauma responses]
+**Tomorrow's Preview:**
+[Brief preview of Day ${dayNumber + 1} that builds excitement and connection]
 
-[Student Note: Take time to recognize your learning journey and consider how today's insights connect to your goals and experiences]
+[Teacher Note: Day ${dayNumber} reflection guidance that supports metacognition and celebrates growth in ${dayFocus}]
 
-**Community Closing:**
-[Circle sharing and intention setting for continued learning]
-
-[Teacher Note: Use restorative practices to build community, celebrate growth, and preview tomorrow's learning while being attentive to emotional responses]
-
-[Student Note: Share your growth and listen for connections to classmates' experiences as we prepare for continued learning together]
+[Student Note: Day ${dayNumber} reflection prompts that help students recognize their progress in ${dayFocus}]
 
 ---
 
-**IMPLEMENTATION SUPPORTS:**
+### **Day ${dayNumber} Implementation Supports:**
 
 **MTSS Tiered Supports:**
-* **Tier 1 (Universal):** Visual agenda, graphic organizers, choice in expression format, collaborative learning opportunities
-* **Tier 2 (Targeted):** Pre-teaching key vocabulary, chunked content with guiding questions, small group check-ins, extended processing time
-* **Tier 3 (Intensive):** One-on-one conferencing, modified learning targets, alternative assessment formats, frequent progress monitoring
-* **504 Accommodations:** Preferential seating, extended time, assistive technology access, frequent breaks, reduced distractions
-* **Gifted Extensions:** Independent research projects, mentorship opportunities, leadership roles, accelerated content
-* **SPED Modifications:** Simplified language, visual supports, concrete manipulatives, individualized goals, sensory accommodations
+- **Tier 1 (Universal):** [3 specific supports for Day ${dayNumber} ${dayFocus}]
+- **Tier 2 (Targeted):** [3 specific interventions for Day ${dayNumber} ${dayFocus}]  
+- **Tier 3 (Intensive):** [3 specific modifications for Day ${dayNumber} ${dayFocus}]
+- **504 Accommodations:** [Specific accommodations for Day ${dayNumber} activities]
+- **Gifted Extensions:** [Advanced opportunities for Day ${dayNumber} ${dayFocus}]
+- **SPED Modifications:** [Specific modifications for Day ${dayNumber} ${dayFocus}]
 
-**SEL Competencies Addressed:**
-CASEL domains integrated through community building, collaborative learning, self-reflection, and decision-making opportunities
+**Day ${dayNumber} Assessment:**
+- **Formative:** [Specific check for understanding during Day ${dayNumber}]
+- **Summative:** [How Day ${dayNumber} contributes to unit assessment]
 
-**Assessment Methods:**
-* **Formative:** Exit tickets, peer feedback, teacher observation, journal reflections, self-assessment checklists
-* **Summative:** Performance-based demonstration with rubric, portfolio development, student choice in format
+**SEL Integration:**
+[Specific social-emotional learning embedded in Day ${dayNumber} ${dayFocus}]
 
-**STEAM Integration:**
-* **Science:** [Specific integration relevant to ${data.topic}]
-* **Technology:** [Digital tools and computational thinking applications]
-* **Engineering:** [Design thinking and problem-solving processes]
-* **Arts:** [Creative expression and cultural connection opportunities]
-* **Mathematics:** [Quantitative reasoning and pattern recognition]
+**Trauma-Informed Considerations:**
+[Specific considerations for Day ${dayNumber} that support student emotional safety]
 
-**Trauma-Informed Care Implementation:**
-* **Safety:** Consistent routines, clear expectations, calm learning environment, choice and control
-* **Trustworthiness:** Transparent communication, reliable follow-through, consistent boundaries
-* **Peer Support:** Collaborative learning structures, peer mentoring, community building
-* **Collaboration:** Shared decision-making, student voice in learning, co-creation of classroom norms
-* **Empowerment:** Student agency, strength-based approach, growth mindset messaging
-* **Cultural Responsiveness:** Asset-based view of student backgrounds, multicultural perspectives, inclusive practices`).join('\n')}
+---`;
+}).join('')}
 
----
+## **COMPREHENSIVE RESOURCE GENERATION**
 
-## **RESOURCE GENERATION SECTION**
+**File Naming Convention:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_[ResourceName].[extension]
 
-**Naming Convention:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_[DescriptiveTitle].[extension]
-
-**Text-Based Resources (Full Content Generated):**
-
-### **1. Student Worksheet**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_StudentWorksheet.docx
+### **1. Day-by-Day Student Workbook**
+**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_StudentWorkbook.pdf
 
 **COMPLETE CONTENT:**
 
-**${data.topic} Learning Worksheet - Grade ${data.gradeLevel}**
-**Name: _________________________ Date: _____________**
-
-**Learning Target:** I can demonstrate understanding of ${data.topic} through analysis and application.
-
-**Section A: Building Understanding**
-1. Define ${data.topic} in your own words, including one example from your community or experience:
-
-2. What connections do you see between ${data.topic} and your daily life? Provide specific examples:
-
-3. Analyze the following scenario related to ${data.topic}: [Provide grade-appropriate scenario]
-   What factors are involved? What might happen next?
-
-**Section B: Application and Analysis**
-4. Compare and contrast two different approaches to ${data.topic}. Use the graphic organizer below:
-
-   | Approach 1 | Similarities | Approach 2 |
-   |------------|--------------|------------|
-   |            |              |            |
-   |            |              |            |
-
-5. If you were teaching a younger student about ${data.topic}, what would be the three most important points to share?
-   a.
-   b.
-   c.
-
-**Section C: Reflection and Growth**
-6. What questions do you still have about ${data.topic}?
-
-7. How has your understanding changed from the beginning of this lesson?
-
-8. What learning strategies helped you most today?
-
-**Success Criteria Checklist:**
-□ I can explain ${data.topic} in my own words
-□ I can connect ${data.topic} to real-world examples
-□ I can analyze situations involving ${data.topic}
-□ I can reflect on my learning process
-
-### **2. Teacher Implementation Guide**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_TeacherGuide.docx
-
-**COMPLETE CONTENT:**
-
-**Teacher Implementation Guide: ${data.topic}**
+**${cleanTopic} Student Learning Guide**
 **Grade ${data.gradeLevel} - ${numberOfDays} Day Unit**
+**Name: _________________________ Class Period: _________**
 
 **Unit Overview:**
-This ${numberOfDays}-day unit engages students in exploring ${data.topic} through trauma-informed, culturally responsive pedagogy using the Root Work Framework.
+This ${numberOfDays}-day exploration of ${cleanTopic} will help you develop critical thinking skills while connecting academic learning to your personal experiences and community.
 
-**Essential Vocabulary:**
-- **${data.topic}:** [Grade-appropriate definition]
-- **Community Impact:** How ${data.topic} affects local and broader communities
-- **Personal Connection:** Individual relationship to and experience with ${data.topic}
-- **Analysis:** Breaking down complex ideas to understand components and relationships
+**Unit Essential Question:**
+[Insert the unit essential question here]
 
-**Daily Pacing Guide:**
-${Array.from({length: numberOfDays}, (_, i) => `- Day ${i + 1}: [Specific focus and key activities] (${data.duration})`).join('\n')}
+**My Learning Targets:**
+By the end of this unit, I will be able to:
+- [ ] [Target 1 - knowledge/comprehension]
+- [ ] [Target 2 - application/analysis] 
+- [ ] [Target 3 - synthesis/evaluation]
 
-**Differentiation Strategies by Student Need:**
+${Array.from({length: parseInt(data.numberOfDays || '5')}, (_, i) => `
+**DAY ${i + 1} LEARNING PAGE**
 
-**English Language Learners:**
-- Provide visual vocabulary supports with images and native language cognates
-- Use graphic organizers to scaffold written responses
-- Pair with bilingual peers when possible
-- Pre-teach key vocabulary with visual and kinesthetic supports
+**Today's Focus:** ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]}
 
-**Students with Learning Differences:**
-- Break complex tasks into smaller, manageable steps
-- Provide choice in response format (verbal, visual, written, digital)
-- Use assistive technology as appropriate
-- Offer extended time and frequent check-ins
+**Daily Essential Question:** _________________________________
 
-**Advanced Learners:**
-- Provide additional research opportunities and complex scenarios
-- Encourage leadership roles in group activities
-- Offer choice in depth and breadth of exploration
-- Connect to real-world applications and community issues
+**What I Already Know About ${cleanTopic}:**
+_____________________________________________________________
+_____________________________________________________________
 
-**Students Experiencing Trauma:**
-- Maintain consistent routines and clear expectations
-- Provide multiple opportunities for success and choice
-- Be aware of potential trauma triggers related to ${data.topic}
-- Emphasize student strengths and community connections
+**New Learning - Key Concepts:**
+1. ____________________________________________________________
+2. ____________________________________________________________  
+3. ____________________________________________________________
 
-**Assessment Rubric:**
+**Real-World Connections:**
+How does ${cleanTopic} connect to my life or community?
+_____________________________________________________________
+_____________________________________________________________
+
+**Analysis Activity:**
+[Specific activity prompt for Day ${i + 1}]
+
+**Reflection:**
+What surprised me today? ___________________________________
+What questions do I still have? ____________________________
+How did I grow as a learner? _______________________________
+
+**Preparation for Tomorrow:**
+One thing I want to explore further: _________________________
+`).join('')}
+
+**Unit Reflection Portfolio:**
+[Instructions for final reflection and portfolio compilation]
+
+### **2. Teacher Implementation Guide**
+**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_TeacherGuide.pdf
+
+**COMPLETE CONTENT:**
+
+**TEACHER IMPLEMENTATION GUIDE: ${cleanTopic}**
+**Grade ${data.gradeLevel} Professional Development Resource**
+
+**UNIT OVERVIEW:**
+This ${numberOfDays}-day unit engages students in exploring ${cleanTopic} through trauma-informed, culturally responsive pedagogy using the Root Work Framework.
+
+**PREPARATION CHECKLIST:**
+**Before Day 1:**
+- [ ] Review all student materials and make copies
+- [ ] Prepare community circle space with comfortable seating
+- [ ] Gather materials for hands-on activities
+- [ ] Review student IEPs and 504 plans for accommodations
+- [ ] Set up digital tools and resources
+
+**DAILY PREPARATION GUIDES:**
+
+${Array.from({length: parseInt(data.numberOfDays || '5')}, (_, i) => `
+**DAY ${i + 1} TEACHER PREP:**
+**Focus:** ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]}
+
+**Key Teaching Points:**
+- [Specific content point 1 for Day ${i + 1}]
+- [Specific content point 2 for Day ${i + 1}]
+- [Specific content point 3 for Day ${i + 1}]
+
+**Anticipated Student Challenges:**
+- Challenge 1: [Common misconception about ${cleanTopic}]
+  Solution: [Specific teaching strategy]
+- Challenge 2: [Engagement concern for Day ${i + 1}]
+  Solution: [Specific intervention]
+
+**Differentiation Strategies:**
+- **Below Grade Level:** [Specific supports for Day ${i + 1}]
+- **On Grade Level:** [Core instruction adaptations for Day ${i + 1}]
+- **Above Grade Level:** [Extension activities for Day ${i + 1}]
+
+**Assessment Indicators:**
+Students successfully demonstrate understanding when they:
+- [Observable behavior 1 for Day ${i + 1}]
+- [Observable behavior 2 for Day ${i + 1}]
+- [Observable behavior 3 for Day ${i + 1}]
+
+**Potential Pivots:**
+If students struggle with [concept], try [alternative approach]
+If students master quickly, extend with [enrichment activity]
+`).join('')}
+
+**TROUBLESHOOTING GUIDE:**
+- **Low Engagement:** [Specific strategies for re-engaging students with ${cleanTopic}]
+- **Behavior Concerns:** [Trauma-informed responses for challenging behaviors]
+- **Academic Struggles:** [Scaffolding strategies for complex concepts]
+- **Technology Issues:** [Backup plans for digital components]
+
+**FAMILY COMMUNICATION:**
+[Template for communicating unit goals and home extension activities]
+
+### **3. Assessment Rubric and Tools**
+**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_AssessmentTools.pdf
+
+**COMPLETE CONTENT:**
+
+**${cleanTopic} UNIT ASSESSMENT RUBRIC**
+**Grade ${data.gradeLevel} - Holistic Performance Evaluation**
 
 | Criteria | Developing (1) | Approaching (2) | Proficient (3) | Advanced (4) |
 |----------|----------------|-----------------|----------------|--------------|
-| Understanding | Basic awareness of ${data.topic} | General understanding with some gaps | Clear understanding with examples | Deep understanding with complex connections |
-| Application | Limited connection to personal experience | Some connections made | Clear connections to life and community | Multiple sophisticated connections |
-| Analysis | Simple observations | Some analysis with support | Independent analysis with evidence | Complex analysis with multiple perspectives |
-| Communication | Basic communication of ideas | Generally clear communication | Clear, organized communication | Sophisticated, nuanced communication |
+| **Understanding of ${cleanTopic}** | Basic awareness with significant gaps | General understanding with some misconceptions | Clear, accurate understanding with examples | Deep, nuanced understanding with sophisticated connections |
+| **Analysis and Critical Thinking** | Simple observations with minimal analysis | Some analysis with teacher support | Independent analysis with evidence | Complex analysis with multiple perspectives |
+| **Application to Real World** | Limited or unclear connections | Some connections with prompting | Clear, relevant connections | Multiple sophisticated connections across contexts |
+| **Communication of Ideas** | Basic communication with unclear organization | Generally clear with some organization | Clear, well-organized communication | Sophisticated, compelling communication |
+| **Collaboration and SEL** | Minimal participation in group work | Participates with encouragement | Actively contributes to group learning | Facilitates and enhances group learning |
 
-**Extension Activities:**
-1. Community interview project about ${data.topic}
-2. Digital storytelling creation
-3. Action plan development for addressing ${data.topic} in the community
-4. Cross-curricular research project
-5. Peer teaching opportunity
+**DAILY CHECK-IN TOOLS:**
 
-**Family Engagement Suggestions:**
-- Send home discussion questions for family conversations
-- Invite community members to share experiences related to ${data.topic}
-- Provide resources for families to explore ${data.topic} together
-- Create opportunities for students to teach families what they've learned
+**Exit Ticket Templates:**
+- Day 1: "One thing I learned about ${cleanTopic} today is..."
+- Day 2: "The most surprising discovery about ${cleanTopic} was..."
+- Day 3: "When I analyze ${cleanTopic}, I notice..."
+- Day 4: "I can apply ${cleanTopic} to my life by..."
+- Day 5: "My thinking about ${cleanTopic} has changed because..."
 
-### **3. Peer Reflection Protocol**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_PeerReflection.docx
+**Peer Feedback Forms:**
+[Structured forms for collaborative assessment activities]
 
-**COMPLETE CONTENT:**
+**Self-Assessment Checklists:**
+[Student reflection tools for metacognitive development]
 
-**Peer Learning Reflection Protocol**
-**${data.topic} Unit - Grade ${data.gradeLevel}**
-
-**Partners:** _________________________ and _________________________
-**Date:** _____________ **Activity:** _________________________________
-
-**Section 1: Sharing Learning**
-Take turns sharing what you learned today. Listen carefully to your partner.
-
-**My partner learned:** (Write 2-3 things your partner shared)
-1.
-2.
-3.
-
-**Section 2: Connections and Questions**
-**Something my partner said that connected to my own experience:**
-
-**A question I have based on what my partner shared:**
-
-**Section 3: Supportive Feedback**
-**One thing my partner did well in their learning today:**
-
-**One way I can support my partner's continued learning:**
-
-**Section 4: Growth Commitment**
-**Something I want to work on for tomorrow:**
-
-**How my partner can help me with this goal:**
-
-**Reflection Questions:**
-1. What did you learn from your partner that you might not have discovered on your own?
-
-2. How did sharing your learning help you understand ${data.topic} better?
-
-3. What questions emerged from your conversation that you want to explore further?
-
-**Partnership Agreement for Tomorrow:**
-We commit to supporting each other's learning by:
-□ Listening actively and respectfully
-□ Asking helpful questions
-□ Sharing our thinking openly
-□ Celebrating each other's growth
-□ Working together to understand ${data.topic} more deeply
-
-**Visual Resources (Detailed AI Generation Instructions):**
-
-### **4. Concept Visualization**
+### **4. Visual Learning Aids**
 **File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_ConceptMap.png
 
 **AI GENERATION PROMPT:**
-"Create a professional educational concept map for ${data.topic} suitable for Grade ${data.gradeLevel} students. Design specifications: Central concept '${data.topic}' in a large circle at center, with 5-6 related concepts in smaller circles connected by labeled arrows. Use a clean, academic color scheme with navy blue (#1B365D) for main concepts, medium blue (#2E86AB) for connections, and gold (#F2CC85) for labels. Include simple, recognizable icons next to each concept circle. Use sans-serif fonts (minimum 14pt for accessibility). White background with subtle grid pattern. Ensure high contrast ratios for classroom projection. Size: 1920x1080 pixels for optimal display."
+"Create a professional educational concept map for '${cleanTopic}' designed for Grade ${data.gradeLevel} students. Central hub labeled '${cleanTopic}' in bold sans-serif font, surrounded by 6 key concept bubbles connected with labeled relationship arrows. Use an academic color palette: navy blue (#1B365D) for the central concept, medium blue (#2E86AB) for secondary concepts, and gold (#F2CC85) for connection labels. Include simple, recognizable icons next to each concept bubble that relate to ${data.subject} learning. Ensure minimum 16pt font size for accessibility and high contrast ratios. Background should be clean white with subtle grid lines. Design for 1920x1080 resolution to ensure clarity when projected in classrooms. Make it visually engaging but academically appropriate for ${data.gradeLevel} students."
 
-### **5. Process Flow Diagram**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_ProcessFlow.png
-
-**AI GENERATION PROMPT:**
-"Design a step-by-step process flow diagram showing how to analyze ${data.topic}. Create 4 sequential steps in rounded rectangles connected by arrows. Each step should contain: a large number (1-4), a brief action verb phrase (3-4 words), and a simple icon representing the action. Use professional color scheme: primary steps in teal (#008080), arrows in dark gray (#333333), text in black for maximum readability. Include subtle drop shadows for depth. Background should be light gray (#F5F5F5) with clean, modern styling. Ensure Grade ${data.gradeLevel} appropriate language. Dimensions: 1600x900 pixels for classroom display and worksheet inclusion."
-
-### **6. Data Collection Template**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_DataTemplate.png
+### **5. Process Guide Poster**
+**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_ProcessPoster.png
 
 **AI GENERATION PROMPT:**
-"Create a clean, printable data collection template for ${data.topic} research. Design a table layout with 4 columns labeled: 'Source', 'Key Information', 'Personal Connection', and 'Questions'. Include 6 empty rows for student use. Add header section with fields for student name, date, and research focus. Use professional formatting with clear borders, alternating row colors (white and light blue #F0F8FF), and black text throughout. Include small instruction text under each column header explaining what students should record. Footer should include space for reflection. Size: 8.5x11 inches (letter size) for easy printing and copying."
+"Design a step-by-step process poster showing 'How to Analyze ${cleanTopic}' for Grade ${data.gradeLevel} students. Create 5 sequential steps in colorful rounded rectangles, connected by clear directional arrows. Each step should include: a large, bold number (1-5), a concise action phrase (4-6 words), and a relevant icon. Use a professional but engaging color scheme: teal (#008080) for step backgrounds, white text for readability, and dark gray (#333333) for arrows and borders. Include subtle drop shadows for visual depth. Add a header banner with the title 'Analyzing ${cleanTopic}: A Step-by-Step Guide' in large, readable font. Ensure the design is clean, modern, and suitable for both classroom display and student handouts. Size: 11x17 inches for poster printing."
 
-**Generated by Root Work Framework - Trauma-informed, regenerative learning ecosystem**
-**Created: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}**
+### **6. Student Reference Card**
+**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_ReferenceCard.png
+
+**AI GENERATION PROMPT:**
+"Create a student reference card (bookmark size) featuring key vocabulary and concepts for '${cleanTopic}' at Grade ${data.gradeLevel} level. Include 8-10 essential terms with brief, student-friendly definitions. Use a clean, organized layout with alternating light blue (#F0F8FF) and white backgrounds for each term. Add small icons next to vocabulary words to aid memory retention. Include the unit title '${cleanTopic}' at the top in bold, readable font. Add a QR code placeholder at the bottom for digital resources. Design should be professional yet student-friendly, suitable for printing on cardstock. Dimensions: 2.5 x 8 inches for bookmark format. Ensure all text is large enough to read easily (minimum 10pt font)."
+
+Generated by Root Work Framework - Professional Trauma-Informed Learning Design
+Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 `.trim();
 }
 
@@ -452,13 +517,9 @@ function formatLessonAsHTML(lessonContent: string, data: MasterPromptRequest): s
     .replace(/â€œ/g, '"')
     .replace(/â€/g, '"')
     .replace(/â€™/g, "'")
-    .replace(/ðŸ¤/g, '')
-    .replace(/ðŸ"‹/g, '')
-    .replace(/ðŸŒ/g, '')
-    .replace(/ðŸ"š/g, '')
-    .replace(/ðŸ¤"/g, '')
-    .replace(/ðŸ"–/g, '');
+    .replace(/\\/g, '');
 
+  const cleanTopic = processTopicForReadability(data.topic);
   const dayMatches = cleanContent.match(/## \*\*DAY \d+:.*?\*\*/g) || [];
   const dayNav = dayMatches.map((match, index) => {
     const dayNum = index + 1;
@@ -473,157 +534,146 @@ function formatLessonAsHTML(lessonContent: string, data: MasterPromptRequest): s
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Root Work Framework: ${data.topic} - Grade ${data.gradeLevel}</title>
+  <title>Root Work Framework: ${cleanTopic} - Grade ${data.gradeLevel}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       line-height: 1.6; 
       color: #2B2B2B; 
-      max-width: 8.5in; 
-      margin: 0 auto; 
-      padding: 1rem;
       background: #FFFFFF;
+      font-size: 14px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
     
     @media print {
-      body { max-width: none; margin: 0.5in; font-size: 11pt; }
-      .no-print { display: none; }
+      body { font-size: 11pt; }
+      .no-print { display: none !important; }
       .page-break { page-break-before: always; }
       .day-section { page-break-inside: avoid; }
+      .container { max-width: none; padding: 0; }
     }
     
+    /* Typography */
     h1, h2, h3, h4 { 
-      font-family: Georgia, serif; 
-      color: #082A19; 
-      margin-bottom: 0.75rem;
-      line-height: 1.3;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #1B365D; 
+      margin-bottom: 1rem;
+      line-height: 1.2;
     }
-    h1 { font-size: 28px; border-bottom: 3px solid #D4C862; padding-bottom: 0.5rem; }
-    h2 { font-size: 22px; margin-top: 2rem; color: #3B523A; }
-    h3 { font-size: 18px; margin-top: 1.5rem; }
-    h4 { font-size: 16px; margin-top: 1rem; font-weight: 600; }
+    h1 { font-size: 2.5rem; font-weight: 700; border-bottom: 4px solid #2E86AB; padding-bottom: 1rem; }
+    h2 { font-size: 1.8rem; font-weight: 600; margin-top: 3rem; color: #2E86AB; }
+    h3 { font-size: 1.4rem; font-weight: 600; margin-top: 2rem; }
+    h4 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; }
     
+    /* Header */
     .header {
-      background: linear-gradient(135deg, #F2F4CA 0%, #E8ECBF 100%);
-      padding: 2rem;
-      margin: -1rem -1rem 2rem -1rem;
-      border-bottom: 4px solid #D4C862;
-      border-radius: 0 0 12px 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, #1B365D 0%, #2E86AB 100%);
+      color: white;
+      padding: 3rem 0;
+      margin-bottom: 3rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      color: white;
+      border-bottom: 4px solid #F2CC85;
+      margin-bottom: 2rem;
     }
     
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-top: 1.5rem;
+      gap: 1.5rem;
+      margin-top: 2rem;
     }
     
     .meta-item {
-      background: rgba(255, 255, 255, 0.8);
-      padding: 1rem;
-      border-radius: 8px;
-      border-left: 4px solid #3B523A;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .meta-label { 
       font-weight: 600; 
-      color: #082A19; 
-      font-size: 14px;
+      font-size: 0.9rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      margin-bottom: 0.5rem;
     }
     
     .meta-value {
-      font-size: 16px;
-      color: #2B2B2B;
-      margin-top: 0.25rem;
+      font-size: 1.2rem;
+      font-weight: 500;
     }
     
-    .quick-stats {
-      display: flex;
-      justify-content: space-around;
-      background: #F9F9F9;
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 1rem 0;
-      border: 2px solid #E0E0E0;
-    }
-    
-    .stat-item {
-      text-align: center;
-    }
-    
-    .stat-number {
-      font-size: 24px;
-      font-weight: bold;
-      color: #3B523A;
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      color: #666;
-      text-transform: uppercase;
-    }
-    
-    .day-nav {
-      background: #F9F9F9;
-      padding: 1.5rem;
-      border-radius: 12px;
-      margin: 2rem 0;
-      border: 2px solid #E0E0E0;
+    /* Navigation */
+    .navigation {
+      background: #F8F9FA;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      border-top: 1px solid #E9ECEF;
+      border-bottom: 1px solid #E9ECEF;
       position: sticky;
-      top: 1rem;
+      top: 0;
       z-index: 100;
     }
     
     .nav-title {
+      font-size: 1.2rem;
       font-weight: 600;
       margin-bottom: 1rem;
-      color: #082A19;
+      color: #1B365D;
     }
     
     .day-links {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 1rem;
     }
     
     .day-link {
-      padding: 0.75rem 1.25rem;
-      background: #3B523A;
+      padding: 0.75rem 1.5rem;
+      background: #2E86AB;
       color: white;
       text-decoration: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-weight: 500;
-      font-size: 14px;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(46, 134, 171, 0.3);
     }
     
     .day-link:hover { 
-      background: #082A19; 
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      background: #1B365D; 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(46, 134, 171, 0.4);
     }
     
+    /* Content Sections */
     .day-section {
-      background: #FEFEFE;
-      border: 1px solid #E0E0E0;
-      border-radius: 12px;
-      margin: 2rem 0;
+      background: white;
+      border: 1px solid #E9ECEF;
+      border-radius: 16px;
+      margin: 3rem 0;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
     }
     
     .day-header {
-      background: linear-gradient(135deg, #3B523A 0%, #2A3D29 100%);
+      background: linear-gradient(135deg, #1B365D 0%, #2E86AB 100%);
       color: white;
-      padding: 1.5rem 2rem;
-      font-size: 20px;
+      padding: 2rem;
+      font-size: 1.5rem;
       font-weight: 600;
     }
     
@@ -631,247 +681,248 @@ function formatLessonAsHTML(lessonContent: string, data: MasterPromptRequest): s
       padding: 2rem;
     }
     
-    .five-r-section {
+    /* 5 Rs Framework */
+    .rs-section {
       margin: 2rem 0;
-      border-left: 5px solid #D4C862;
-      background: linear-gradient(135deg, #FEFEFE 0%, #F8F9F6 100%);
-      border-radius: 0 8px 8px 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-left: 6px solid #F2CC85;
+      background: linear-gradient(135deg, #FEFEFE 0%, #F8F9FA 100%);
+      border-radius: 0 12px 12px 0;
+      overflow: hidden;
     }
     
-    .r-header {
-      background: #F2F4CA;
+    .rs-header {
+      background: #F2CC85;
+      color: #1B365D;
       padding: 1rem 1.5rem;
-      font-weight: 600;
-      font-size: 16px;
-      color: #082A19;
-      border-bottom: 1px solid #E8ECBF;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
-    .r-content {
-      padding: 1.5rem;
+    .rs-content {
+      padding: 2rem;
     }
     
+    /* Notes */
     .teacher-note, .student-note {
-      margin: 1rem 0;
-      padding: 1rem 1.25rem;
-      border-radius: 8px;
-      font-size: 14px;
-      border-left: 4px solid;
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      border-left: 5px solid;
+      position: relative;
     }
     
     .teacher-note {
-      background: #E8F4FD;
+      background: linear-gradient(135deg, #E8F4FD 0%, #F0F8FF 100%);
       border-left-color: #2E86AB;
-      color: #1A365D;
+      color: #1B365D;
     }
     
     .student-note {
-      background: #F0F9E8;
-      border-left-color: #38A169;
-      color: #22543D;
+      background: linear-gradient(135deg, #F0F9E8 0%, #F8FFF8 100%);
+      border-left-color: #28A745;
+      color: #155724;
     }
     
     .note-label {
-      font-weight: 600;
-      margin-bottom: 0.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    th, td {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid #E9ECEF;
+    }
+    
+    th {
+      background: #1B365D;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    tr:hover {
+      background: #F8F9FA;
+    }
+    
+    /* MTSS Grid */
     .mtss-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
     }
     
     .mtss-tier {
-      background: #F8F9FA;
+      background: white;
       border: 1px solid #E9ECEF;
-      border-radius: 8px;
-      padding: 1rem;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border-left-width: 5px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     }
     
     .tier-header {
-      font-weight: 600;
-      color: #495057;
-      margin-bottom: 0.75rem;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 2px solid #DEE2E6;
+      border-bottom: 2px solid #F8F9FA;
     }
     
-    .tier-1 { border-left: 4px solid #28A745; }
-    .tier-2 { border-left: 4px solid #FFC107; }
-    .tier-3 { border-left: 4px solid #DC3545; }
-    .tier-504 { border-left: 4px solid #6F42C1; }
-    .tier-gifted { border-left: 4px solid #E83E8C; }
-    .tier-sped { border-left: 4px solid #FD7E14; }
+    .tier-1 { border-left-color: #28A745; }
+    .tier-2 { border-left-color: #FFC107; }
+    .tier-3 { border-left-color: #DC3545; }
+    .tier-504 { border-left-color: #6F42C1; }
+    .tier-gifted { border-left-color: #E83E8C; }
+    .tier-sped { border-left-color: #FD7E14; }
     
+    /* Resources */
     .resource-section {
       background: #F8F9FA;
       border: 2px solid #E9ECEF;
-      border-radius: 12px;
-      padding: 2rem;
-      margin: 2rem 0;
+      border-radius: 16px;
+      padding: 3rem;
+      margin: 3rem 0;
     }
     
     .resource-item {
       background: white;
-      border: 1px solid #DEE2E6;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 1px solid #E9ECEF;
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     }
     
     .resource-title {
-      font-weight: 600;
-      color: #3B523A;
-      margin-bottom: 0.5rem;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #1B365D;
+      margin-bottom: 1rem;
     }
     
     .resource-type {
       display: inline-block;
-      background: #D4C862;
-      color: #082A19;
-      padding: 0.25rem 0.75rem;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      margin-bottom: 0.75rem;
-    }
-    
-    .collapsible {
-      cursor: pointer;
-      padding: 1rem;
-      background: #F1F3F4;
-      border: none;
-      text-align: left;
-      width: 100%;
-      font-size: 16px;
+      background: #F2CC85;
+      color: #1B365D;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
       font-weight: 600;
-      border-radius: 6px;
-      margin: 0.5rem 0;
-      transition: background 0.2s;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
-    .collapsible:hover {
-      background: #E8EAED;
-    }
-    
-    .collapsible.active {
-      background: #D4C862;
-      color: #082A19;
-    }
-    
-    .collapsible-content {
-      display: none;
-      padding: 0 1rem 1rem 1rem;
-      background: #FEFEFE;
-      border-radius: 0 0 6px 6px;
-    }
-    
-    .collapsible-content.active {
-      display: block;
-    }
-    
+    /* Footer */
     .footer {
-      margin-top: 3rem;
-      padding: 2rem 1rem 1rem 1rem;
-      border-top: 3px solid #F2F4CA;
+      background: linear-gradient(135deg, #1B365D 0%, #2E86AB 100%);
+      color: white;
       text-align: center;
-      background: linear-gradient(135deg, #F9F9F9 0%, #F2F4CA 100%);
-      border-radius: 12px;
+      padding: 3rem 0;
+      margin-top: 4rem;
     }
     
     .footer-logo {
-      font-weight: 600;
-      color: #3B523A;
-      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
     }
     
     .footer-date {
-      font-size: 14px;
-      color: #666;
+      font-size: 0.9rem;
+      opacity: 0.9;
     }
     
+    /* Responsive */
     @media (max-width: 768px) {
-      body { padding: 0.5rem; }
-      .header { margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 1rem; }
+      .container { padding: 0 15px; }
+      .header { padding: 2rem 0; }
+      h1 { font-size: 2rem; }
       .meta-grid { grid-template-columns: 1fr; }
       .day-links { flex-direction: column; }
-      .day-link { text-align: center; }
-      .quick-stats { flex-direction: column; gap: 1rem; }
+      .mtss-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* Print Styles */
+    @media print {
+      .navigation { position: static; }
+      .day-section { box-shadow: none; border: 2px solid #ccc; }
+      .rs-section { border-left: 4px solid #333; }
+      .teacher-note, .student-note { border-left: 3px solid #666; background: #f9f9f9; }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Root Work Framework Lesson Plan</h1>
-    <div class="meta-grid">
-      <div class="meta-item">
-        <div class="meta-label">Topic</div>
-        <div class="meta-value">${data.topic}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Grade Level</div>
-        <div class="meta-value">${data.gradeLevel}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Subject(s)</div>
-        <div class="meta-value">${data.subject}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Duration</div>
-        <div class="meta-value">${data.duration} × ${data.numberOfDays} days</div>
+    <div class="container">
+      <h1>Root Work Framework Lesson Plan</h1>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="meta-label">Topic</div>
+          <div class="meta-value">${cleanTopic}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Grade Level</div>
+          <div class="meta-value">${data.gradeLevel}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Subject</div>
+          <div class="meta-value">${data.subject}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Duration</div>
+          <div class="meta-value">${data.duration} × ${data.numberOfDays} days</div>
+        </div>
       </div>
     </div>
   </div>
   
-  <div class="quick-stats no-print">
-    <div class="stat-item">
-      <div class="stat-number">${data.numberOfDays}</div>
-      <div class="stat-label">Days</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-number">${resourceCount}</div>
-      <div class="stat-label">Resources</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-number">5</div>
-      <div class="stat-label">Rs Framework</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-number">6</div>
-      <div class="stat-label">MTSS Tiers</div>
+  <div class="navigation no-print">
+    <div class="container">
+      <div class="nav-title">Lesson Navigation</div>
+      <div class="day-links">
+        ${dayNav}
+        <a href="#resources" class="day-link">Resources</a>
+      </div>
     </div>
   </div>
   
-  <div class="day-nav no-print">
-    <div class="nav-title">Lesson Navigation</div>
-    <div class="day-links">
-      ${dayNav}
-      <a href="#resources" class="day-link">Resources</a>
+  <div class="container">
+    <div class="content">
+      ${processLessonContent(cleanContent)}
     </div>
-  </div>
-  
-  <div class="content">
-    ${processLessonContent(cleanContent)}
   </div>
   
   <div class="footer">
-    <div class="footer-logo">Generated by Root Work Framework</div>
-    <div class="footer-date">Trauma-informed, regenerative learning ecosystem • ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+    <div class="container">
+      <div class="footer-logo">Generated by Root Work Framework</div>
+      <div class="footer-date">Professional Trauma-Informed Learning Design • ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+    </div>
   </div>
 
   <script>
-    document.querySelectorAll('.collapsible').forEach(button => {
-      button.addEventListener('click', function() {
-        this.classList.toggle('active');
-        const content = this.nextElementSibling;
-        content.classList.toggle('active');
-      });
-    });
-    
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -888,30 +939,30 @@ function formatLessonAsHTML(lessonContent: string, data: MasterPromptRequest): s
 
 function processLessonContent(content: string): string {
   return content
-    .replace(/\[Teacher Note: ([^\]]+)\]/g, '<div class="teacher-note"><div class="note-label">Teacher Note:</div>$1</div>')
-    .replace(/\[Student Note: ([^\]]+)\]/g, '<div class="student-note"><div class="note-label">Student Note:</div>$1</div>')
+    .replace(/\[Teacher Note: ([^\]]+)\]/g, '<div class="teacher-note"><div class="note-label">👩‍🏫 Teacher Note:</div>$1</div>')
+    .replace(/\[Student Note: ([^\]]+)\]/g, '<div class="student-note"><div class="note-label">🎓 Student Note:</div>$1</div>')
     .replace(/## \*\*DAY (\d+): ([^*]+)\*\*/g, '<div id="day$1" class="day-section page-break"><div class="day-header">Day $1: $2</div><div class="day-content">')
-    .replace(/\*\*RELATIONSHIPS \((\d+) minutes\)\*\*/g, '<div class="five-r-section"><div class="r-header">RELATIONSHIPS ($1 minutes)</div><div class="r-content">')
-    .replace(/\*\*ROUTINES \((\d+) minutes\)\*\*/g, '</div></div><div class="five-r-section"><div class="r-header">ROUTINES ($1 minutes)</div><div class="r-content">')
-    .replace(/\*\*RELEVANCE \((\d+) minutes\)\*\*/g, '</div></div><div class="five-r-section"><div class="r-header">RELEVANCE ($1 minutes)</div><div class="r-content">')
-    .replace(/\*\*RIGOR \((\d+) minutes\)\*\*/g, '</div></div><div class="five-r-section"><div class="r-header">RIGOR ($1 minutes)</div><div class="r-content">')
-    .replace(/\*\*REFLECTION \((\d+) minutes\)\*\*/g, '</div></div><div class="five-r-section"><div class="r-header">REFLECTION ($1 minutes)</div><div class="r-content">')
-    .replace(/\*\*MTSS Tiered Supports:\*\*/g, '</div></div></div><button class="collapsible">MTSS Tiered Supports</button><div class="collapsible-content"><div class="mtss-grid">')
-    .replace(/\* \*\*Tier 1 \(Universal\):\*\*/g, '<div class="mtss-tier tier-1"><div class="tier-header">Tier 1 (Universal)</div>')
-    .replace(/\* \*\*Tier 2 \(Targeted\):\*\*/g, '</div><div class="mtss-tier tier-2"><div class="tier-header">Tier 2 (Targeted)</div>')
-    .replace(/\* \*\*Tier 3 \(Intensive\):\*\*/g, '</div><div class="mtss-tier tier-3"><div class="tier-header">Tier 3 (Intensive)</div>')
-    .replace(/\* \*\*504 Accommodations:\*\*/g, '</div><div class="mtss-tier tier-504"><div class="tier-header">504 Accommodations</div>')
-    .replace(/\* \*\*Gifted Extensions:\*\*/g, '</div><div class="mtss-tier tier-gifted"><div class="tier-header">Gifted Extensions</div>')
-    .replace(/\* \*\*SPED Modifications:\*\*/g, '</div><div class="mtss-tier tier-sped"><div class="tier-header">SPED Modifications</div>')
-    .replace(/## \*\*RESOURCE GENERATION SECTION\*\*/g, '</div></div><div id="resources" class="resource-section"><h2>Resource Generation Section</h2>')
+    .replace(/\*\*RELATIONSHIPS \((\d+) minutes\)\*\*/g, '<div class="rs-section"><div class="rs-header">🤝 RELATIONSHIPS ($1 minutes)</div><div class="rs-content">')
+    .replace(/\*\*ROUTINES \((\d+) minutes\)\*\*/g, '</div></div><div class="rs-section"><div class="rs-header">📋 ROUTINES ($1 minutes)</div><div class="rs-content">')
+    .replace(/\*\*RELEVANCE \((\d+) minutes\)\*\*/g, '</div></div><div class="rs-section"><div class="rs-header">🌍 RELEVANCE ($1 minutes)</div><div class="rs-content">')
+    .replace(/\*\*RIGOR \((\d+) minutes\)\*\*/g, '</div></div><div class="rs-section"><div class="rs-header">📚 RIGOR ($1 minutes)</div><div class="rs-content">')
+    .replace(/\*\*REFLECTION \((\d+) minutes\)\*\*/g, '</div></div><div class="rs-section"><div class="rs-header">🤔 REFLECTION ($1 minutes)</div><div class="rs-content">')
+    .replace(/\*\*MTSS Tiered Supports:\*\*/g, '</div></div></div><h3>MTSS Tiered Supports</h3><div class="mtss-grid">')
+    .replace(/- \*\*Tier 1 \(Universal\):\*\*/g, '<div class="mtss-tier tier-1"><div class="tier-header">Tier 1 (Universal)</div>')
+    .replace(/- \*\*Tier 2 \(Targeted\):\*\*/g, '</div><div class="mtss-tier tier-2"><div class="tier-header">Tier 2 (Targeted)</div>')
+    .replace(/- \*\*Tier 3 \(Intensive\):\*\*/g, '</div><div class="mtss-tier tier-3"><div class="tier-header">Tier 3 (Intensive)</div>')
+    .replace(/- \*\*504 Accommodations:\*\*/g, '</div><div class="mtss-tier tier-504"><div class="tier-header">504 Accommodations</div>')
+    .replace(/- \*\*Gifted Extensions:\*\*/g, '</div><div class="mtss-tier tier-gifted"><div class="tier-header">Gifted Extensions</div>')
+    .replace(/- \*\*SPED Modifications:\*\*/g, '</div><div class="mtss-tier tier-sped"><div class="tier-header">SPED Modifications</div>')
+    .replace(/## \*\*COMPREHENSIVE RESOURCE GENERATION\*\*/g, '</div></div><div id="resources" class="resource-section"><h2>Comprehensive Resource Generation</h2>')
     .replace(/### \*\*\d+\. ([^*]+)\*\*/g, '<div class="resource-item"><div class="resource-title">$1</div>')
     .replace(/\*\*File:\*\* ([^\n]+)/g, '<div class="resource-type">$1</div>')
-    .replace(/\*\*COMPLETE CONTENT:\*\*/g, '<div><strong>Generated Content:</strong></div>')
-    .replace(/\*\*AI GENERATION PROMPT:\*\*/g, '<div><strong>AI Generation Instructions:</strong></div>')
+    .replace(/\*\*COMPLETE CONTENT:\*\*/g, '<div><h4>Generated Content:</h4></div>')
+    .replace(/\*\*AI GENERATION PROMPT:\*\*/g, '<div><h4>AI Generation Instructions:</h4></div>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
     .replace(/###? ([^\n]+)/g, '<h3>$1</h3>')
-    .replace(/^-\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/(\n<li>[\s\S]*?<\/li>\n)/g, '<ul>$1</ul>')
     .replace(/\n\n/g, '</p><p>')
     .replace(/^([^<\n].+)$/gm, '<p>$1</p>')
@@ -920,7 +971,8 @@ function processLessonContent(content: string): string {
 }
 
 function generateDownloadableResources(content: string, data: MasterPromptRequest): {textResources: GeneratedResource[], imagePrompts: ImagePrompt[]} {
-  const lessonCode = `RootedIn${data.topic.replace(/[^a-zA-Z]/g, '')}`;
+  const cleanTopic = processTopicForReadability(data.topic);
+  const lessonCode = `RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}`;
   const subjectAbbr = getSubjectAbbreviation(data.subject);
   
   const resourceMatches = content.match(/\*\*COMPLETE CONTENT:\*\*([\s\S]*?)(?=\*\*File:|### \*\*\d+\.|$)/g) || [];
@@ -945,25 +997,18 @@ function validateLessonPlan(content: string, data: MasterPromptRequest): {isVali
   
   const teacherNoteCount = (content.match(/\[Teacher Note:/g) || []).length;
   const studentNoteCount = (content.match(/\[Student Note:/g) || []).length;
-  const expectedNotes = parseInt(data.numberOfDays || '3') * 6;
+  const expectedNotes = parseInt(data.numberOfDays || '5') * 6;
   
   if (teacherNoteCount < expectedNotes) missing.push(`Teacher Notes (found ${teacherNoteCount}, need ${expectedNotes})`);
   if (studentNoteCount < expectedNotes) missing.push(`Student Notes (found ${studentNoteCount}, need ${expectedNotes})`);
   
-  if (!content.includes('RELATIONSHIPS')) missing.push('Relationships R Component');
-  if (!content.includes('ROUTINES')) missing.push('Routines R Component');
-  if (!content.includes('RELEVANCE')) missing.push('Relevance R Component');
-  if (!content.includes('RIGOR')) missing.push('Rigor R Component');
-  if (!content.includes('REFLECTION')) missing.push('Reflection R Component');
+  if (!content.includes('RELATIONSHIPS')) missing.push('Relationships Component');
+  if (!content.includes('ROUTINES')) missing.push('Routines Component');
+  if (!content.includes('RELEVANCE')) missing.push('Relevance Component');
+  if (!content.includes('RIGOR')) missing.push('Rigor Component');
+  if (!content.includes('REFLECTION')) missing.push('Reflection Component');
   if (!content.includes('Essential Question:')) missing.push('Essential Questions');
-  if (!content.includes('I can ')) missing.push('I Can Targets');
   if (!content.includes('Tier 1')) missing.push('MTSS Tier 1 Supports');
-  if (!content.includes('Tier 2')) missing.push('MTSS Tier 2 Supports');
-  if (!content.includes('Tier 3')) missing.push('MTSS Tier 3 Supports');
-  if (!content.includes('504 Accommodations')) missing.push('504 Accommodations');
-  if (!content.includes('Gifted')) missing.push('Gifted Extensions');
-  if (!content.includes('SPED')) missing.push('SPED Modifications');
-  if (!content.includes('STEAM Integration')) missing.push('STEAM Integration');
   if (!content.includes('COMPLETE CONTENT:')) missing.push('Generated Resource Content');
   if (!content.includes('AI GENERATION PROMPT:')) missing.push('AI Image Generation Instructions');
   
@@ -974,181 +1019,229 @@ function validateLessonPlan(content: string, data: MasterPromptRequest): {isVali
 }
 
 function buildEnhancedFallback(data: MasterPromptRequest): {content: string, html: string} {
-  const numberOfDays = parseInt(data.numberOfDays || '3');
+  const cleanTopic = processTopicForReadability(data.topic);
+  const numberOfDays = parseInt(data.numberOfDays || '5');
   const durationMinutes = parseInt(data.duration?.match(/\d+/)?.[0] || '90');
-  const lessonCode = `RootedIn${data.topic.replace(/[^a-zA-Z]/g, '')}`;
-  const subjectAbbr = getSubjectAbbreviation(data.subject);
   
   const content = `
 **TRAUMA-INFORMED STEAM LESSON PLAN**
 **Grade:** ${data.gradeLevel}
-**Duration:** ${data.duration} per day
+**Subject:** ${data.subject}
+**Topic:** ${cleanTopic}
+**Duration:** ${data.duration} per day over ${numberOfDays} days
 **Location:** ${data.location || 'Savannah, Georgia'}
-**Unit Title:** Exploring ${data.topic} Through Root Work Framework
+**Unit Title:** Exploring ${cleanTopic} Through Root Work Framework
 
-${Array.from({length: numberOfDays}, (_, dayIndex) => `
-## **DAY ${dayIndex + 1}: Foundation Building in ${data.topic}**
+**UNIT ESSENTIAL QUESTION:**
+How does understanding ${cleanTopic} help us grow as learners and community members?
 
-### **Essential Question:**
-How does understanding ${data.topic} help us grow as learners and community members?
+**UNIT LEARNING TARGETS:**
+- I can analyze key concepts related to ${cleanTopic} (DOK 2)
+- I can apply understanding of ${cleanTopic} to real-world situations (DOK 3)
+- I can evaluate the impact of ${cleanTopic} on my community (DOK 4)
 
-### **Learning Target:**
-I can demonstrate understanding of ${data.topic} while building connections to my community (DOK 3)
+${Array.from({length: numberOfDays}, (_, dayIndex) => {
+  const dayNumber = dayIndex + 1;
+  const dayFoci = [
+    'Introduction and Foundation Building',
+    'Exploration and Investigation', 
+    'Analysis and Critical Thinking',
+    'Application and Creation',
+    'Synthesis and Reflection'
+  ];
+  const dayFocus = dayFoci[dayIndex] || `Advanced Application ${dayNumber}`;
+  
+  return `
+## **DAY ${dayNumber}: ${dayFocus}**
+
+### **Daily Essential Question:**
+How does ${cleanTopic} connect to our daily experiences and community?
+
+### **Daily Learning Target:**
+I can demonstrate understanding of ${cleanTopic} through ${dayFocus.toLowerCase()} (DOK ${dayNumber <= 2 ? 2 : dayNumber <= 4 ? 3 : 4})
 
 ### **Standards Alignment:**
-* ${data.subject} Standard: Students analyze and apply concepts related to ${data.topic}
-* SEL Competency: CASEL Self-Awareness and Social Awareness
+- **Primary Standard:** ${data.subject} - Students analyze and apply concepts related to ${cleanTopic}
+- **SEL Integration:** CASEL Self-Awareness and Social Awareness
+- **Cross-Curricular Connections:** Science, Technology, Arts, Mathematics integration
 
-### **Root Work Framework 5 Rs Lesson Structure:**
+### **Materials Needed:**
+- Student worksheets and reflection journals
+- Visual aids and graphic organizers
+- Technology tools for research and creation
+- Community connection resources
+
+---
+
+### **Root Work Framework 5 Rs Structure:**
 
 **RELATIONSHIPS (${Math.round(durationMinutes * 0.15)} minutes)**
-*Building Community and Belonging*
-Community circle with breathing exercise and intention setting related to ${data.topic}
+*Community Building and Belonging*
 
-[Teacher Note: Use consistent trauma-informed opening to establish safety and predictability for all learners while honoring cultural approaches to community building]
+**Opening Ritual for Day ${dayNumber}:**
+Students engage in a community circle focused on ${dayFocus.toLowerCase()} related to ${cleanTopic}, sharing one personal connection or question.
 
-[Student Note: This is your time to ground yourself, connect with classmates, and set positive intentions for learning together]
+[Teacher Note: Establish psychological safety through consistent trauma-informed practices that honor student identities while connecting to ${dayFocus}]
+
+[Student Note: This is your time to connect with classmates and ground yourself in our learning community before exploring ${cleanTopic}]
 
 **ROUTINES (${Math.round(durationMinutes * 0.1)} minutes)**
-*Establishing Predictable Structure*
-Clear agenda review, success criteria sharing, and materials preparation with visual supports
+*Predictable Structure and Safety*
 
-[Teacher Note: Provide predictable structure that reduces anxiety and builds executive function skills for all learners]
+**Day ${dayNumber} Agenda Preview:**
+Review the day's ${dayFocus} activities, success criteria, and learning goals related to ${cleanTopic}.
 
-[Student Note: Use this time to organize yourself, understand expectations, and see what success looks like today]
+[Teacher Note: Provide predictable structure that reduces anxiety and builds executive function skills while previewing ${dayFocus}]
+
+[Student Note: Use this time to organize yourself mentally and understand what success looks like in today's ${dayFocus}]
 
 **RELEVANCE (${Math.round(durationMinutes * 0.25)} minutes)**
-*Connecting to Lived Experience and Community*
-Students explore connections between ${data.topic} and their personal experiences, families, and community
+*Connecting to Student Experience*
 
-[Teacher Note: Draw explicit connections between academic content and student cultural assets, honoring diverse backgrounds and experiences]
+**Day ${dayNumber} Connection Activity:**
+Students explore personal and community connections to ${cleanTopic} through ${dayFocus} lens, sharing diverse perspectives and experiences.
 
-[Student Note: Share your authentic experiences and discover how they connect to our learning - your knowledge matters]
+[Teacher Note: Draw explicit connections between ${cleanTopic} and student cultural assets while facilitating ${dayFocus} thinking]
+
+[Student Note: Your experiences with ${cleanTopic} are valuable - share authentically and listen for connections to others' stories]
 
 **RIGOR (${Math.round(durationMinutes * 0.35)} minutes)**
-*Engaging in Challenging, Scaffolded Learning*
+*Academic Challenge and Growth*
 
 **I Do: Teacher Modeling (${Math.round(durationMinutes * 0.1)} minutes)**
-Demonstration of key concepts about ${data.topic} using think-aloud and culturally relevant examples
+Demonstrate ${dayFocus} thinking about ${cleanTopic} using think-aloud strategies and culturally relevant examples.
 
-[Teacher Note: Make explicit connections to student experiences while modeling complex thinking processes]
+[Teacher Note: Model complex thinking processes while making connections to student experiences and ${dayFocus} goals]
 
-[Student Note: Listen for connections to your own life and notice the strategies being demonstrated]
+[Student Note: Watch for strategies and thinking processes you can use when engaging in ${dayFocus} about ${cleanTopic}]
 
 **We Do: Guided Practice (${Math.round(durationMinutes * 0.15)} minutes)**
-Students work in partnerships to explore ${data.topic} using guided inquiry protocols
+Collaborative exploration of ${cleanTopic} using ${dayFocus} approaches with teacher scaffolding and peer support.
 
-[Teacher Note: Circulate to provide just-right scaffolding while honoring student thinking processes and cultural approaches to collaboration]
+[Teacher Note: Provide just-right support while encouraging productive struggle and honoring different approaches to ${dayFocus}]
 
-[Student Note: Share your ideas openly, build on your partner's thinking, and ask questions when you need support]
+[Student Note: Engage actively in shared learning about ${cleanTopic} - ask questions and build on others' ${dayFocus} ideas]
 
 **You Do Together: Collaborative Application (${Math.round(durationMinutes * 0.1)} minutes)**
-Choice-based demonstration of understanding through visual, written, or creative expression
+Partner or small group application of ${dayFocus} skills to analyze or create something related to ${cleanTopic}.
 
-[Teacher Note: Offer multiple pathways for expression to honor different learning styles, cultural backgrounds, and abilities]
+[Teacher Note: Monitor for equitable participation while offering multiple pathways for demonstrating ${dayFocus} understanding]
 
-[Student Note: Choose the format that best allows you to show your learning and demonstrate your unique strengths]
+[Student Note: Work collaboratively to apply your ${dayFocus} learning about ${cleanTopic}, drawing on everyone's unique strengths]
 
 **REFLECTION (${Math.round(durationMinutes * 0.15)} minutes)**
-*Metacognitive Processing and Growth Recognition*
+*Growth Recognition and Forward Planning*
 
-**Individual Processing:**
-Individual journal reflection connecting ${data.topic} to personal experience
+**Day ${dayNumber} Processing:**
+Individual reflection on ${dayFocus} learning about ${cleanTopic}, followed by community sharing of insights and questions.
 
-[Teacher Note: Support students who need additional processing time while using restorative circle practices to build community]
+[Teacher Note: Support various reflection styles while building metacognitive awareness about ${dayFocus} and ${cleanTopic}]
 
-[Student Note: Be honest about your learning journey and take time to appreciate your growth and that of your classmates]
-
-**Community Closing:**
-Circle sharing of one connection and one question for tomorrow
-
-[Teacher Note: Use restorative practices to build community, celebrate growth, and preview tomorrow's learning while being attentive to emotional responses]
-
-[Student Note: Share your growth and listen for connections to classmates' experiences as we prepare for continued learning together]
+[Student Note: Take time to recognize your growth in ${dayFocus} and consider how today's insights about ${cleanTopic} connect to your goals]
 
 ---
 
-**IMPLEMENTATION SUPPORTS:**
+### **Day ${dayNumber} Implementation Supports:**
 
 **MTSS Tiered Supports:**
-* **Tier 1 (Universal):** Visual supports, choice in expression format, clear success criteria, collaborative options
-* **Tier 2 (Targeted):** Graphic organizers, extended processing time, guided practice with teacher check-ins
-* **Tier 3 (Intensive):** One-on-one conferencing, modified expectations, alternative assessment formats
-* **504 Accommodations:** Extended time, preferential seating, frequent breaks, assistive technology access
-* **Gifted Extensions:** Independent research projects, mentorship opportunities, leadership roles
-* **SPED Modifications:** Simplified language, visual schedules, sensory supports, individualized goals
+- **Tier 1 (Universal):** Visual supports for ${cleanTopic}, choice in expression format, clear success criteria for ${dayFocus}
+- **Tier 2 (Targeted):** Graphic organizers for ${dayFocus}, extended processing time, guided practice with ${cleanTopic}
+- **Tier 3 (Intensive):** One-on-one conferencing, modified expectations for ${dayFocus}, alternative assessment formats
+- **504 Accommodations:** Extended time, assistive technology access, preferential seating for ${dayFocus} activities
+- **Gifted Extensions:** Independent research projects about ${cleanTopic}, leadership roles in ${dayFocus}
+- **SPED Modifications:** Simplified language, visual supports for ${cleanTopic}, individualized ${dayFocus} goals
 
-**SEL Competencies Addressed:**
-CASEL domains integrated through community building, self-reflection, and collaborative problem-solving
+**Day ${dayNumber} Assessment:**
+- **Formative:** Exit ticket about ${dayFocus} understanding of ${cleanTopic}
+- **Summative:** Portfolio development showing ${dayFocus} growth with ${cleanTopic}
 
-**Assessment Methods:**
-* **Formative:** Exit tickets, journal reflections, peer feedback, teacher observation
-* **Summative:** Choice-based demonstration of learning with rubric evaluation
+**SEL Integration:**
+CASEL competencies integrated through ${dayFocus} activities and community building around ${cleanTopic}
 
-**STEAM Integration:**
-* **Science:** Investigation and hypothesis testing related to ${data.topic}
-* **Technology:** Digital tools for research, creation, and collaboration
-* **Engineering:** Design thinking and problem-solving processes
-* **Arts:** Creative expression and cultural storytelling
-* **Mathematics:** Data analysis, patterns, and quantitative reasoning
+**Trauma-Informed Considerations:**
+Consistent routines, student choice, cultural responsiveness, and strength-based approach to ${dayFocus} and ${cleanTopic}
 
-**Trauma-Informed Care Implementation:**
-* **Safety:** Consistent routines, clear expectations, calm learning environment
-* **Trustworthiness:** Consistent follow-through, transparent communication
-* **Peer Support:** Collaborative learning, peer mentoring, community building
-* **Collaboration:** Shared decision-making, student voice in learning choices
-* **Empowerment:** Student agency, strength-based approach, growth mindset
-* **Cultural Responsiveness:** Asset-based view of student backgrounds and experiences`).join('\n')}
+---`;
+}).join('')}
 
----
+## **COMPREHENSIVE RESOURCE GENERATION**
 
-## **RESOURCE GENERATION SECTION**
-
-### **1. Student Worksheet**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_StudentWorksheet.docx
+### **1. Day-by-Day Student Workbook**
+**File:** RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}_StudentWorkbook.pdf
 
 **COMPLETE CONTENT:**
 
-**${data.topic} Learning Worksheet - Grade ${data.gradeLevel}**
-**Name: _________________________ Date: _____________**
+**${cleanTopic} Student Learning Guide**
+**Grade ${data.gradeLevel} - ${numberOfDays} Day Unit**
 
-**Learning Target:** I can demonstrate understanding of ${data.topic} through analysis and application.
+This ${numberOfDays}-day exploration of ${cleanTopic} will help you develop critical thinking skills while connecting academic learning to your personal experiences and community.
 
-**Section A: Building Understanding**
-1. Define ${data.topic} in your own words, including one example from your community:
+**Unit Essential Question:** How does understanding ${cleanTopic} help us grow as learners and community members?
 
-2. What connections do you see between ${data.topic} and your daily life?
+**My Learning Targets:**
+- [ ] I can analyze key concepts related to ${cleanTopic}
+- [ ] I can apply understanding of ${cleanTopic} to real-world situations  
+- [ ] I can evaluate the impact of ${cleanTopic} on my community
 
-3. Analyze the following scenario: [Describe a relevant situation]
-   What factors are involved? What might happen next?
+${Array.from({length: numberOfDays}, (_, i) => `
+**DAY ${i + 1} LEARNING PAGE**
+**Today's Focus:** ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]}
 
-**Section B: Reflection and Growth**
-4. What questions do you still have about ${data.topic}?
+**What I Know About ${cleanTopic}:**
+_________________________________________________
 
-5. How has your understanding changed from the beginning of this lesson?
+**New Learning - Key Concepts:**
+1. _____________________________________________
+2. _____________________________________________
+3. _____________________________________________
 
-6. What learning strategies helped you most today?
+**Real-World Connections:**
+How does ${cleanTopic} connect to my life?
+_________________________________________________
 
-**Success Criteria Checklist:**
-□ I can explain ${data.topic} in my own words
-□ I can connect ${data.topic} to real-world examples
-□ I can analyze situations involving ${data.topic}
-□ I can reflect on my learning process
+**Daily Reflection:**
+What surprised me? _____________________________
+What questions do I have? _____________________
+How did I grow? _______________________________
+`).join('')}
 
-### **2. Visual Concept Map**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_ConceptMap.png
+### **2. Teacher Implementation Guide**
+**File:** RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}_TeacherGuide.pdf
+
+**COMPLETE CONTENT:**
+
+**TEACHER IMPLEMENTATION GUIDE: ${cleanTopic}**
+**Grade ${data.gradeLevel} Professional Development Resource**
+
+**UNIT OVERVIEW:**
+This ${numberOfDays}-day unit engages students in exploring ${cleanTopic} through trauma-informed, culturally responsive pedagogy.
+
+**KEY TEACHING STRATEGIES:**
+- Use think-aloud modeling to make learning visible
+- Provide multiple pathways for student expression
+- Connect academic content to student cultural assets
+- Maintain consistent routines for emotional safety
+- Facilitate meaningful peer collaboration
+
+**DAILY FOCUS AREAS:**
+${Array.from({length: numberOfDays}, (_, i) => `Day ${i + 1}: ${['Foundation Building', 'Exploration', 'Analysis', 'Application', 'Reflection'][i]} with ${cleanTopic}`).join('\n')}
+
+**DIFFERENTIATION STRATEGIES:**
+- **Below Grade Level:** Provide graphic organizers, extended time, visual supports for ${cleanTopic}
+- **On Grade Level:** Use collaborative learning and choice-based activities
+- **Above Grade Level:** Offer independent research and leadership opportunities
+
+**ASSESSMENT GUIDANCE:**
+Focus on growth over perfection, provide multiple ways to demonstrate understanding of ${cleanTopic}, and use formative assessment to guide instruction.
+
+### **3. Visual Learning Aids**
+**File:** RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}_ConceptMap.png
 
 **AI GENERATION PROMPT:**
-"Create a professional educational concept map for ${data.topic} suitable for Grade ${data.gradeLevel} students. Central concept '${data.topic}' in large circle at center, with 5 related concepts in smaller circles connected by labeled arrows. Use clean academic color scheme with navy blue for main concepts, medium blue for connections, and gold for labels. Include simple icons next to each concept. Sans-serif fonts minimum 14pt. White background, high contrast, 1920x1080 resolution for classroom display."
+"Create a professional educational concept map for '${cleanTopic}' designed for Grade ${data.gradeLevel} students. Central hub labeled '${cleanTopic}' in bold sans-serif font, surrounded by 5 key concept bubbles connected with labeled arrows. Use academic color palette: navy blue for central concept, medium blue for secondary concepts, gold for connection labels. Include simple icons next to each concept. Ensure 16pt minimum font size and high contrast. White background with subtle grid. 1920x1080 resolution for classroom projection."
 
-### **3. Process Flow Diagram**
-**File:** ${lessonCode}_${data.gradeLevel}${subjectAbbr}_ProcessFlow.png
-
-**AI GENERATION PROMPT:**
-"Design a step-by-step process flow showing how to analyze ${data.topic}. Create 4 sequential steps in rounded rectangles connected by arrows. Each step contains a large number, brief action phrase, and simple icon. Use professional teal and dark gray colors. Clean modern styling with subtle shadows. Grade ${data.gradeLevel} appropriate language. 1600x900 pixels for classroom display."
-
-Generated by Root Work Framework - Trauma-informed, regenerative learning ecosystem
-Created: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+Generated by Root Work Framework - Professional Trauma-Informed Learning Design
+Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 `;
 
   const html = formatLessonAsHTML(content, data);
@@ -1165,7 +1258,7 @@ export async function POST(request: NextRequest) {
     const gradeLevel = (received as any).gradeLevel?.trim?.() || (warnings.push('Defaulted gradeLevel to "6"'), '6');
     const topic = (received as any).topic?.trim?.() || (warnings.push('Defaulted topic to "Core Concept"'), 'Core Concept');
     const duration = (received as any).duration?.trim?.() || (warnings.push('Defaulted duration to "90 minutes"'), '90 minutes');
-    const numberOfDays = (received as any).numberOfDays?.trim?.() || (warnings.push('Defaulted numberOfDays to "3"'), '3');
+    const numberOfDays = (received as any).numberOfDays?.trim?.() || (warnings.push('Defaulted numberOfDays to "5"'), '5');
 
     const data: MasterPromptRequest = {
       subject,
@@ -1194,7 +1287,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const prompt = buildImprovedMasterPrompt(data);
+    const prompt = buildEnhancedMasterPrompt(data);
     
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1206,7 +1299,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20240620',
         max_tokens: 8000,
-        temperature: 0.2,
+        temperature: 0.3,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -1231,7 +1324,7 @@ export async function POST(request: NextRequest) {
 
     lessonContent = lessonContent.replace(/```markdown\s*/gi, '').replace(/```\s*$/gi, '').trim();
 
-    if (!lessonContent || lessonContent.length < 2000) {
+    if (!lessonContent || lessonContent.length < 3000) {
       const fallback = buildEnhancedFallback(data);
       return okJson({ 
         lessonPlan: fallback.content,
@@ -1272,7 +1365,7 @@ export async function POST(request: NextRequest) {
       gradeLevel: '6',
       topic: 'Learning Together',
       duration: '90 minutes',
-      numberOfDays: '3'
+      numberOfDays: '5'
     };
     
     const fallback = buildEnhancedFallback(fallbackData);
