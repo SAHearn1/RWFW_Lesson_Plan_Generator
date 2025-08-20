@@ -1,4 +1,4 @@
-// src/app/api/generate-lesson/route.ts - Clean HTML formatting & stable parsing
+// src/app/api/generate-lesson/route.ts - Clean HTML formatting & stable parsing (TS fixes)
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -380,7 +380,7 @@ ul { margin: 8pt 0; padding-left: 20pt; }
   html = html.replace(/^LEVEL III HEADING:\s*(.+)$/gmi, '<h3 class="level-3-heading">$1</h3>');
 
   // DAY sections: wrap "DAY X: Title" in a section
-  html = html.replace(/<h1 class="level-1-heading">DAY\s+(\d+):\s*([^<]+)<\/h1>/g, (_m, d, title) => {
+  html = html.replace(/<h1 class="level-1-heading">DAY\s+(\d+):\s*([^<]+)<\/h1>/g, (_m: string, d: string, title: string) => {
     return `<section class="day-section"><h1 class="level-1-heading">DAY ${d}: ${title}</h1>`;
   });
 
@@ -406,18 +406,18 @@ ul { margin: 8pt 0; padding-left: 20pt; }
     .replace(/(^|\n)Student Note:\s*([^\n<][^\n]*)/g, `$1<div class="note student-note"><strong>Student Note:</strong> $2</div>`);
 
   // CREATE TABLE blocks: convert pipe tables to HTML tables
-  html = html.replace(/CREATE TABLE:\s*\n((?:[^\n]+\|[^\n]+\|[^\n]+\n?)+)/g, (_m, tableBlock) => {
-    const lines = tableBlock.trim().split('\n').filter(l => l.trim());
+  html = html.replace(/CREATE TABLE:\s*\n((?:[^\n]+\|[^\n]+\|[^\n]+\n?)+)/g, (_m: string, tableBlock: string) => {
+    const lines: string[] = tableBlock.trim().split('\n').filter((l: string) => l.trim());
     if (!lines.length) return '';
     const [headerLine, ...dataLines] = lines;
-    const headers = headerLine.split('|').map(s => s.trim());
+    const headers: string[] = headerLine.split('|').map((s: string) => s.trim());
     let out = '<table><thead><tr>';
-    headers.forEach(h => { out += `<th>${h}</th>`; });
+    headers.forEach((h: string) => { out += `<th>${h}</th>`; });
     out += '</tr></thead><tbody>';
-    dataLines.forEach(line => {
-      const cells = line.split('|').map(s => s.trim());
+    dataLines.forEach((line: string) => {
+      const cells: string[] = line.split('|').map((s: string) => s.trim());
       if (cells.length) {
-        out += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        out += '<tr>' + cells.map((c: string) => `<td>${c}</td>`).join('') + '</tr>';
       }
     });
     out += '</tbody></table>';
@@ -428,10 +428,10 @@ ul { margin: 8pt 0; padding-left: 20pt; }
   // Step 1: wrap bullet lines
   html = html.replace(/(^|\n)\s*[-•]\s+(.+)/g, '$1<li>$2</li>');
   // Step 2: wrap consecutive li into a UL
-  html = html.replace(/(?:<li>[\s\S]*?<\/li>\s*)+/g, match => `<div class="bulleted-list"><ul>${match}</ul></div>`);
+  html = html.replace(/(?:<li>[\s\S]*?<\/li>\s*)+/g, (match: string) => `<div class="bulleted-list"><ul>${match}</ul></div>`);
 
   // Close any rs-section that was left open before a new heading or section
-  html = html.replace(/(<div class="rs-section">[\s\S]*?)(?=<h[123]|<section|<\/section>|$)/g, (m) => {
+  html = html.replace(/(<div class="rs-section">[\s\S]*?)(?=<h[123]|<section|<\/section>|$)/g, (m: string) => {
     return m.endsWith('</div>') ? m : m + '</div>';
   });
 
@@ -480,7 +480,7 @@ function generateDownloadableResources(content: string, data: MasterPromptReques
   const subjectAbbr = getSubjectAbbreviation(data.subject);
 
   const matches = content.match(/COMPLETE CONTENT:\s*([\s\S]*?)(?=\nLEVEL II HEADING:|\nLEVEL I HEADING:|$)/g) || [];
-  const textResources: GeneratedResource[] = matches.map((m, i) => ({
+  const textResources: GeneratedResource[] = matches.map((m: string, i: number) => ({
     filename: `${lessonCode}_${data.gradeLevel}${subjectAbbr}_Resource${i + 1}.txt`,
     content: cleanContent(m.replace(/^COMPLETE CONTENT:\s*/i, '')),
     type: 'text/plain'
@@ -498,7 +498,7 @@ function validateLessonPlan(content: string, data: MasterPromptRequest) {
 
   if (teacherNoteCount < expectedNotes) missing.push(`Teacher Notes (found ${teacherNoteCount}, expected ~${expectedNotes})`);
   if (studentNoteCount < expectedNotes) missing.push(`Student Notes (found ${studentNoteCount}, expected ~${expectedNotes})`);
-  ['RELATIONSHIPS','ROUTINES','RELEVANCE','RIGOR','REFLECTION'].forEach(k => {
+  ['RELATIONSHIPS','ROUTINES','RELEVANCE','RIGOR','REFLECTION'].forEach((k: string) => {
     if (!content.includes(k)) missing.push(`${k} component`);
   });
   if (!content.includes('CREATE TABLE')) missing.push('Structured tables');
