@@ -722,21 +722,7 @@ Duration: ${formData.duration} over ${formData.numberOfDays} days\\par
 
             {/* Enhanced Fields */}
             <div className="space-y-8">
-              {/* Location */}
-              <div>
-                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
-                  Location Context
-                </label>
-                <input
-                  type="text" 
-                  name="location" 
-                  value={formData.location} 
-                  onChange={handleInputChange}
-                  placeholder="e.g., Savannah, Georgia (helps with local relevance)"
-                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]" 
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                />
-              </div>
+
 
               {/* Learning Objectives */}
               <div>
