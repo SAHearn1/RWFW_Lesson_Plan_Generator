@@ -1,4 +1,4 @@
-// src/app/api/generate-lesson/route.ts - Fixed with intelligent standards interpretation and content alignment
+// src/app/api/generate-lesson/route.ts - Conservative fix based on your working original
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -124,7 +124,8 @@ function processTopicForReadability(topic: string): string {
 }
 
 /**
- * Clean up mojibake and fix formatting issues
+ * Clean up mojibake, but DO NOT renumber ordered lists or strip structural tokens we intend to transform.
+ * We keep "LEVEL I/II/III HEADING", "CREATE TABLE:", etc., so the HTML transformer can convert them.
  */
 function cleanContent(content: string): string {
   return (content || '')
@@ -134,12 +135,14 @@ function cleanContent(content: string): string {
     .replace(/Â/g, ' ')
     .replace(/Ã—/g, '×')
     .replace(/\u00A0/g, ' ')
+    // common bullets that sometimes render weirdly
     .replace(/^[\s•\-]+\s*/gm, match => match.includes('•') ? '• ' : match.trim() ? match : '')
+    // collapse excessive blank lines
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-/** Build enhanced master prompt with intelligent standards and alignment requirements */
+/** Build the master prompt - MINIMAL CHANGES to your working version */
 function buildEnhancedMasterPrompt(data: MasterPromptRequest): string {
   const numberOfDays = parseInt(data.numberOfDays || '5');
   const durationMinutes = parseInt(data.duration?.match(/\d+/)?.[0] || '90');
@@ -148,34 +151,25 @@ function buildEnhancedMasterPrompt(data: MasterPromptRequest): string {
 
   const dayFoci = [
     'Introduction and Foundation Building',
-    'Exploration and Investigation', 
+    'Exploration and Investigation',
     'Analysis and Critical Thinking',
     'Application and Creation',
-    'Synthesis and Reflection',
-    'Advanced Application',
-    'Mastery and Assessment',
-    'Extension and Transfer'
+    'Synthesis and Reflection'
   ];
 
-  // Enhanced standards instruction based on user input
-  const standardsInstruction = data.specialInstructions?.toLowerCase().includes('georgia') ? 
-    `Use specific Georgia State Standards (GSE) for ${data.subject}. Include actual standard codes and descriptions.` :
+  // Only change: Add standards guidance
+  const standardsGuidance = data.specialInstructions?.toLowerCase().includes('georgia') ? 
+    'Use real Georgia State Standards (GSE) codes and descriptions' :
     data.specialInstructions?.toLowerCase().includes('common core') ?
-    `Use specific Common Core State Standards for ${data.subject}. Include actual standard codes and descriptions.` :
-    `Use appropriate ${data.subject} standards for Grade ${data.gradeLevel}. Include specific, real standard codes and full descriptions that align with "${cleanTopic}".`;
+    'Use real Common Core State Standards codes and descriptions' :
+    'Use real, specific standards codes and descriptions (not placeholders)';
 
   return `
-PROFESSIONAL LESSON PLAN GENERATOR - COMPLETE ${numberOfDays}-DAY STRUCTURED OUTPUT
+PROFESSIONAL LESSON PLAN GENERATOR - STRUCTURED OUTPUT
 
-Create a comprehensive, educationally sound ${numberOfDays}-day lesson plan focused on "${cleanTopic}" for Grade ${data.gradeLevel} ${data.subject}.
+Create a comprehensive ${numberOfDays}-day lesson plan with clear content hierarchy and professional formatting. Use the heading tokens literally as labels for sections so they can be transformed into HTML later.
 
-CRITICAL REQUIREMENTS:
-1. Generate ALL ${numberOfDays} days completely - do not stop early
-2. Use REAL, SPECIFIC standards (not placeholders) - ${standardsInstruction}
-3. Create learning targets that DIRECTLY align with assessments and exit tickets
-4. Provide substantive, subject-specific content - not generic topic repetition
-5. Ensure all Teacher Notes and Student Notes are meaningful and specific
-6. Fix HTML formatting issues in tables and sections
+IMPORTANT: Generate ALL ${numberOfDays} days completely. ${standardsGuidance}.
 
 LESSON PARAMETERS:
 - Subject: ${data.subject}
@@ -183,7 +177,7 @@ LESSON PARAMETERS:
 - Topic: ${cleanTopic}
 - Duration: ${data.duration} per day
 - Location: ${data.location || 'Savannah, Georgia'}
-- Days: ${numberOfDays} (MUST COMPLETE ALL)
+- Days: ${numberOfDays}
 
 LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
 Grade: ${data.gradeLevel}
@@ -191,146 +185,133 @@ Subject: ${data.subject}
 Topic: ${cleanTopic}
 Duration: ${data.duration} per day over ${numberOfDays} days
 Location: ${data.location || 'Savannah, Georgia'}
-Unit Title: [Create compelling, specific title based on "${cleanTopic}"]
+Unit Title: [Create compelling 4-6 word title using "${cleanTopic}"]
 
 LEVEL I HEADING: LESSON OVERVIEW
-[Write 3-4 sentences describing what students will specifically learn about ${cleanTopic}, how skills will develop across ${numberOfDays} days, and the unit's educational purpose]
+[Write 2-3 sentences describing the unit's purpose and student outcomes]
 
 LEVEL I HEADING: UNIT ESSENTIAL QUESTION
-[Create one overarching question that captures the essence of learning ${cleanTopic} and spans all ${numberOfDays} days]
+[One overarching question that spans all ${numberOfDays} days]
 
 LEVEL I HEADING: UNIT LEARNING TARGETS
-[Create 3-4 specific, measurable learning targets that directly relate to ${cleanTopic} and can be assessed]
-- I can [specific skill/knowledge about ${cleanTopic}] (DOK 2)
-- I can [higher-order thinking about ${cleanTopic}] (DOK 3)  
-- I can [application/analysis of ${cleanTopic}] (DOK 4)
+- I can [specific measurable outcome 1] (DOK 2)
+- I can [specific measurable outcome 2] (DOK 3)
+- I can [specific measurable outcome 3] (DOK 4)
 
 ${Array.from({ length: numberOfDays }, (_, i) => {
   const dayNumber = i + 1;
   const focus = dayFoci[i] || `Advanced Application ${dayNumber}`;
-  const relationshipsTime = Math.round(durationMinutes * 0.15);
-  const routinesTime = Math.round(durationMinutes * 0.1);
-  const relevanceTime = Math.round(durationMinutes * 0.25);
-  const rigorTime = Math.round(durationMinutes * 0.35);
-  const reflectionTime = Math.round(durationMinutes * 0.15);
-  
   return `
 LEVEL I HEADING: DAY ${dayNumber}: ${focus}
 
 LEVEL II HEADING: Daily Essential Question
-[Create a specific question for Day ${dayNumber} that focuses on ${focus.toLowerCase()} aspects of ${cleanTopic}]
+[Specific question for Day ${dayNumber} that builds toward unit question]
 
 LEVEL II HEADING: Daily Learning Target
-I can [specific, measurable skill for Day ${dayNumber} that builds toward unit targets and relates to ${cleanTopic}] (DOK ${dayNumber <= 2 ? 2 : dayNumber <= 4 ? 3 : 4})
+I can [specific skill for Day ${dayNumber} related to ${cleanTopic}] (DOK ${dayNumber <= 2 ? 2 : dayNumber <= 4 ? 3 : 4})
 
 LEVEL II HEADING: Standards Alignment
 CREATE TABLE:
 Standard Type | Standard Code | Description
-Primary Standard | [Insert REAL ${data.subject} standard code for Grade ${data.gradeLevel}] | [Full, accurate description of how this standard applies to ${cleanTopic}]
-SEL Integration | CASEL.${dayNumber === 1 ? 'SA' : dayNumber === 2 ? 'SM' : dayNumber === 3 ? 'SOA' : dayNumber === 4 ? 'RS' : 'RDM'} | ${dayNumber === 1 ? 'Self-awareness: Recognizing emotions and values related to ' + cleanTopic : dayNumber === 2 ? 'Self-management: Demonstrating self-discipline in ' + cleanTopic + ' work' : dayNumber === 3 ? 'Social awareness: Understanding perspectives in ' + cleanTopic + ' contexts' : dayNumber === 4 ? 'Relationship skills: Working effectively with others on ' + cleanTopic : 'Responsible decision-making: Making ethical choices about ' + cleanTopic}
-Cross-Curricular | [Specific integration] | [How ${cleanTopic} connects to other subjects in meaningful ways]
+Primary Standard | [Real ${data.subject} standard code for Grade ${data.gradeLevel}] | [Complete description of how this applies to ${cleanTopic}]
+SEL Integration | CASEL | [Specific competency for Day ${dayNumber}]
+Cross-Curricular | [Subject areas] | [Integration description]
 
 LEVEL II HEADING: Materials Needed
-[List 4-6 specific, realistic materials needed for Day ${dayNumber} activities related to ${cleanTopic}]
+- [Specific materials for Day ${dayNumber}]
 
 LEVEL II HEADING: Root Work Framework 5 Rs Structure
 
-LEVEL III HEADING: RELATIONSHIPS (${relationshipsTime} minutes)
+LEVEL III HEADING: RELATIONSHIPS (${Math.round(durationMinutes * 0.15)} minutes)
 Opening Activity for Day ${dayNumber}:
-[Create a specific community-building activity that connects to Day ${dayNumber}'s focus on ${focus.toLowerCase()} and relates to ${cleanTopic}. Make it engaging and age-appropriate for Grade ${data.gradeLevel}.]
+[Community building activity for Day ${dayNumber}]
 
-Teacher Note: [Specific guidance for facilitating Day ${dayNumber}'s opening that builds classroom community while introducing ${focus.toLowerCase()} concepts of ${cleanTopic}]
-Student Note: [Encouraging message that helps students understand their role in Day ${dayNumber}'s community-building and learning about ${cleanTopic}]
+Teacher Note: [Guidance for Day ${dayNumber} relationships]
+Student Note: [Encouragement for Day ${dayNumber} relationships]
 
-LEVEL III HEADING: ROUTINES (${routinesTime} minutes)
+LEVEL III HEADING: ROUTINES (${Math.round(durationMinutes * 0.1)} minutes)
 Day ${dayNumber} Agenda:
-1. [Specific opening activity name]
-2. [Specific lesson component for ${focus.toLowerCase()}]
-3. [Specific practice activity]
-4. [Specific closing/transition]
+1. [Agenda step]
+2. [Agenda step]
+3. [Agenda step]
 
-Success Criteria for Day ${dayNumber}:
-- I can [specific, observable behavior related to ${cleanTopic}]
-- I can [specific demonstration of ${focus.toLowerCase()} skills]
-- I can [specific way to show learning about ${cleanTopic}]
+Success Criteria:
+- [Criterion]
+- [Criterion]
 
-Teacher Note: [Specific routine management strategies for Day ${dayNumber} that support learning ${cleanTopic} through ${focus.toLowerCase()}]
-Student Note: [Clear expectations for Day ${dayNumber} that help students track their progress in understanding ${cleanTopic}]
+Teacher Note: [Routine guidance Day ${dayNumber}]
+Student Note: [Organization tip Day ${dayNumber}]
 
-LEVEL III HEADING: RELEVANCE (${relevanceTime} minutes)
+LEVEL III HEADING: RELEVANCE (${Math.round(durationMinutes * 0.25)} minutes)
 Day ${dayNumber} Connection Activity:
-[Create a specific activity that connects ${cleanTopic} to students' lives, current events, or local Savannah community, emphasizing ${focus.toLowerCase()} aspects]
+[Connection activity for ${cleanTopic}]
 
 Real-World Bridge:
-[Specific examples of how Day ${dayNumber}'s learning about ${cleanTopic} applies to real-world situations, careers, or community issues]
+[Community/current events tie for Day ${dayNumber}]
 
-Teacher Note: [Guidance for helping students see personal relevance of ${cleanTopic} on Day ${dayNumber}, including discussion prompts and connection strategies]
-Student Note: [Prompts that help students connect Day ${dayNumber}'s learning about ${cleanTopic} to their own experiences and future goals]
+Teacher Note: [Relevance guidance Day ${dayNumber}]
+Student Note: [Relevance encouragement Day ${dayNumber}]
 
-LEVEL III HEADING: RIGOR (${rigorTime} minutes)
-I Do: Teacher Modeling (${Math.round(rigorTime * 0.3)} minutes)
-[Describe specific modeling of ${focus.toLowerCase()} skills applied to ${cleanTopic}. Include what the teacher will demonstrate and how.]
+LEVEL III HEADING: RIGOR (${Math.round(durationMinutes * 0.35)} minutes)
+I Do: Teacher Modeling (${Math.round(durationMinutes * 0.1)} minutes)
+[Demonstration]
 
-Think-Aloud Script for Day ${dayNumber}:
-"[Write a specific think-aloud script that demonstrates thinking processes for ${cleanTopic} using ${focus.toLowerCase()} approach. Make it authentic and instructional.]"
+Think-Aloud Script:
+"[Brief think aloud]"
 
-Teacher Note: [Specific guidance for effective modeling on Day ${dayNumber}, including key points to emphasize about ${cleanTopic}]
-Student Note: [Clear directions for what students should pay attention to during modeling of ${cleanTopic} concepts]
+Teacher Note: [Modeling guidance Day ${dayNumber}]
+Student Note: [Listening strategy Day ${dayNumber}]
 
-We Do: Guided Practice (${Math.round(rigorTime * 0.4)} minutes)
-[Describe specific guided practice activity where teacher and students work together on ${cleanTopic} using ${focus.toLowerCase()} strategies]
+We Do: Guided Practice (${Math.round(durationMinutes * 0.15)} minutes)
+[Collaborative activity]
 
-Scaffolding Supports for Day ${dayNumber}:
-- [Specific support tool for ${cleanTopic}]
-- [Specific language support for ${focus.toLowerCase()}]
-- [Specific organizational tool]
+Scaffolding Supports:
+- [Support]
+- [Support]
 
-Teacher Note: [Guidance for providing appropriate support during Day ${dayNumber} guided practice, including how to adjust for different learners]
-Student Note: [Clear expectations for participation in guided practice and how to ask for help with ${cleanTopic}]
+Teacher Note: [Scaffolding guidance Day ${dayNumber}]
+Student Note: [Collaboration strategies Day ${dayNumber}]
 
-You Do Together: Collaborative Application (${Math.round(rigorTime * 0.3)} minutes)
-[Describe specific collaborative activity where students apply ${focus.toLowerCase()} skills to new ${cleanTopic} scenarios]
+You Do Together: Collaborative Application (${Math.round(durationMinutes * 0.1)} minutes)
+[Group task]
+Choice Options:
+- [Option]
+- [Option]
 
-Choice Options for Day ${dayNumber}:
-- [Specific creative option related to ${cleanTopic}]
-- [Specific analytical option related to ${cleanTopic}]
-- [Specific presentation option related to ${cleanTopic}]
+Teacher Note: [Monitoring guidance Day ${dayNumber}]
+Student Note: [Teamwork strategies Day ${dayNumber}]
 
-Teacher Note: [Specific strategies for monitoring collaborative work on Day ${dayNumber} and ensuring equitable participation in ${cleanTopic} activities]
-Student Note: [Clear guidelines for working effectively in teams on Day ${dayNumber} and contributing to ${cleanTopic} discussions]
-
-LEVEL III HEADING: REFLECTION (${reflectionTime} minutes)
+LEVEL III HEADING: REFLECTION (${Math.round(durationMinutes * 0.15)} minutes)
 Day ${dayNumber} Processing:
-[Specific reflection activity that helps students process their learning about ${cleanTopic} through ${focus.toLowerCase()} lens]
+[Reflection activity]
 
 Tomorrow's Preview:
-${dayNumber < numberOfDays ? `[Specific preview of Day ${dayNumber + 1}'s focus on ${dayFoci[dayNumber] || 'continued learning'} and how it builds on today's ${focus.toLowerCase()} work with ${cleanTopic}]` : '[Celebration of completed unit and discussion of how students will use their ${cleanTopic} knowledge in future learning]'}
+[Preview]
 
-Teacher Note: [Specific guidance for facilitating Day ${dayNumber} reflection and using student responses to inform future instruction about ${cleanTopic}]
-Student Note: [Specific prompts for metacognitive reflection about Day ${dayNumber} learning and goal-setting for continued growth in ${cleanTopic}]
+Teacher Note: [Reflection guidance Day ${dayNumber}]
+Student Note: [Metacognition prompts Day ${dayNumber}]
 
 LEVEL II HEADING: Day ${dayNumber} Implementation Supports
 CREATE TABLE:
-Support Tier | Target Population | Specific Strategies for Day ${dayNumber}
-Tier 1 Universal | All Students | [3 specific, practical supports for all students learning ${cleanTopic} through ${focus.toLowerCase()}]
-Tier 2 Targeted | Students Needing Additional Support | [3 specific interventions for students who need more support with ${cleanTopic}]
-Tier 3 Intensive | Students Needing Significant Support | [3 specific intensive supports for students struggling with ${cleanTopic}]
-504 Accommodations | Students with Disabilities | [Specific accommodations for Day ${dayNumber} activities related to ${cleanTopic}]
-Gifted Extensions | Advanced Learners | [Specific extensions that deepen learning about ${cleanTopic} for advanced students]
-SPED Modifications | Students with IEPs | [Specific modifications for Day ${dayNumber} that maintain learning goals while adjusting delivery of ${cleanTopic} content]
+Support Tier | Target Population | Specific Strategies
+Tier 1 Universal | All Students | [3 supports]
+Tier 2 Targeted | Students Needing Additional Support | [3 supports]
+Tier 3 Intensive | Students Needing Significant Support | [3 supports]
+504 Accommodations | Students with Disabilities | [Accommodations]
+Gifted Extensions | Advanced Learners | [Extensions]
+SPED Modifications | Students with IEPs | [Modifications]
 
 LEVEL II HEADING: Day ${dayNumber} Assessment
 CREATE TABLE:
 Assessment Type | Method | Purpose
-Formative | [Specific formative assessment that directly measures Day ${dayNumber}'s learning target about ${cleanTopic}] | [Specific purpose aligned to daily target]
-Observation | [Specific teacher observation checklist for ${focus.toLowerCase()} skills with ${cleanTopic}] | [Specific data to collect about student progress]
-Summative | ${dayNumber === numberOfDays ? '[Specific culminating assessment that measures all unit learning targets about ' + cleanTopic + ']' : '[Specific progress check toward unit goals for ' + cleanTopic + ']'} | ${dayNumber === numberOfDays ? 'Evaluate mastery of all unit learning targets' : 'Monitor progress toward unit mastery'}
+Formative | [Exit ticket aligned to Day ${dayNumber} learning target] | Monitor daily progress
+Summative | [Assessment aligned to unit targets] | Evaluate mastery
 
-LEVEL II HEADING: SEL Integration for Day ${dayNumber}
-[Specific description of how SEL competency for Day ${dayNumber} is woven into ${cleanTopic} learning, including specific activities, discussion prompts, and reflection opportunities]
+LEVEL II HEADING: SEL Integration
+[SEL specifics Day ${dayNumber}]
 
-LEVEL II HEADING: Trauma-Informed Considerations for Day ${dayNumber}
-[Specific considerations for Day ${dayNumber} that account for potential student trauma responses to ${cleanTopic} content, including alternative activities, choice and voice opportunities, and signs to watch for]
+LEVEL II HEADING: Trauma-Informed Considerations
+[Trauma-informed notes Day ${dayNumber}]
 
 PAGE BREAK
 `.trim();
@@ -342,34 +323,17 @@ LEVEL II HEADING: 1. Student Workbook
 File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${subjectAbbr}_StudentWorkbook.pdf
 
 COMPLETE CONTENT:
-[Write detailed student workbook pages that include:
-- Daily learning target tracking sheets
-- Graphic organizers specific to ${cleanTopic}
-- Vocabulary pages with ${cleanTopic} terms
-- Reflection prompts for each day
-- Assessment rubrics students can understand
-- Home connection activities related to ${cleanTopic}
-- Reference pages with key concepts about ${cleanTopic}]
+[Write out all student-facing workbook pages for the unit]
 
-LEVEL II HEADING: 2. Teacher Implementation Guide  
+LEVEL II HEADING: 2. Teacher Implementation Guide
 File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${subjectAbbr}_TeacherGuide.pdf
 
 COMPLETE CONTENT:
-[Write comprehensive teacher guide including:
-- Daily preparation checklists specific to ${cleanTopic}
-- Differentiation strategies for each day
-- Assessment rubrics aligned to learning targets
-- Extension activities for early finishers
-- Intervention strategies for struggling learners
-- Parent communication templates about ${cleanTopic}
-- Additional resources for teaching ${cleanTopic}
-- Troubleshooting guide for common challenges]
-
-GENERATION COMPLETE - ALL ${numberOfDays} DAYS INCLUDED WITH ALIGNED STANDARDS AND ASSESSMENTS
+[Write a detailed teacher guide, prep checklists, day-by-day tips, anticipated challenges, differentiation, and rubrics]
 `.trim();
 }
 
-/** Convert the structured tokens to styled HTML with fixed formatting */
+/** Convert the structured tokens to styled HTML - FIXED table formatting */
 function formatAsEnhancedHTML(content: string, data: MasterPromptRequest): string {
   const cleaned = cleanContent(content);
   const cleanTopic = processTopicForReadability(data.topic);
@@ -429,15 +393,17 @@ ul { margin: 8pt 0; padding-left: 20pt; }
     return `<section class="day-section"><h1 class="level-1-heading">DAY ${d}: ${title}</h1>`;
   });
 
-  // Ensure PAGE BREAK tokens become proper section boundaries
-  html = html.replace(/\n?PAGE BREAK\n?/g, '</section>');
+  // Fix PAGE BREAK handling - ensure proper section closing
+  html = html.replace(/PAGE BREAK/g, '</section>');
 
-  // Add section tags where missing
-  if (html.includes('<section class="day-section">') && !html.endsWith('</section>')) {
+  // Close any remaining open sections
+  const sectionCount = (html.match(/<section class="day-section">/g) || []).length;
+  const closingSectionCount = (html.match(/<\/section>/g) || []).length;
+  if (sectionCount > closingSectionCount) {
     html += '</section>';
   }
 
-  // 5 Rs → styled blocks with proper closing
+  // 5 Rs → styled blocks
   html = html
     .replace(/<h3 class="level-3-heading">RELATIONSHIPS \((\d+)\s*minutes\)<\/h3>/g, `<div class="rs-section"><div class="rs-header">RELATIONSHIPS ($1 minutes)</div>`)
     .replace(/<h3 class="level-3-heading">ROUTINES \((\d+)\s*minutes\)<\/h3>/g, `</div><div class="rs-section"><div class="rs-header">ROUTINES ($1 minutes)</div>`)
@@ -450,17 +416,17 @@ ul { margin: 8pt 0; padding-left: 20pt; }
     .replace(/(^|\n)Teacher Note:\s*([^\n<][^\n]*)/g, `$1<div class="note teacher-note"><strong>Teacher Note:</strong> $2</div>`)
     .replace(/(^|\n)Student Note:\s*([^\n<][^\n]*)/g, `$1<div class="note student-note"><strong>Student Note:</strong> $2</div>`);
 
-  // CREATE TABLE blocks: convert pipe tables to HTML tables with proper structure
+  // CREATE TABLE blocks: convert pipe tables to HTML tables - FIXED
   html = html.replace(/CREATE TABLE:\s*\n((?:[^\n]+\|[^\n]+\|[^\n]+\n?)+)/g, (_m: string, tableBlock: string) => {
     const lines: string[] = tableBlock.trim().split('\n').filter((l: string) => l.trim());
     if (!lines.length) return '';
     const [headerLine, ...dataLines] = lines;
-    const headers: string[] = headerLine.split('|').map((s: string) => s.trim());
+    const headers: string[] = headerLine.split('|').map((s: string) => s.trim()).filter(h => h);
     let out = '<table><thead><tr>';
     headers.forEach((h: string) => { out += `<th>${h}</th>`; });
     out += '</tr></thead><tbody>';
     dataLines.forEach((line: string) => {
-      const cells: string[] = line.split('|').map((s: string) => s.trim());
+      const cells: string[] = line.split('|').map((s: string) => s.trim()).filter(c => c);
       if (cells.length >= headers.length) {
         out += '<tr>' + cells.slice(0, headers.length).map((c: string) => `<td>${c}</td>`).join('') + '</tr>';
       }
@@ -469,26 +435,22 @@ ul { margin: 8pt 0; padding-left: 20pt; }
     return out;
   });
 
-  // Turn hyphen bullets into lists
+  // Turn hyphen bullets into lists (lightweight)
   html = html.replace(/(^|\n)\s*[-•]\s+(.+)/g, '$1<li>$2</li>');
   html = html.replace(/(?:<li>[\s\S]*?<\/li>\s*)+/g, (match: string) => `<div class="bulleted-list"><ul>${match}</ul></div>`);
 
-  // Close any open rs-section divs properly
+  // Close rs-sections properly
   html = html.replace(/(<div class="rs-section">[\s\S]*?)(?=<\/div><div class="rs-section">|<h[123]|<\/section>|$)/g, (m: string) => {
     return m.endsWith('</div>') ? m : m + '</div>';
   });
 
-  // Ensure the last rs-section in each day is closed
-  html = html.replace(/(<div class="rs-section">[\s\S]*?)(<\/section>)/g, (m: string, content: string, ending: string) => {
-    return content.endsWith('</div>') ? content + ending : content + '</div>' + ending;
-  });
-
-  // Resource section wrapper
+  // Resource block header
   html = html.replace(/<h1 class="level-1-heading">COMPREHENSIVE RESOURCE GENERATION<\/h1>/g,
     `<div class="resource-section"><h1 class="level-1-heading">COMPREHENSIVE RESOURCE GENERATION</h1>`);
 
-  if (html.includes('class="resource-section"') && !html.endsWith('</div>')) {
-    html += '</div>';
+  // Ensure resource block closes
+  if (html.includes('class="resource-section"') && !html.match(/<\/div>\s*<div class="footer">/)) {
+    html = html.replace(/(<div class="footer">)/, '</div>$1');
   }
 
   // Basic header wrap with meta
@@ -522,7 +484,7 @@ ${html}
 </html>`;
 }
 
-/** Extract downloadable text resources */
+/** Extract downloadable text resources (from "COMPLETE CONTENT:" blocks) */
 function generateDownloadableResources(content: string, data: MasterPromptRequest): {textResources: GeneratedResource[], imagePrompts: ImagePrompt[]} {
   const cleanTopic = processTopicForReadability(data.topic);
   const lessonCode = `RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}`;
@@ -538,7 +500,7 @@ function generateDownloadableResources(content: string, data: MasterPromptReques
   return { textResources, imagePrompts: [] };
 }
 
-/** Enhanced validation with standards and alignment checks */
+/** Validate presence of key components */
 function validateLessonPlan(content: string, data: MasterPromptRequest) {
   const missing: string[] = [];
   const expectedDays = parseInt(data.numberOfDays || '5');
@@ -550,70 +512,127 @@ function validateLessonPlan(content: string, data: MasterPromptRequest) {
     missing.push(`Complete days (found ${foundDays}, expected ${expectedDays})`);
   }
   
-  // Check for standards (should not be placeholders)
-  const placeholderStandards = (content.match(/\[.*std.*\]/g) || []).length;
-  if (placeholderStandards > 0) {
-    missing.push(`Real standards (found ${placeholderStandards} placeholders)`);
-  }
-  
-  // Check for required components
   const teacherNoteCount = (content.match(/Teacher Note:/g) || []).length;
   const studentNoteCount = (content.match(/Student Note:/g) || []).length;
-  const expectedNotes = expectedDays * 6;
+  const expectedNotes = expectedDays * 6; // rough expectation
 
-  if (teacherNoteCount < expectedNotes * 0.8) missing.push(`Teacher Notes (found ${teacherNoteCount}, expected ~${expectedNotes})`);
-  if (studentNoteCount < expectedNotes * 0.8) missing.push(`Student Notes (found ${studentNoteCount}, expected ~${expectedNotes})`);
-  
-  // Check for 5 Rs components
+  if (teacherNoteCount < expectedNotes) missing.push(`Teacher Notes (found ${teacherNoteCount}, expected ~${expectedNotes})`);
+  if (studentNoteCount < expectedNotes) missing.push(`Student Notes (found ${studentNoteCount}, expected ~${expectedNotes})`);
   ['RELATIONSHIPS','ROUTINES','RELEVANCE','RIGOR','REFLECTION'].forEach((k: string) => {
-    const componentCount = (content.match(new RegExp(k, 'g')) || []).length;
-    if (componentCount < expectedDays) missing.push(`${k} component (found ${componentCount}, expected ${expectedDays})`);
+    if (!content.includes(k)) missing.push(`${k} component`);
   });
-  
-  // Check for learning target and assessment alignment
-  const learningTargets = (content.match(/I can [^(]+\(DOK/g) || []).length;
-  const assessments = (content.match(/Assessment Type.*Method.*Purpose/g) || []).length;
-  if (learningTargets === 0) missing.push('Specific learning targets');
-  if (assessments < expectedDays) missing.push(`Daily assessments (found ${assessments}, expected ${expectedDays})`);
-  
   if (!content.includes('CREATE TABLE')) missing.push('Structured tables');
   if (!content.includes('COMPLETE CONTENT:')) missing.push('Generated resource content');
 
   return { isValid: missing.length === 0, missingComponents: missing };
 }
 
-/** Emergency fallback with improved content */
+/** Emergency fallback content when API key or generation fails */
 function buildEnhancedFallback(data: MasterPromptRequest) {
   const cleanTopic = processTopicForReadability(data.topic);
-  const numberOfDays = parseInt(data.numberOfDays || '5');
-  
   const content = `
 LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
 Grade: ${data.gradeLevel}
 Subject: ${data.subject}
 Topic: ${cleanTopic}
-Duration: ${data.duration} per day over ${numberOfDays} days
+Duration: ${data.duration} per day over ${data.numberOfDays} days
 Location: ${data.location || 'Savannah, Georgia'}
 
 LEVEL I HEADING: LESSON OVERVIEW
-This ${numberOfDays}-day unit develops student understanding of ${cleanTopic} through the Root Work Framework, incorporating trauma-informed practices, MTSS supports, and authentic assessment.
+This multi-day sequence explores ${cleanTopic} with RWFW (5 Rs), MTSS supports, SEL, and clear assessment.
 
 LEVEL I HEADING: UNIT ESSENTIAL QUESTION
-How can we effectively apply ${cleanTopic} concepts to solve problems and communicate ideas in our learning and community?
+How does ${cleanTopic} connect to our lives, community, and future?
 
 LEVEL I HEADING: UNIT LEARNING TARGETS
-- I can identify and explain key concepts related to ${cleanTopic} (DOK 2)
-- I can analyze examples of ${cleanTopic} and evaluate their effectiveness (DOK 3)
-- I can create original work that demonstrates mastery of ${cleanTopic} principles (DOK 4)
+- I can describe key concepts of ${cleanTopic}. (DOK 2)
+- I can apply ${cleanTopic} ideas in real-world contexts. (DOK 3)
+- I can evaluate impacts of ${cleanTopic} and propose solutions. (DOK 4)
 
-[Multiple days would be generated here with proper structure]
+LEVEL I HEADING: DAY 1: Introduction and Foundation Building
+LEVEL II HEADING: Daily Essential Question
+What matters most about ${cleanTopic} to our community?
+
+LEVEL II HEADING: Standards Alignment
+CREATE TABLE:
+Standard Type | Standard Code | Description
+Primary Standard | [Subject std] | Analyze and apply concepts of ${cleanTopic}
+SEL Integration | CASEL | Self-awareness & Social awareness
+Cross-Curricular | STEAM | Integrate science/tech/arts/maths
+
+LEVEL II HEADING: Root Work Framework 5 Rs Structure
+LEVEL III HEADING: RELATIONSHIPS (15 minutes)
+Opening Activity for Day 1:
+Community circle
+
+Teacher Note: Welcome every voice.
+Student Note: Share at your pace.
+
+LEVEL III HEADING: ROUTINES (10 minutes)
+Day 1 Agenda:
+1. Community circle
+2. Mini-lesson
+3. Practice
+
+Success Criteria:
+- Identify key terms
+- Engage in discussion
+- Reflect
+
+Teacher Note: Post agenda visually.
+Student Note: Track your questions.
+
+LEVEL III HEADING: RELEVANCE (20 minutes)
+Day 1 Connection Activity:
+Local tie to ${cleanTopic}
+
+Teacher Note: Draw community links.
+Student Note: Add personal examples.
+
+LEVEL III HEADING: RIGOR (35 minutes)
+I Do: Teacher Modeling (10 minutes)
+Think-Aloud Script:
+"Watch how I..."
+
+Teacher Note: Model strategies.
+Student Note: Note key moves.
+
+We Do: Guided Practice (15 minutes)
+Scaffolding Supports:
+- Graphic organizers
+- Sentence starters
+
+Teacher Note: Right-sized help.
+Student Note: Collaborate.
+
+You Do Together: Collaborative Application (10 minutes)
+Choice Options:
+- Create
+- Explain
+
+Teacher Note: Monitor equity.
+Student Note: Share roles.
+
+LEVEL III HEADING: REFLECTION (10 minutes)
+Day 1 Processing:
+Quick write; share
+
+Teacher Note: Celebrate growth.
+Student Note: Set a goal.
+
+LEVEL II HEADING: Day 1 Assessment
+CREATE TABLE:
+Assessment Type | Method | Purpose
+Formative | Exit Ticket | Gauge understanding
+
+PAGE BREAK
 
 LEVEL I HEADING: COMPREHENSIVE RESOURCE GENERATION
 LEVEL II HEADING: 1. Student Workbook
 File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}_StudentWorkbook.pdf
 
 COMPLETE CONTENT:
-[Comprehensive student workbook with daily pages, assessments, and resources for ${cleanTopic}]
+[Student pages]
 `.trim();
 
   const cleanVersion = cleanContent(content);
@@ -621,7 +640,7 @@ COMPLETE CONTENT:
   return { content, htmlVersion, cleanVersion };
 }
 
-/** POST handler with enhanced error handling */
+/** ---- POST handler ---- */
 export async function POST(request: NextRequest) {
   try {
     const parsed = await parseLessonRequest(request);
@@ -673,8 +692,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 25000, // INCREASED FURTHER FOR DETAILED CONTENT
-        temperature: 0.4,
+        max_tokens: 20000, // Back to what was working
+        temperature: 0.3,  // Back to original
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -701,9 +720,10 @@ export async function POST(request: NextRequest) {
       lessonContent = payload.content;
     }
 
+    // Strip code fences if the model wrapped output
     lessonContent = lessonContent.replace(/```(?:markdown)?\s*|```/gi, '').trim();
 
-    if (!lessonContent || lessonContent.length < 3000) {
+    if (!lessonContent || lessonContent.length < 2000) {
       const fallback = buildEnhancedFallback(data);
       return okJson({
         lessonPlan: fallback.cleanVersion,
@@ -721,8 +741,8 @@ export async function POST(request: NextRequest) {
     const resources = generateDownloadableResources(lessonContent, data);
 
     return okJson({
-      lessonPlan: cleanedContent,
-      htmlVersion,
+      lessonPlan: cleanedContent,  // raw text (cleaned) for copy/RTF
+      htmlVersion,                 // fully formatted HTML for UI/PDF
       plainText: cleanedContent,
       resources,
       success: true,
