@@ -1,4 +1,4 @@
-// src/app/api/generate-lesson/route.ts - Simplified approach to ensure all days generate
+// src/app/api/generate-lesson/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 
