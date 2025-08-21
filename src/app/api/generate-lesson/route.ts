@@ -1,4 +1,4 @@
-// src/app/api/generate-lesson/route.ts - Clean HTML formatting & stable parsing (TS fixes)
+// src/app/api/generate-lesson/route.ts - Complete corrected version with multi-day generation fix
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -129,9 +129,9 @@ function processTopicForReadability(topic: string): string {
  */
 function cleanContent(content: string): string {
   return (content || '')
-    .replace(/â€”|—/g, '—')
-    .replace(/â€œ|â€|“|”/g, '"')
-    .replace(/â€˜|â€™|’/g, "'")
+    .replace(/â€"|—/g, '—')
+    .replace(/â€œ|â€|"|"/g, '"')
+    .replace(/â€˜|â€™|'/g, "'")
     .replace(/Â/g, ' ')
     .replace(/Ã—/g, '×')
     .replace(/\u00A0/g, ' ')
@@ -151,16 +151,21 @@ function buildEnhancedMasterPrompt(data: MasterPromptRequest): string {
 
   const dayFoci = [
     'Introduction and Foundation Building',
-    'Exploration and Investigation',
+    'Exploration and Investigation', 
     'Analysis and Critical Thinking',
     'Application and Creation',
-    'Synthesis and Reflection'
+    'Synthesis and Reflection',
+    'Advanced Application',
+    'Mastery and Assessment',
+    'Extension and Transfer'
   ];
 
   return `
-PROFESSIONAL LESSON PLAN GENERATOR - STRUCTURED OUTPUT
+PROFESSIONAL LESSON PLAN GENERATOR - COMPLETE ${numberOfDays}-DAY STRUCTURED OUTPUT
 
-Create a comprehensive ${numberOfDays}-day lesson plan with clear content hierarchy and professional formatting. Use the heading tokens literally as labels for sections so they can be transformed into HTML later.
+Create a comprehensive ${numberOfDays}-day lesson plan with ALL DAYS INCLUDED. Generate every single day from Day 1 through Day ${numberOfDays}. Use the heading tokens literally as labels for sections so they can be transformed into HTML later.
+
+CRITICAL REQUIREMENT: You MUST generate ALL ${numberOfDays} days. Do not stop early. Complete every day.
 
 LESSON PARAMETERS:
 - Subject: ${data.subject}
@@ -168,7 +173,7 @@ LESSON PARAMETERS:
 - Topic: ${cleanTopic}
 - Duration: ${data.duration} per day
 - Location: ${data.location || 'Savannah, Georgia'}
-- Days: ${numberOfDays}
+- Days: ${numberOfDays} (GENERATE ALL ${numberOfDays} DAYS)
 
 LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
 Grade: ${data.gradeLevel}
@@ -179,130 +184,146 @@ Location: ${data.location || 'Savannah, Georgia'}
 Unit Title: [Create compelling 4-6 word title using "${cleanTopic}"]
 
 LEVEL I HEADING: LESSON OVERVIEW
-[Write 2-3 sentences describing the unit's purpose and student outcomes]
+[Write 2-3 sentences describing the unit's purpose and student outcomes across all ${numberOfDays} days]
 
 LEVEL I HEADING: UNIT ESSENTIAL QUESTION
-[One overarching question that spans all ${numberOfDays} days]
+[One overarching question that spans all ${numberOfDays} days and connects to ${cleanTopic}]
 
 LEVEL I HEADING: UNIT LEARNING TARGETS
-- I can [specific measurable outcome 1] (DOK 2)
-- I can [specific measurable outcome 2] (DOK 3)
-- I can [specific measurable outcome 3] (DOK 4)
+- I can identify and explain key concepts related to ${cleanTopic} (DOK 2)
+- I can analyze and evaluate information about ${cleanTopic} using evidence (DOK 3)
+- I can synthesize learning about ${cleanTopic} to create solutions or products (DOK 4)
 
 ${Array.from({ length: numberOfDays }, (_, i) => {
   const dayNumber = i + 1;
   const focus = dayFoci[i] || `Advanced Application ${dayNumber}`;
+  const relationshipsTime = Math.round(durationMinutes * 0.15);
+  const routinesTime = Math.round(durationMinutes * 0.1);
+  const relevanceTime = Math.round(durationMinutes * 0.25);
+  const rigorTime = Math.round(durationMinutes * 0.35);
+  const reflectionTime = Math.round(durationMinutes * 0.15);
+  
   return `
 LEVEL I HEADING: DAY ${dayNumber}: ${focus}
 
 LEVEL II HEADING: Daily Essential Question
-[Specific question for Day ${dayNumber} that builds toward unit question]
+How does ${cleanTopic} connect to ${focus.toLowerCase()} in our learning and community?
 
 LEVEL II HEADING: Daily Learning Target
-I can [specific skill for Day ${dayNumber} related to ${cleanTopic}] (DOK ${dayNumber <= 2 ? 2 : dayNumber <= 4 ? 3 : 4})
+I can demonstrate understanding of ${cleanTopic} through ${focus.toLowerCase()} activities and discussions (DOK ${dayNumber <= 2 ? 2 : dayNumber <= 4 ? 3 : 4})
 
 LEVEL II HEADING: Standards Alignment
 CREATE TABLE:
 Standard Type | Standard Code | Description
-Primary Standard | [Specific ${data.subject} standard] | [Brief description]
-SEL Integration | CASEL | [Specific competency for Day ${dayNumber}]
-Cross-Curricular | [Subject areas] | [Integration description]
+Primary Standard | [${data.subject} standard aligned to ${cleanTopic}] | Apply concepts of ${cleanTopic} through ${focus}
+SEL Integration | CASEL | ${dayNumber === 1 ? 'Self-awareness and identifying emotions' : dayNumber === 2 ? 'Self-management and impulse control' : dayNumber === 3 ? 'Social awareness and empathy' : dayNumber === 4 ? 'Relationship skills and communication' : 'Responsible decision-making and problem-solving'}
+Cross-Curricular | Multiple subjects | Integrate ${cleanTopic} across STEAM disciplines
 
 LEVEL II HEADING: Materials Needed
-- [Specific materials for Day ${dayNumber}]
+- Student journals or notebooks
+- Digital presentation materials for Day ${dayNumber}
+- Handouts related to ${cleanTopic} for ${focus}
+- Collaborative workspace materials
+- Assessment materials for Day ${dayNumber}
 
 LEVEL II HEADING: Root Work Framework 5 Rs Structure
 
-LEVEL III HEADING: RELATIONSHIPS (${Math.round(durationMinutes * 0.15)} minutes)
+LEVEL III HEADING: RELATIONSHIPS (${relationshipsTime} minutes)
 Opening Activity for Day ${dayNumber}:
-[Community building activity for Day ${dayNumber}]
+"${cleanTopic} ${focus}" Connection Circle: Students share how Day ${dayNumber}'s focus on ${focus.toLowerCase()} connects to their personal experiences with ${cleanTopic}.
 
-Teacher Note: [Guidance for Day ${dayNumber} relationships]
-Student Note: [Encouragement for Day ${dayNumber} relationships]
+Teacher Note: Create a welcoming environment where all voices are valued. For Day ${dayNumber}, focus on building connections between ${cleanTopic} and ${focus.toLowerCase()}.
+Student Note: This is your time to connect with classmates and share your perspective on ${cleanTopic}. Listen actively to others' experiences.
 
-LEVEL III HEADING: ROUTINES (${Math.round(durationMinutes * 0.1)} minutes)
+LEVEL III HEADING: ROUTINES (${routinesTime} minutes)
 Day ${dayNumber} Agenda:
-1. [Agenda step]
-2. [Agenda step]
-3. [Agenda step]
+1. Opening connection circle
+2. ${focus} mini-lesson on ${cleanTopic}
+3. Collaborative exploration activity
+4. Individual reflection and goal setting
 
-Success Criteria:
-- [Criterion]
-- [Criterion]
+Success Criteria for Day ${dayNumber}:
+- I can explain key concepts from today's ${focus.toLowerCase()} focus
+- I can connect ${cleanTopic} to real-world applications
+- I can collaborate effectively with peers
 
-Teacher Note: [Routine guidance Day ${dayNumber}]
-Student Note: [Organization tip Day ${dayNumber}]
+Teacher Note: Post the agenda visually and refer to it throughout Day ${dayNumber}. Establish clear expectations for ${focus.toLowerCase()} activities.
+Student Note: Keep track of your learning goals and check your progress throughout Day ${dayNumber}.
 
-LEVEL III HEADING: RELEVANCE (${Math.round(durationMinutes * 0.25)} minutes)
+LEVEL III HEADING: RELEVANCE (${relevanceTime} minutes)
 Day ${dayNumber} Connection Activity:
-[Connection activity for ${cleanTopic}]
+"${cleanTopic} in Savannah" Local Context: Explore how ${cleanTopic} impacts our local Savannah community, specifically relating to ${focus.toLowerCase()}. Students identify current examples and connections.
 
 Real-World Bridge:
-[Community/current events tie for Day ${dayNumber}]
+Connect Day ${dayNumber}'s focus on ${focus.toLowerCase()} to current events, local issues, or future career applications related to ${cleanTopic}.
 
-Teacher Note: [Relevance guidance Day ${dayNumber}]
-Student Note: [Relevance encouragement Day ${dayNumber}]
+Teacher Note: Use local examples and current events to make ${cleanTopic} relevant to students' lives. Help them see connections between ${focus.toLowerCase()} and their community.
+Student Note: Think about how ${cleanTopic} appears in your daily life and community. Make personal connections to the material.
 
-LEVEL III HEADING: RIGOR (${Math.round(durationMinutes * 0.35)} minutes)
-I Do: Teacher Modeling (${Math.round(durationMinutes * 0.1)} minutes)
-[Demonstration]
+LEVEL III HEADING: RIGOR (${rigorTime} minutes)
+I Do: Teacher Modeling (${Math.round(rigorTime * 0.3)} minutes)
+Demonstrate ${focus.toLowerCase()} strategies for understanding ${cleanTopic}. Model the thinking process students will use in their own work.
 
-Think-Aloud Script:
-"[Brief think aloud]"
+Think-Aloud Script for Day ${dayNumber}:
+"As I examine this aspect of ${cleanTopic}, I'm using ${focus.toLowerCase()} to understand... Let me show you my thinking process for Day ${dayNumber}..."
 
-Teacher Note: [Modeling guidance Day ${dayNumber}]
-Student Note: [Listening strategy Day ${dayNumber}]
+Teacher Note: Make your thinking visible for students. Show them how to approach ${cleanTopic} using ${focus.toLowerCase()} strategies.
+Student Note: Pay attention to the thinking strategies being modeled. You'll use these same approaches in your own work.
 
-We Do: Guided Practice (${Math.round(durationMinutes * 0.15)} minutes)
-[Collaborative activity]
+We Do: Guided Practice (${Math.round(rigorTime * 0.4)} minutes)
+Together, work through ${cleanTopic} examples using ${focus.toLowerCase()} approaches. Provide scaffolded support as students practice new skills.
 
-Scaffolding Supports:
-- [Support]
-- [Support]
+Scaffolding Supports for Day ${dayNumber}:
+- Graphic organizers for ${cleanTopic} concepts
+- Sentence starters for discussions about ${focus.toLowerCase()}
+- Visual aids and reference materials
 
-Teacher Note: [Scaffolding guidance Day ${dayNumber}]
-Student Note: [Collaboration strategies Day ${dayNumber}]
+Teacher Note: Provide just-right support for Day ${dayNumber}. Gradually release responsibility as students show understanding of ${cleanTopic}.
+Student Note: Ask questions and seek clarification during guided practice. This is your time to learn with support.
 
-You Do Together: Collaborative Application (${Math.round(durationMinutes * 0.1)} minutes)
-[Group task]
-Choice Options:
-- [Option]
-- [Option]
+You Do Together: Collaborative Application (${Math.round(rigorTime * 0.3)} minutes)
+In pairs or small groups, students apply ${focus.toLowerCase()} strategies to new ${cleanTopic} scenarios or problems.
 
-Teacher Note: [Monitoring guidance Day ${dayNumber}]
-Student Note: [Teamwork strategies Day ${dayNumber}]
+Choice Options for Day ${dayNumber}:
+- Create a visual representation of ${cleanTopic} connections
+- Develop questions for further investigation of ${cleanTopic}
+- Design a solution or response related to ${cleanTopic}
 
-LEVEL III HEADING: REFLECTION (${Math.round(durationMinutes * 0.15)} minutes)
+Teacher Note: Monitor group work closely on Day ${dayNumber}. Ensure equitable participation and understanding of ${cleanTopic}.
+Student Note: Work collaboratively and build on each other's ideas about ${cleanTopic}. Share responsibilities fairly.
+
+LEVEL III HEADING: REFLECTION (${reflectionTime} minutes)
 Day ${dayNumber} Processing:
-[Reflection activity]
+Students complete a reflection on their learning about ${cleanTopic} through today's ${focus.toLowerCase()} activities. Use a structured reflection format.
 
 Tomorrow's Preview:
-[Preview]
+${dayNumber < numberOfDays ? `Preview Day ${dayNumber + 1}'s focus on ${dayFoci[dayNumber] || 'continued learning'} and how it builds on today's work with ${focus.toLowerCase()}.` : 'Celebrate the completion of our unit on ' + cleanTopic + ' and discuss next steps.'}
 
-Teacher Note: [Reflection guidance Day ${dayNumber}]
-Student Note: [Metacognition prompts Day ${dayNumber}]
+Teacher Note: Use Day ${dayNumber} reflections to inform tomorrow's instruction. Note student progress and areas needing support.
+Student Note: Be honest in your reflection about Day ${dayNumber}. Think about what you learned and what questions you still have about ${cleanTopic}.
 
 LEVEL II HEADING: Day ${dayNumber} Implementation Supports
 CREATE TABLE:
-Support Tier | Target Population | Specific Strategies
-Tier 1 Universal | All Students | [3 supports]
-Tier 2 Targeted | Students Needing Additional Support | [3 supports]
-Tier 3 Intensive | Students Needing Significant Support | [3 supports]
-504 Accommodations | Students with Disabilities | [Accommodations]
-Gifted Extensions | Advanced Learners | [Extensions]
-SPED Modifications | Students with IEPs | [Modifications]
+Support Tier | Target Population | Specific Strategies for Day ${dayNumber}
+Tier 1 Universal | All Students | Visual supports for ${cleanTopic}, collaborative learning structures, multiple ways to show understanding
+Tier 2 Targeted | Students Needing Additional Support | Pre-teaching key vocabulary, simplified texts, extended time for ${focus.toLowerCase()} activities
+Tier 3 Intensive | Students Needing Significant Support | One-on-one support, modified expectations, alternative assessment methods
+504 Accommodations | Students with Disabilities | Extended time, assistive technology, preferential seating, modified materials
+Gifted Extensions | Advanced Learners | Deeper investigation of ${cleanTopic}, leadership roles, additional complexity in ${focus.toLowerCase()} tasks
+SPED Modifications | Students with IEPs | Individualized goals, modified content, specialized instruction methods, additional support staff
 
 LEVEL II HEADING: Day ${dayNumber} Assessment
 CREATE TABLE:
 Assessment Type | Method | Purpose
-Formative | [Specific check] | Monitor progress
-Summative | [Culmination] | Evaluate mastery
+Formative | Exit ticket on ${cleanTopic} understanding from Day ${dayNumber} | Monitor daily progress and adjust instruction
+Observation | Teacher observation of ${focus.toLowerCase()} skills during activities | Assess application of learning strategies
+Summative | ${dayNumber === numberOfDays ? 'Unit culminating project or assessment on ' + cleanTopic : 'Ongoing portfolio development'} | ${dayNumber === numberOfDays ? 'Evaluate overall unit mastery' : 'Track cumulative learning progress'}
 
-LEVEL II HEADING: SEL Integration
-[SEL specifics Day ${dayNumber}]
+LEVEL II HEADING: SEL Integration for Day ${dayNumber}
+Focus on ${dayNumber === 1 ? 'self-awareness as students identify their prior knowledge and feelings about ' + cleanTopic : dayNumber === 2 ? 'self-management as students practice persistence and goal-setting with ' + focus.toLowerCase() + ' activities' : dayNumber === 3 ? 'social awareness as students consider different perspectives on ' + cleanTopic : dayNumber === 4 ? 'relationship skills through collaborative work on ' + cleanTopic + ' projects' : 'responsible decision-making as students apply learning about ' + cleanTopic + ' to real-world scenarios'}. Integrate SEL naturally throughout Day ${dayNumber} activities.
 
-LEVEL II HEADING: Trauma-Informed Considerations
-[Trauma-informed notes Day ${dayNumber}]
+LEVEL II HEADING: Trauma-Informed Considerations for Day ${dayNumber}
+Be aware that ${cleanTopic} may connect to students' personal experiences. For Day ${dayNumber}'s focus on ${focus.toLowerCase()}, provide choice and voice in activities. Create safe spaces for sharing and ensure all students feel valued and supported. Monitor for signs of stress or discomfort and have alternative activities ready.
 
 PAGE BREAK
 `.trim();
@@ -314,13 +335,15 @@ LEVEL II HEADING: 1. Student Workbook
 File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${subjectAbbr}_StudentWorkbook.pdf
 
 COMPLETE CONTENT:
-[Write out all student-facing workbook pages for the unit]
+[Write comprehensive student workbook with pages for each day covering ${cleanTopic}, including graphic organizers, reflection prompts, vocabulary sections, and assessment materials for all ${numberOfDays} days]
 
-LEVEL II HEADING: 2. Teacher Implementation Guide
+LEVEL II HEADING: 2. Teacher Implementation Guide  
 File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${subjectAbbr}_TeacherGuide.pdf
 
 COMPLETE CONTENT:
-[Write a detailed teacher guide, prep checklists, day-by-day tips, anticipated challenges, differentiation, and rubrics]
+[Write detailed teacher guide with preparation checklists, day-by-day implementation tips, differentiation strategies, assessment rubrics, and troubleshooting guidance for all ${numberOfDays} days of ${cleanTopic} instruction]
+
+GENERATION COMPLETE - ALL ${numberOfDays} DAYS INCLUDED
 `.trim();
 }
 
@@ -489,18 +512,32 @@ function generateDownloadableResources(content: string, data: MasterPromptReques
   return { textResources, imagePrompts: [] };
 }
 
-/** Validate presence of key components */
+/** Validate presence of key components and check for complete day generation */
 function validateLessonPlan(content: string, data: MasterPromptRequest) {
   const missing: string[] = [];
+  const expectedDays = parseInt(data.numberOfDays || '5');
+  
+  // Check for all requested days
+  const dayMatches = content.match(/DAY\s+(\d+):/g) || [];
+  const foundDays = dayMatches.length;
+  if (foundDays < expectedDays) {
+    missing.push(`Complete days (found ${foundDays}, expected ${expectedDays})`);
+  }
+  
+  // Check for required components
   const teacherNoteCount = (content.match(/Teacher Note:/g) || []).length;
   const studentNoteCount = (content.match(/Student Note:/g) || []).length;
-  const expectedNotes = parseInt(data.numberOfDays || '5') * 6; // rough expectation
+  const expectedNotes = expectedDays * 6; // rough expectation: 6 notes per day
 
-  if (teacherNoteCount < expectedNotes) missing.push(`Teacher Notes (found ${teacherNoteCount}, expected ~${expectedNotes})`);
-  if (studentNoteCount < expectedNotes) missing.push(`Student Notes (found ${studentNoteCount}, expected ~${expectedNotes})`);
+  if (teacherNoteCount < expectedNotes * 0.8) missing.push(`Teacher Notes (found ${teacherNoteCount}, expected ~${expectedNotes})`);
+  if (studentNoteCount < expectedNotes * 0.8) missing.push(`Student Notes (found ${studentNoteCount}, expected ~${expectedNotes})`);
+  
+  // Check for 5 Rs components
   ['RELATIONSHIPS','ROUTINES','RELEVANCE','RIGOR','REFLECTION'].forEach((k: string) => {
-    if (!content.includes(k)) missing.push(`${k} component`);
+    const componentCount = (content.match(new RegExp(k, 'g')) || []).length;
+    if (componentCount < expectedDays) missing.push(`${k} component (found ${componentCount}, expected ${expectedDays})`);
   });
+  
   if (!content.includes('CREATE TABLE')) missing.push('Structured tables');
   if (!content.includes('COMPLETE CONTENT:')) missing.push('Generated resource content');
 
@@ -510,16 +547,26 @@ function validateLessonPlan(content: string, data: MasterPromptRequest) {
 /** Emergency fallback content when API key or generation fails */
 function buildEnhancedFallback(data: MasterPromptRequest) {
   const cleanTopic = processTopicForReadability(data.topic);
+  const numberOfDays = parseInt(data.numberOfDays || '5');
+  
+  const dayFoci = [
+    'Introduction and Foundation Building',
+    'Exploration and Investigation', 
+    'Analysis and Critical Thinking',
+    'Application and Creation',
+    'Synthesis and Reflection'
+  ];
+
   const content = `
 LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
 Grade: ${data.gradeLevel}
 Subject: ${data.subject}
 Topic: ${cleanTopic}
-Duration: ${data.duration} per day over ${data.numberOfDays} days
+Duration: ${data.duration} per day over ${numberOfDays} days
 Location: ${data.location || 'Savannah, Georgia'}
 
 LEVEL I HEADING: LESSON OVERVIEW
-This multi-day sequence explores ${cleanTopic} with RWFW (5 Rs), MTSS supports, SEL, and clear assessment.
+This ${numberOfDays}-day sequence explores ${cleanTopic} with RWFW (5 Rs), MTSS supports, SEL, and clear assessment.
 
 LEVEL I HEADING: UNIT ESSENTIAL QUESTION
 How does ${cleanTopic} connect to our lives, community, and future?
@@ -529,9 +576,15 @@ LEVEL I HEADING: UNIT LEARNING TARGETS
 - I can apply ${cleanTopic} ideas in real-world contexts. (DOK 3)
 - I can evaluate impacts of ${cleanTopic} and propose solutions. (DOK 4)
 
-LEVEL I HEADING: DAY 1: Introduction and Foundation Building
+${Array.from({ length: numberOfDays }, (_, i) => {
+  const dayNumber = i + 1;
+  const focus = dayFoci[i] || `Advanced Application ${dayNumber}`;
+  
+  return `
+LEVEL I HEADING: DAY ${dayNumber}: ${focus}
+
 LEVEL II HEADING: Daily Essential Question
-What matters most about ${cleanTopic} to our community?
+What matters most about ${cleanTopic} in our ${focus.toLowerCase()}?
 
 LEVEL II HEADING: Standards Alignment
 CREATE TABLE:
@@ -542,77 +595,88 @@ Cross-Curricular | STEAM | Integrate science/tech/arts/maths
 
 LEVEL II HEADING: Root Work Framework 5 Rs Structure
 LEVEL III HEADING: RELATIONSHIPS (15 minutes)
-Opening Activity for Day 1:
-Community circle
+Opening Activity for Day ${dayNumber}:
+Community circle focusing on ${focus}
 
-Teacher Note: Welcome every voice.
-Student Note: Share at your pace.
+Teacher Note: Welcome every voice on Day ${dayNumber}.
+Student Note: Share at your pace during ${focus} activities.
 
 LEVEL III HEADING: ROUTINES (10 minutes)
-Day 1 Agenda:
+Day ${dayNumber} Agenda:
 1. Community circle
-2. Mini-lesson
-3. Practice
+2. ${focus} mini-lesson
+3. Practice activities
 
 Success Criteria:
-- Identify key terms
-- Engage in discussion
-- Reflect
+- Identify key terms for ${focus}
+- Engage in discussion about ${cleanTopic}
+- Reflect on Day ${dayNumber} learning
 
-Teacher Note: Post agenda visually.
-Student Note: Track your questions.
+Teacher Note: Post Day ${dayNumber} agenda visually.
+Student Note: Track your questions about ${cleanTopic}.
 
 LEVEL III HEADING: RELEVANCE (20 minutes)
-Day 1 Connection Activity:
-Local tie to ${cleanTopic}
+Day ${dayNumber} Connection Activity:
+Local tie to ${cleanTopic} and ${focus}
 
-Teacher Note: Draw community links.
-Student Note: Add personal examples.
+Teacher Note: Draw community links for Day ${dayNumber}.
+Student Note: Add personal examples from ${focus} work.
 
 LEVEL III HEADING: RIGOR (35 minutes)
 I Do: Teacher Modeling (10 minutes)
-Think-Aloud Script:
-"Watch how I..."
+Demonstrate ${focus} strategies for ${cleanTopic}
 
-Teacher Note: Model strategies.
-Student Note: Note key moves.
+Think-Aloud Script:
+"Watch how I approach ${cleanTopic} using ${focus}..."
+
+Teacher Note: Model Day ${dayNumber} strategies clearly.
+Student Note: Note key moves for ${focus} work.
 
 We Do: Guided Practice (15 minutes)
-Scaffolding Supports:
-- Graphic organizers
-- Sentence starters
+Collaborate on ${cleanTopic} using ${focus} approach
 
-Teacher Note: Right-sized help.
-Student Note: Collaborate.
+Scaffolding Supports:
+- Graphic organizers for ${cleanTopic}
+- Sentence starters for ${focus}
+
+Teacher Note: Provide right-sized help for Day ${dayNumber}.
+Student Note: Collaborate effectively on ${focus} tasks.
 
 You Do Together: Collaborative Application (10 minutes)
-Choice Options:
-- Create
-- Explain
+Apply ${focus} to ${cleanTopic} scenarios
 
-Teacher Note: Monitor equity.
-Student Note: Share roles.
+Choice Options:
+- Create visual representation
+- Develop questions for investigation
+
+Teacher Note: Monitor equity during Day ${dayNumber}.
+Student Note: Share roles in ${focus} activities.
 
 LEVEL III HEADING: REFLECTION (10 minutes)
-Day 1 Processing:
-Quick write; share
+Day ${dayNumber} Processing:
+Reflect on ${focus} learning about ${cleanTopic}
 
-Teacher Note: Celebrate growth.
-Student Note: Set a goal.
+Tomorrow's Preview:
+${dayNumber < numberOfDays ? `Preview Day ${dayNumber + 1} focus` : 'Celebrate unit completion'}
 
-LEVEL II HEADING: Day 1 Assessment
+Teacher Note: Use Day ${dayNumber} reflections for planning.
+Student Note: Set goals for continued ${cleanTopic} learning.
+
+LEVEL II HEADING: Day ${dayNumber} Assessment
 CREATE TABLE:
 Assessment Type | Method | Purpose
-Formative | Exit Ticket | Gauge understanding
+Formative | Exit Ticket on ${focus} | Gauge Day ${dayNumber} understanding
 
 PAGE BREAK
+`.trim();
+}).join('\n\n')}
 
 LEVEL I HEADING: COMPREHENSIVE RESOURCE GENERATION
 LEVEL II HEADING: 1. Student Workbook
 File: RootedIn${cleanTopic.replace(/[^a-zA-Z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}_StudentWorkbook.pdf
 
 COMPLETE CONTENT:
-[Student pages]
+[Student workbook pages for ${numberOfDays} days covering ${cleanTopic}]
 `.trim();
 
   const cleanVersion = cleanContent(content);
@@ -672,8 +736,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 8000,
-        temperature: 0.3,
+        max_tokens: 20000, // INCREASED FROM 8000 TO ALLOW FULL GENERATION
+        temperature: 0.4,  // SLIGHTLY INCREASED FOR BETTER VARIETY
         messages: [{ role: 'user', content: prompt }]
       })
     });
