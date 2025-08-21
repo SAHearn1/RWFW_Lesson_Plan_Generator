@@ -1,5 +1,4 @@
-// src/app/api/generate-lesson/route.ts — Robust formatter (tables, headings, notes) + RWFW polish
-
+// /src/app/api/generate-lesson/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -20,11 +19,58 @@ type MasterPromptRequest = {
   specialInstructions?: string;
 };
 
+type GeneratedResource = {
+  filename: string;
+  content: string;
+  type: string;
+};
+
 function okJson(data: unknown, init: ResponseInit = {}) {
   return NextResponse.json(data, { ...init, headers: { 'Cache-Control': 'no-store' } });
 }
 
-// ——— small utilities ———
+function normalizeShape(input: any): Partial<MasterPromptRequest> {
+  if (!input || typeof input !== 'object') return input;
+  if (input.payload && typeof input.payload === 'object') return input.payload;
+  if (typeof input.body === 'string') {
+    try {
+      const parsed = JSON.parse(input.body);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch {}
+  }
+  if (input.data && typeof input.data === 'object') return input.data;
+  return input;
+}
+
+async function parseLessonRequest(req: NextRequest): Promise<Partial<MasterPromptRequest> | null> {
+  const ct = req.headers.get('content-type') || '';
+
+  if (ct.includes('application/json')) {
+    try {
+      const json = await req.json();
+      return normalizeShape(json);
+    } catch {}
+  }
+
+  try {
+    const raw = await req.text();
+    if (raw && raw.trim().startsWith('{')) {
+      const json = JSON.parse(raw);
+      return normalizeShape(json);
+    }
+  } catch {}
+
+  if (ct.includes('application/x-www-form-urlencoded')) {
+    try {
+      const form = await req.formData();
+      const o: Record<string, string> = {};
+      for (const [k, v] of form.entries()) if (typeof v === 'string') o[k] = v;
+      return normalizeShape(o);
+    } catch {}
+  }
+
+  return null;
+}
 
 function getSubjectAbbreviation(subject: string): string {
   const map: Record<string, string> = {
@@ -50,279 +96,273 @@ function getSubjectAbbreviation(subject: string): string {
 function processTopicForReadability(topic: string): string {
   let t = (topic || '').trim();
   if (!t) return 'Core Concept';
-  if (t.length > 80) t = t.slice(0, 80).replace(/\s+\S*$/, '');
+  if (t.length > 60) t = t.split(' ').slice(0, 8).join(' ');
   return t
     .split(' ')
-    .filter(Boolean)
-    .map((w) => w[0]?.toUpperCase() + w.slice(1).toLowerCase())
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ');
 }
 
-function cleanSmartQuotes(s: string): string {
-  return s
+function cleanContent(content: string): string {
+  return (content || '')
     .replace(/â€"/g, '—')
-    .replace(/â€œ|â€\u009d|“/g, '"')
-    .replace(/â€\u0099|â€™|’/g, "'")
+    .replace(/â€œ|â€/g, '"')
+    .replace(/â€™/g, "'")
     .replace(/Ã—/g, '×')
     .replace(/â€¦/g, '...')
     .replace(/Â/g, ' ')
-    .replace(/\u00A0/g, ' ');
-}
-
-// Remove directive tokens that slip through (case-insensitive)
-function stripDirectiveTokens(s: string): string {
-  return s
-    .replace(/^\s*LEVEL\s*I\s*HEADING:\s*/gim, '')
-    .replace(/^\s*LEVEL\s*II\s*HEADING:\s*/gim, '')
-    .replace(/^\s*LEVEL\s*III\s*HEADING:\s*/gim, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/#{1,6}\s*/g, '')               // remove markdown heads
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // bold/italics
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links -> text
+    .replace(/`{1,3}([^`]+)`{1,3}/g, '$1')   // inline code
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-// ——— content parser to HTML ———
+/** Convert our directive-style text into a styled, printable HTML page */
+function formatAsEnhancedHTML(content: string, data: MasterPromptRequest): string {
+  const cleaned = cleanContent(content);
+  const topic = processTopicForReadability(data.topic);
 
-function renderEnhancedHtml(content: string, data: MasterPromptRequest): string {
-  const cleanTopic = processTopicForReadability(data.topic);
-  const lines = stripDirectiveTokens(cleanSmartQuotes(content)).split(/\r?\n/);
-
-  let html: string[] = [];
-  const push = (x: string) => html.push(x);
-
-  // header
-  push(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">`);
-  push(`<title>${cleanTopic} — Grade ${data.gradeLevel} Lesson Plan</title>`);
-  push(`<style>
-@page { margin: 0.75in; }
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11pt; line-height: 1.5; color:#2B2B2B; background:#FFF; margin:0; padding:24pt; }
-.level-1 { font-size: 18pt; font-weight: 800; margin: 20pt 0 10pt; background: linear-gradient(135deg,#1B365D,#2E86AB); color:#fff; padding:10pt 12pt; border-radius:8pt; }
-.level-2 { font-size: 14pt; font-weight: 700; color:#2E86AB; margin:16pt 0 8pt; border-bottom:2pt solid #2E86AB; padding-bottom:4pt; }
-.level-3 { font-size: 12pt; font-weight: 700; color:#3B523A; margin:12pt 0 6pt; background:#F2F4CA; border-left:5pt solid #3B523A; padding:6pt 10pt; border-radius:4pt; }
-.header { text-align:center; margin-bottom:24pt; padding:16pt; background: linear-gradient(135deg,#F2F4CA,#E8ECBF); border:2pt solid #D4C862; border-radius:12pt; }
-.meta { display:grid; grid-template-columns:1fr 1fr; gap:10pt; margin-top:12pt; }
-.meta-item { padding:8pt; background:#fff; border-left:4pt solid #2E86AB; border-radius:6pt; }
-.meta-label { font-weight:700; color:#1B365D; }
-.day { margin:24pt 0; padding:14pt; background:#fff; border:1pt solid #E0E0E0; border-radius:10pt; }
-.rs { margin:12pt 0; padding:12pt; border-left:6pt solid #D4C862; background:#FAFAFA; border-radius:0 8pt 8pt 0; }
-.rs-h { font-size: 12pt; font-weight:700; color:#1B365D; margin-bottom:8pt; }
-.note { margin:10pt 0; padding:10pt; border-radius:8pt; font-size:10pt; border-left:4pt solid; }
-.teacher { background:#F0F7FF; border-left-color:#2E86AB; color:#1B365D; }
-.student { background:#F3FFF0; border-left-color:#28A745; color:#155724; }
-table { width:100%; border-collapse:collapse; margin:12pt 0; background:#fff; border-radius:6pt; overflow:hidden; }
-th, td { border:1pt solid #E0E0E0; padding:8pt 10pt; text-align:left; vertical-align:top; }
-th { background: linear-gradient(135deg,#1B365D,#2E86AB); color:#fff; font-weight:700; font-size:10pt; }
+  const css = `
+@page {
+  margin: 0.75in;
+  @bottom-center {
+    content: "Page " counter(page) " of " counter(pages);
+    font-size: 10pt;
+    color: #666;
+  }
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11pt; line-height: 1.45; color:#2B2B2B; margin:0; padding:0; background:#fff;
+}
+.header {
+  display:flex; gap:12pt; align-items:center; padding:16pt; margin:16pt;
+  border:2pt solid #D4C862; border-radius:12pt; background:linear-gradient(135deg,#F2F4CA,#E8ECBF);
+}
+.header img { width:56px; height:56px; object-fit:contain; border-radius:50%; border:2pt solid #D4C862; background:#fff; }
+.level-1-heading {
+  font-size:18pt; font-weight:800; color:#ffffff;
+  margin:24pt 16pt 12pt; padding:10pt 12pt; border-radius:8pt;
+  background:linear-gradient(135deg,#1B365D 0%, #2E86AB 100%);
+}
+.level-2-heading {
+  font-size:14pt; font-weight:800; color:#2E86AB;
+  margin:18pt 16pt 8pt; padding-bottom:6pt; border-bottom:2pt solid #2E86AB;
+}
+.level-3-heading {
+  font-size:12pt; font-weight:800; color:#3B523A;
+  margin:12pt 16pt 6pt; padding:6pt 10pt; background:#F2F4CA; border-left:6pt solid #3B523A; border-radius:6pt;
+}
+.day-section {
+  margin: 16pt; padding: 16pt; background:#FEFEFE; border:1pt solid #E0E0E0; border-radius:12pt; box-shadow:0 4pt 12pt rgba(0,0,0,0.06);
+}
+.rs-block { margin:12pt 0; padding:12pt; border-left:6pt solid #D4C862; background:#F8F9FA; border-radius:0 8pt 8pt 0; }
+.note { margin:10pt 16pt; padding:12pt; border-radius:8pt; font-size:10pt; border-left:4pt solid; }
+.teacher { background:linear-gradient(135deg,#E8F4FD 0%, #F0F8FF 100%); border-left-color:#2E86AB; color:#1B365D; }
+.student { background:linear-gradient(135deg,#F0F9E8 0%, #F8FFF8 100%); border-left-color:#28A745; color:#155724; }
+table { width:calc(100% - 32pt); margin:12pt 16pt; border-collapse:collapse; background:#fff; border-radius:8pt; overflow:hidden; box-shadow:0 2pt 8pt rgba(0,0,0,0.05); }
+th, td { border:1pt solid #E0E0E0; padding:8pt 12pt; text-align:left; vertical-align:top; }
+th { background:linear-gradient(135deg,#1B365D 0%, #2E86AB 100%); color:#fff; font-weight:800; }
 tr:nth-child(even) { background:#F8F9FA; }
-ul { margin:8pt 0; padding-left:20pt; }
-.footer { margin-top:24pt; padding-top:12pt; border-top:2pt solid #F2F4CA; text-align:center; color:#666; font-size:9pt; }
-@media print { body{padding:0.5in} .day,.rs,.level-1,.level-2,.level-3,table{ page-break-inside:avoid; } }
-</style></head><body>`);
+.content { margin: 0 16pt 24pt; }
+.footer { margin: 24pt 16pt; padding-top:12pt; border-top:2pt solid #F2F4CA; text-align:center; color:#666; font-size:10pt; }
+  `.trim();
 
-  // header block
-  push(`<div class="header">
-  <h1>Root Work Framework Lesson Plan</h1>
-  <div class="meta">
-    <div class="meta-item"><div class="meta-label">Topic:</div><div>${cleanTopic}</div></div>
-    <div class="meta-item"><div class="meta-label">Grade Level:</div><div>${data.gradeLevel}</div></div>
-    <div class="meta-item"><div class="meta-label">Subject:</div><div>${data.subject}</div></div>
-    <div class="meta-item"><div class="meta-label">Duration:</div><div>${data.duration} × ${data.numberOfDays} days</div></div>
+  // Convert directive text to HTML fragments
+  let html = cleaned;
+
+  // 1) Heading hierarchy (fix groups to $1)
+  html = html.replace(/LEVEL I HEADING:\s*(.+)/g, '<h1 class="level-1-heading">$1</h1>');
+  html = html.replace(/LEVEL II HEADING:\s*(.+)/g, '<h2 class="level-2-heading">$1</h2>');
+  html = html.replace(/LEVEL III HEADING:\s*(.+)/g, '<h3 class="level-3-heading">$1</h3>');
+
+  // 2) Day sections
+  html = html.replace(/(^|\n)DAY\s+(\d+):\s*([^\n]+)\n/g, (_m: string, p1: string, dayNum: string, title: string) =>
+    `${p1}<div class="day-section"><h1 class="level-1-heading">DAY ${dayNum}: ${title}</h1>`
+  );
+  // Close day sections when a new LEVEL I or end reached
+  html = html.replace(/<\/h1>\n(?=LEVEL I HEADING:|$)/g, '</h1></div>\n');
+
+  // 3) 5Rs blocks
+  html = html.replace(/RELATIONSHIPS\s*\((\d+)\s*minutes\)/g, '<div class="rs-block"><div class="level-3-heading">RELATIONSHIPS ($1 minutes)</div>');
+  html = html.replace(/ROUTINES\s*\((\d+)\s*minutes\)/g, '</div><div class="rs-block"><div class="level-3-heading">ROUTINES ($1 minutes)</div>');
+  html = html.replace(/RELEVANCE\s*\((\d+)\s*minutes\)/g, '</div><div class="rs-block"><div class="level-3-heading">RELEVANCE ($1 minutes)</div>');
+  html = html.replace(/RIGOR\s*\((\d+)\s*minutes\)/g, '</div><div class="rs-block"><div class="level-3-heading">RIGOR ($1 minutes)</div>');
+  html = html.replace(/REFLECTION\s*\((\d+)\s*minutes\)/g, '</div><div class="rs-block"><div class="level-3-heading">REFLECTION ($1 minutes)</div>');
+  // Close any open rs-blocks when the next heading appears
+  html = html.replace(/<\/div>\n(?=<h[123]|LEVEL I HEADING:|$)/g, '</div>\n');
+
+  // 4) Notes
+  html = html.replace(/Teacher Note:\s*([^\n]+)/g, '<div class="note teacher"><b>Teacher Note:</b> $1</div>');
+  html = html.replace(/Student Note:\s*([^\n]+)/g, '<div class="note student"><b>Student Note:</b> $1</div>');
+
+  // 5) CREATE TABLE blocks: pipe tables -> HTML table
+  html = html.replace(
+    /CREATE TABLE(?: FOR [A-Z\s]+)?:\s*\n((?:[^\n]*\|[^\n]*\|[^\n]*\n?)+)/g,
+    (_m: string, tableBlock: string) => {
+      const lines = tableBlock
+        .trim()
+        .split('\n')
+        .filter((ln: string) => ln.trim().length > 0);
+      if (!lines.length) return '';
+      const [headerLine, ...dataLines] = lines;
+      const headers = headerLine.split('|').map((s: string) => s.trim());
+      let out = '<table><thead><tr>';
+      headers.forEach((h: string) => (out += `<th>${h}</th>`));
+      out += '</tr></thead><tbody>';
+      dataLines.forEach((line: string) => {
+        const cells = line.split('|').map((s: string) => s.trim());
+        if (cells.filter(Boolean).length) {
+          out += '<tr>' + cells.map((c: string) => `<td>${c}</td>`).join('') + '</tr>';
+        }
+      });
+      out += '</tbody></table>';
+      return out;
+    }
+  );
+
+  // 6) Simple bullet conversion for lines that start with "- "
+  html = html.replace(/(?:^|\n)-\s+(.+?)(?=\n(?!- )|$)/gs, (_m: string, group: string) => {
+    const items = group
+      .split('\n')
+      .map((ln: string) => ln.trim())
+      .filter((ln: string) => ln.startsWith('- '))
+      .map((ln: string) => `<li>${ln.replace(/^- /, '')}</li>`)
+      .join('');
+    return items ? `\n<ul>${items}</ul>` : _m;
+  });
+
+  const header = `
+<div class="header">
+  <img src="/logo.png" alt="Root Work Framework" />
+  <div>
+    <div style="font-size:20pt;font-weight:800;color:#082A19;margin-bottom:4pt">Root Work Framework Lesson Plan</div>
+    <div style="color:#3B523A">Professional, trauma-informed learning design</div>
+    <div style="margin-top:6pt;color:#3B523A"><b>Topic:</b> ${topic} &nbsp; • &nbsp; <b>Grade:</b> ${data.gradeLevel} &nbsp; • &nbsp; <b>Subject:</b> ${data.subject} &nbsp; • &nbsp; <b>Duration:</b> ${data.duration} × ${data.numberOfDays} days</div>
   </div>
-</div>`);
+</div>`;
 
-  // state while parsing
-  let inDay = false;
-  let inRs = false;
-  let inList = false;
-  let pendingTable: string[] | null = null;
-
-  function closeList() {
-    if (inList) {
-      push('</ul>');
-      inList = false;
-    }
-  }
-  function closeRs() {
-    if (inRs) {
-      push('</div>');
-      inRs = false;
-    }
-  }
-  function closeDay() {
-    closeRs();
-    if (inDay) {
-      push('</section>');
-      inDay = false;
-    }
-  }
-  function flushTable() {
-    if (!pendingTable || pendingTable.length === 0) return;
-    const rows = pendingTable.map((l) => l.split('|').map((c) => c.trim()));
-    pendingTable = null;
-    if (rows.length === 0) return;
-    push('<table><thead><tr>');
-    const header = rows[0];
-    header.forEach((h) => push(`<th>${h}</th>`));
-    push('</tr></thead><tbody>');
-    rows.slice(1).forEach((r) => {
-      if (r.every((c) => c === '')) return;
-      push('<tr>');
-      r.forEach((c) => push(`<td>${c}</td>`));
-      push('</tr>');
-    });
-    push('</tbody></table>');
-  }
-
-  const isH1 = (s: string) => /^LEVEL\s*I\s*HEADING\s*:?\s*/i.test(s);
-  const isH2 = (s: string) => /^LEVEL\s*II\s*HEADING\s*:?\s*/i.test(s);
-  const isH3 = (s: string) => /^LEVEL\s*III\s*HEADING\s*:?\s*/i.test(s);
-  const isDay = (s: string) => /^\s*DAY\s+\d+\s*:/i.test(s);
-  const isRsHeader = (s: string) =>
-    /^\s*(RELATIONSHIPS|ROUTINES|RELEVANCE|RIGOR|REFLECTION)\s*\(\s*\d+\s*minutes?\s*\)\s*$/i.test(s);
-  const isTeacherNote = (s: string) => /^\s*Teacher Note\s*:\s*/i.test(s);
-  const isStudentNote = (s: string) => /^\s*Student Note\s*:\s*/i.test(s);
-  const isPipeLine = (s: string) => /\|/.test(s) && s.split('|').length >= 2;
-
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i] ?? '';
-    const raw = line;
-
-    // normalize whitespace
-    line = line.replace(/\t/g, '  ').trimRight();
-
-    // blank line: flush blocks
-    if (!line.trim()) {
-      closeList();
-      flushTable();
-      continue;
-    }
-
-    // table accumulation: collect contiguous pipe lines regardless of marker
-    if (isPipeLine(line)) {
-      if (!pendingTable) pendingTable = [];
-      pendingTable.push(line);
-      continue;
-    } else {
-      // a non-pipe line flushes any pending table
-      flushTable();
-    }
-
-    // headings & structure
-    if (isDay(line)) {
-      closeDay();
-      const title = raw.replace(/^\s*DAY\s+/i, '').trim();
-      push(`<section class="day"><h1 class="level-1">DAY ${title}</h1>`);
-      inDay = true;
-      continue;
-    }
-    if (isH1(line)) {
-      closeDay();
-      const title = raw.replace(/^LEVEL\s*I\s*HEADING\s*:?\s*/i, '').trim();
-      push(`<h1 class="level-1">${title}</h1>`);
-      continue;
-    }
-    if (isH2(line)) {
-      closeList();
-      closeRs();
-      const title = raw.replace(/^LEVEL\s*II\s*HEADING\s*:?\s*/i, '').trim();
-      push(`<h2 class="level-2">${title}</h2>`);
-      continue;
-    }
-    if (isH3(line)) {
-      closeList();
-      const title = raw.replace(/^LEVEL\s*III\s*HEADING\s*:?\s*/i, '').trim();
-      push(`<h3 class="level-3">${title}</h3>`);
-      continue;
-    }
-
-    // 5 Rs section header
-    if (isRsHeader(line)) {
-      closeList();
-      closeRs();
-      const label = raw.replace(/\(\s*\d+\s*minutes?\s*\)\s*$/i, '').trim();
-      const mins = (raw.match(/\((\d+)\s*minutes?/i)?.[1] as string) || '';
-      push(`<div class="rs"><div class="rs-h">${label.toUpperCase()}${mins ? ` (${mins} minutes)` : ''}</div>`);
-      inRs = true;
-      continue;
-    }
-
-    // notes
-    if (isTeacherNote(line)) {
-      const body = raw.replace(/^\s*Teacher Note\s*:\s*/i, '').trim();
-      push(`<div class="note teacher"><strong>Teacher Note:</strong> ${body}</div>`);
-      continue;
-    }
-    if (isStudentNote(line)) {
-      const body = raw.replace(/^\s*Student Note\s*:\s*/i, '').trim();
-      push(`<div class="note student"><strong>Student Note:</strong> ${body}</div>`);
-      continue;
-    }
-
-    // list items: lines starting with "- " or "• "
-    if (/^\s*[-•]\s+/.test(line)) {
-      const text = raw.replace(/^\s*[-•]\s+/, '').trim();
-      if (!inList) {
-        push('<ul>');
-        inList = true;
-      }
-      push(`<li>${text}</li>`);
-      continue;
-    }
-
-    // default paragraph
-    closeList();
-    push(`<p>${raw.trim()}</p>`);
-  }
-
-  // flush any pending blocks
-  closeList();
-  flushTable();
-  closeDay();
-
-  // footer
-  push(`<div class="footer">
-  <p><strong>Generated by Root Work Framework</strong> — Professional, trauma-informed learning design</p>
-  <p>Generated: ${new Date().toLocaleDateString()}</p>
-</div>`);
-
-  push(`</body></html>`);
-  return html.join('');
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>${topic} — Grade ${data.gradeLevel}</title>
+<style>${css}</style>
+</head>
+<body>
+${header}
+<div class="content">
+${html}
+</div>
+<div class="footer">
+  Generated by Root Work Framework — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+</div>
+</body>
+</html>`;
 }
 
-// quick validity check (optional; keeps your logic light)
-function validateTextHasCorePieces(text: string) {
-  const must = ['RELATIONSHIPS', 'ROUTINES', 'RELEVANCE', 'RIGOR', 'REFLECTION'];
-  return must.every((m) => new RegExp(m, 'i').test(text));
+/** Extract simple text resources from the content (first run teacher helpers) */
+function generateDownloadableResources(content: string, data: MasterPromptRequest): { textResources: GeneratedResource[] } {
+  const topic = processTopicForReadability(data.topic);
+  const code = `RootedIn${topic.replace(/[^A-Za-z]/g, '')}_${data.gradeLevel}${getSubjectAbbreviation(data.subject)}`;
+
+  const res: GeneratedResource[] = [];
+
+  // A light set of artifacts teachers can use immediately
+  const exitTicket = `EXIT TICKET — ${topic}\n\nOne thing I learned today:\n_____________________________\n\nOne question I still have:\n_____________________________\n\nHow confident do I feel (1–5): ____`;
+  res.push({ filename: `${code}_ExitTicket.txt`, content: exitTicket, type: 'text/plain' });
+
+  const reflection = `REFLECTION PROMPTS — ${topic}\n\n• What was most challenging today and how did you work through it?\n• Where did you see relevance to your life or community?\n• What’s a strategy you want to try tomorrow?`;
+  res.push({ filename: `${code}_ReflectionPrompts.txt`, content: reflection, type: 'text/plain' });
+
+  const rubric = `QUICK RUBRIC — ${topic}\n\nCriterion | Developing | Proficient | Advanced\nClarity of Ideas | Needs focus | Clear & organized | Insightful & compelling\nUse of Evidence | Limited | Appropriate | Strong & varied\nCollaboration | Uneven | Consistent | Leadership & support`;
+  res.push({ filename: `${code}_QuickRubric.txt`, content: rubric, type: 'text/plain' });
+
+  return { textResources: res };
 }
 
-// ——— request parsing ———
+function buildEnhancedFallback(data: MasterPromptRequest): { content: string; htmlVersion: string; cleanVersion: string } {
+  // A short but well-structured fallback (still converts to HTML nicely)
+  const content = `
+LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
+Grade: ${data.gradeLevel}
+Subject: ${data.subject}
+Topic: ${data.topic}
+Duration: ${data.duration} per day over ${data.numberOfDays} days
+Location: ${data.location || 'Savannah, Georgia'}
 
-async function parseLessonRequest(req: NextRequest): Promise<Partial<MasterPromptRequest> | null> {
-  const ct = req.headers.get('content-type') || '';
-  if (ct.includes('application/json')) {
-    try {
-      const json = await req.json();
-      return json && typeof json === 'object' ? json : null;
-    } catch {}
-  }
-  try {
-    const raw = await req.text();
-    if (raw && raw.trim().startsWith('{')) return JSON.parse(raw);
-  } catch {}
-  if (ct.includes('application/x-www-form-urlencoded')) {
-    try {
-      const form = await req.formData();
-      const o: Record<string, string> = {};
-      for (const [k, v] of form.entries()) if (typeof v === 'string') o[k] = v;
-      return o;
-    } catch {}
-  }
-  return null;
+LEVEL I HEADING: LESSON OVERVIEW
+This unit develops belonging and rigorous thinking while connecting learning to students' lives and community.
+
+LEVEL I HEADING: UNIT ESSENTIAL QUESTION
+How does ${data.topic} help us understand ourselves and our world?
+
+LEVEL I HEADING: UNIT LEARNING TARGETS
+- I can explain key concepts of ${data.topic} (DOK 2)
+- I can apply understanding in new contexts (DOK 3)
+- I can evaluate impacts and propose solutions (DOK 4)
+
+LEVEL I HEADING: DAY 1: Foundation
+LEVEL II HEADING: Standards Alignment
+CREATE TABLE:
+Standard Type | Standard Code | Description
+Primary Standard | Content Standard | Core expectations for today
+SEL Integration | CASEL | Self-Awareness
+Cross-Curricular | STEAM | Connections across disciplines
+
+LEVEL II HEADING: Root Work Framework 5 Rs Structure
+RELATIONSHIPS (12 minutes)
+Teacher Note: Greet students, community circle, identity-affirming norms.
+Student Note: Share a connection to today's topic.
+
+ROUTINES (8 minutes)
+Teacher Note: Preview agenda and success criteria.
+Student Note: Get organized and ready.
+
+RELEVANCE (15 minutes)
+Teacher Note: Bridge to local/community examples.
+Student Note: Where do you see this in your world?
+
+RIGOR (30 minutes)
+Teacher Note: I Do/We Do/You Do Together sequence with scaffolds.
+Student Note: Use sentence stems and graphic organizer.
+
+REFLECTION (10 minutes)
+Teacher Note: Guided processing and forward look.
+Student Note: What did you learn? What’s next?
+
+LEVEL II HEADING: Day 1 Implementation Supports
+CREATE TABLE:
+Support Tier | Target Population | Specific Strategies
+Tier 1 Universal | All Students | Visuals • Choice • Clear criteria
+Tier 2 Targeted | Some Students | Small group • Checks • Graphic organizers
+Tier 3 Intensive | Few Students | 1:1 support • Modified task
+504 Accommodations | Students w/ disabilities | Time • AT • Seating
+Gifted Extensions | Advanced Learners | Open-ended inquiry
+SPED Modifications | IEPs | Simplified language • Step-wise tasks
+
+LEVEL II HEADING: Day 1 Assessment
+CREATE TABLE:
+Assessment Type | Method | Purpose
+Formative | Exit Ticket | Gauge understanding
+Summative | Product/Performance | Synthesize learning
+`;
+
+  const cleanVersion = cleanContent(content);
+  const htmlVersion = formatAsEnhancedHTML(content, data);
+  return { content, htmlVersion, cleanVersion };
 }
-
-// ——— route ———
 
 export async function POST(request: NextRequest) {
   try {
-    const received = (await parseLessonRequest(request)) ?? {};
-    const warnings: string[] = [];
+    const parsed = await parseLessonRequest(request);
+    const received = parsed ?? {};
 
+    const warnings: string[] = [];
     const subject = (received as any).subject?.trim?.() || (warnings.push('Defaulted subject to "General Studies"'), 'General Studies');
     const gradeLevel = (received as any).gradeLevel?.trim?.() || (warnings.push('Defaulted gradeLevel to "6"'), '6');
     const topic = (received as any).topic?.trim?.() || (warnings.push('Defaulted topic to "Core Concept"'), 'Core Concept');
@@ -345,20 +385,40 @@ export async function POST(request: NextRequest) {
     };
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    const prompt = buildPrompt(data);
-
-    // If no key, produce a styled fallback for dev
     if (!apiKey) {
-      const fallback = minimalFallback(data);
+      const fb = buildEnhancedFallback(data);
+      const resources = generateDownloadableResources(fb.cleanVersion, data);
       return okJson({
-        lessonPlan: cleanSmartQuotes(fallback),
-        htmlVersion: renderEnhancedHtml(fallback, data),
-        plainText: fallback,
+        lessonPlan: fb.cleanVersion,
+        htmlVersion: fb.htmlVersion,
+        plainText: fb.content,
+        resources,
         fallback: true,
         success: true,
-        warnings: [...warnings, 'Used fallback due to missing ANTHROPIC_API_KEY'],
+        warnings: [...warnings, 'Used fallback because ANTHROPIC_API_KEY is not set.'],
       });
     }
+
+    // Build master prompt
+    const number = parseInt(numberOfDays || '5', 10);
+    const prompt = `
+You are an expert RWFW curriculum designer.
+Return a SINGLE plain text document that strictly follows these conventions:
+- Use explicit section markers: "LEVEL I HEADING:", "LEVEL II HEADING:", "LEVEL III HEADING:" (do not include markdown).
+- Use "CREATE TABLE:" before any pipe-separated table to signal table conversion.
+- Daily structure must include 5 Rs with [Teacher Note:] and [Student Note:] lines.
+
+CONTEXT:
+Subject: ${subject}
+Grade Level: ${gradeLevel}
+Topic: ${topic}
+Duration per day: ${duration}
+Days: ${number}
+Location: ${data.location || 'Savannah, Georgia'}
+${data.learningObjectives ? `Learning Objectives:\n${data.learningObjectives}\n` : ''}
+
+Now produce a comprehensive ${number}-day plan with unique daily content, MTSS supports table, and assessment tables. End without meta commentary.
+`.trim();
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -376,209 +436,72 @@ export async function POST(request: NextRequest) {
     });
 
     if (!resp.ok) {
-      const fallback = minimalFallback(data);
+      const fb = buildEnhancedFallback(data);
+      const resources = generateDownloadableResources(fb.cleanVersion, data);
       return okJson({
-        lessonPlan: cleanSmartQuotes(fallback),
-        htmlVersion: renderEnhancedHtml(fallback, data),
-        plainText: fallback,
+        lessonPlan: fb.cleanVersion,
+        htmlVersion: fb.htmlVersion,
+        plainText: fb.content,
+        resources,
         fallback: true,
         success: true,
-        warnings: [...warnings, `Anthropic API error ${resp.status} — using fallback`],
+        warnings: [...warnings, `API error ${resp.status}, served fallback.`],
       });
     }
 
     const payload = await resp.json();
-    let lessonText = '';
-
+    let text = '';
     if (Array.isArray(payload?.content) && payload.content[0]?.type === 'text') {
-      lessonText = String(payload.content[0].text || '');
-    } else if (typeof payload?.content === 'string') {
-      lessonText = String(payload.content);
+      text = String(payload.content[0].text || '');
     }
+    // Strip code fences if present
+    text = text.replace(/```(?:markdown)?\s*/gi, '').replace(/```\s*$/gi, '').trim();
 
-    // scrub fences
-    lessonText = lessonText.replace(/```[a-z]*\s*/gi, '').trim();
-
-    // if too short or missing core pieces, fallback
-    if (lessonText.length < 1500 || !validateTextHasCorePieces(lessonText)) {
-      const fallback = minimalFallback(data);
+    if (!text || text.length < 1800) {
+      const fb = buildEnhancedFallback(data);
+      const resources = generateDownloadableResources(fb.cleanVersion, data);
       return okJson({
-        lessonPlan: cleanSmartQuotes(fallback),
-        htmlVersion: renderEnhancedHtml(fallback, data),
-        plainText: fallback,
+        lessonPlan: fb.cleanVersion,
+        htmlVersion: fb.htmlVersion,
+        plainText: fb.content,
+        resources,
         fallback: true,
         success: true,
-        warnings: [...warnings, 'Model output incomplete — using fallback'],
+        warnings: [...warnings, 'Generated content was too short; served fallback.'],
       });
     }
 
-    const cleaned = cleanSmartQuotes(lessonText);
-    const html = renderEnhancedHtml(cleaned, data);
+    const cleaned = cleanContent(text);
+    const htmlVersion = formatAsEnhancedHTML(text, data);
+    const resources = generateDownloadableResources(cleaned, data);
 
     return okJson({
-      lessonPlan: cleaned,       // plain text (kept for your current UI)
-      htmlVersion: html,         // print-ready HTML (available if you want to switch views)
+      lessonPlan: cleaned,
+      htmlVersion,
       plainText: cleaned,
+      resources,
       success: true,
       warnings,
     });
-  } catch (err: any) {
-    const data: MasterPromptRequest = {
+  } catch (err) {
+    const fbData: MasterPromptRequest = {
       subject: 'General Studies',
       gradeLevel: '6',
       topic: 'Learning Together',
       duration: '90 minutes',
       numberOfDays: '5',
     };
-    const fb = minimalFallback(data);
+    const fb = buildEnhancedFallback(fbData);
+    const resources = generateDownloadableResources(fb.cleanVersion, fbData);
     return okJson({
-      lessonPlan: cleanSmartQuotes(fb),
-      htmlVersion: renderEnhancedHtml(fb, data),
-      plainText: fb,
+      lessonPlan: fb.cleanVersion,
+      htmlVersion: fb.htmlVersion,
+      plainText: fb.content,
       fallback: true,
       success: true,
+      resources,
       warnings: ['Emergency fallback due to system error'],
-      error: String(err?.message || err),
+      error: err instanceof Error ? err.message : 'Unknown error',
     });
   }
-}
-
-// ——— Prompt builder (keeps your structure & table guidance) ———
-function buildPrompt(d: MasterPromptRequest) {
-  const days = parseInt(d.numberOfDays || '5', 10) || 5;
-  const dur = parseInt(d.duration.match(/\d+/)?.[0] || '90', 10) || 90;
-  const chunk = (p: number) => Math.round(dur * p);
-
-  return `
-Create a ${days}-day, trauma-informed, Root Work Framework lesson plan for:
-- Subject(s): ${d.subject}
-- Grade: ${d.gradeLevel}
-- Topic: ${d.topic}
-- Duration per day: ${d.duration}
-- Location context: ${d.location || 'Savannah, Georgia'}
-
-CRITICAL RULES:
-- Do NOT include directive labels (e.g., “LEVEL I HEADING”). Output only human-facing content.
-- For tables (Standards Alignment, Implementation Supports, Assessments) use pipe tables:
-  Header 1 | Header 2 | Header 3
-  row a1   | row a2   | row a3
-  row b1   | row b2   | row b3
-- Every 5 Rs section must include **Teacher Note:** and **Student Note:**
-- Voice must be healing-centered and classroom-ready.
-${d.specialInstructions || ''}
-
-SECTIONS:
-LEVEL I HEADING: TRAUMA-INFORMED STEAM LESSON PLAN
-LEVEL I HEADING: LESSON OVERVIEW
-LEVEL I HEADING: UNIT ESSENTIAL QUESTION
-LEVEL I HEADING: UNIT LEARNING TARGETS
-
-${Array.from({ length: days }, (_, i) => {
-    const n = i + 1;
-    const focus = ['Foundation', 'Investigation', 'Analysis', 'Application', 'Synthesis'][i] || `Learning ${n}`;
-    return `
-LEVEL I HEADING: DAY ${n}: ${focus}
-
-LEVEL II HEADING: Daily Essential Question
-[1–2 sentence EQ]
-
-LEVEL II HEADING: Daily Learning Target
-I can … (DOK ${n <= 2 ? 2 : n <= 4 ? 3 : 4})
-
-LEVEL II HEADING: Standards Alignment
-Standard Type | Standard Code | Description
-Primary | [actual code] | [student-friendly description]
-SEL (CASEL) | [competency] | [how it shows up today]
-Cross-Curricular | [area] | [integration description]
-
-LEVEL II HEADING: Materials Needed
-- [specific]
-- [specific]
-- [specific]
-
-LEVEL II HEADING: Root Work Framework 5 Rs Structure
-LEVEL III HEADING: RELATIONSHIPS (${chunk(0.15)} minutes)
-Teacher Note: ...
-Student Note: ...
-
-LEVEL III HEADING: ROUTINES (${chunk(0.1)} minutes)
-Teacher Note: ...
-Student Note: ...
-
-LEVEL III HEADING: RELEVANCE (${chunk(0.25)} minutes)
-Teacher Note: ...
-Student Note: ...
-
-LEVEL III HEADING: RIGOR (${chunk(0.35)} minutes)
-I Do (teacher modeling): ...
-We Do (guided practice): ...
-You Do Together (collab): ...
-Teacher Note: ...
-Student Note: ...
-
-LEVEL III HEADING: REFLECTION (${chunk(0.15)} minutes)
-Teacher Note: ...
-Student Note: ...
-
-LEVEL II HEADING: Day ${n} Implementation Supports
-Support Tier | Target Population | Specific Strategies
-Tier 1 Universal | All Students | [3 supports]
-Tier 2 Targeted | Some Students | [3 supports]
-Tier 3 Intensive | Few Students | [3 supports]
-504 Accommodations | Students w/ disabilities | [specific]
-Gifted Extensions | Advanced Learners | [specific]
-SPED Modifications | IEPs | [specific]
-
-LEVEL II HEADING: Day ${n} Assessment
-Assessment Type | Method | Purpose
-Formative | [check for understanding] | [purpose]
-Summative | [performance or product] | [purpose]
-
-LEVEL II HEADING: SEL Integration
-[brief]
-
-LEVEL II HEADING: Trauma-Informed Considerations
-[brief]
-`;
-  }).join('\n')}
-`.trim();
-}
-
-// ——— Minimal fallback text (keeps it clean & parseable) ———
-function minimalFallback(d: MasterPromptRequest) {
-  const days = parseInt(d.numberOfDays || '3', 10) || 3;
-  const block = (title: string) => `LEVEL I HEADING: ${title}\n`;
-  let s = '';
-  s += block('TRAUMA-INFORMED STEAM LESSON PLAN');
-  s += `Grade: ${d.gradeLevel}\nSubject: ${d.subject}\nTopic: ${d.topic}\nDuration: ${d.duration} per day over ${d.numberOfDays} days\nLocation: ${d.location}\n\n`;
-  s += block('LESSON OVERVIEW') + `Brief overview…\n\n`;
-  s += block('UNIT ESSENTIAL QUESTION') + `How does ${d.topic} shape our community and choices?\n\n`;
-  s += block('UNIT LEARNING TARGETS') + `- I can describe...\n- I can apply...\n- I can evaluate...\n\n`;
-
-  for (let i = 1; i <= days; i++) {
-    s += `LEVEL I HEADING: DAY ${i}: Learning Focus\n\n`;
-    s += `LEVEL II HEADING: Daily Essential Question\nEQ goes here\n\n`;
-    s += `LEVEL II HEADING: Daily Learning Target\nI can … (DOK ${i <= 2 ? 2 : i <= 4 ? 3 : 4})\n\n`;
-    s += `LEVEL II HEADING: Standards Alignment\n`;
-    s += `Standard Type | Standard Code | Description\n`;
-    s += `Primary | CODE.${i} | Description of today’s alignment\n`;
-    s += `SEL (CASEL) | Self-Management | Practice routines and reflection\n\n`;
-    s += `LEVEL II HEADING: Materials Needed\n- Chart paper\n- Markers\n- Exit tickets\n\n`;
-    s += `LEVEL II HEADING: Root Work Framework 5 Rs Structure\n`;
-    s += `LEVEL III HEADING: RELATIONSHIPS (10 minutes)\nTeacher Note: Welcome...\nStudent Note: You belong...\n\n`;
-    s += `LEVEL III HEADING: ROUTINES (8 minutes)\nTeacher Note: Post agenda...\nStudent Note: Review success criteria…\n\n`;
-    s += `LEVEL III HEADING: RELEVANCE (20 minutes)\nTeacher Note: Connect to lived experiences…\nStudent Note: Share a connection…\n\n`;
-    s += `LEVEL III HEADING: RIGOR (30 minutes)\nI Do: Model...\nWe Do: Guided practice...\nYou Do Together: Collaborative task...\nTeacher Note: Scaffold as needed…\nStudent Note: Use sentence starters…\n\n`;
-    s += `LEVEL III HEADING: REFLECTION (12 minutes)\nTeacher Note: Facilitate circle…\nStudent Note: What did I learn?\n\n`;
-    s += `LEVEL II HEADING: Day ${i} Implementation Supports\n`;
-    s += `Support Tier | Target Population | Specific Strategies\n`;
-    s += `Tier 1 Universal | All Students | Visuals; Clear criteria; Choice\n`;
-    s += `Tier 2 Targeted | Some Students | Guided notes; Small group; Pre-teach vocab\n\n`;
-    s += `LEVEL II HEADING: Day ${i} Assessment\n`;
-    s += `Assessment Type | Method | Purpose\n`;
-    s += `Formative | Exit Ticket | Check understanding\n\n`;
-    s += `LEVEL II HEADING: SEL Integration\nBrief…\n\n`;
-    s += `LEVEL II HEADING: Trauma-Informed Considerations\nBrief…\n\n`;
-  }
-  return s;
 }
