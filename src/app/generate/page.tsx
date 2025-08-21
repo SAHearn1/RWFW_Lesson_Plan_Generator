@@ -550,4 +550,296 @@ Duration: ${formData.duration} over ${formData.numberOfDays} days\\par
                 </h2>
                 <button
                   onClick={downloadResourcesTxt}
-                  className="px-4 py-2 bg-[#3B523A] hover:bg-[#001C10] text-whi
+                  className="px-4 py-2 bg-[#3B523A] hover:bg-[#001C10] text-white rounded-lg transition-colors font-medium"
+                >
+                  Download .txt
+                </button>
+              </div>
+              <pre
+                className="whitespace-pre-wrap text-sm text-[#2B2B2B] leading-relaxed font-sans bg-[#F2F4CA]/20 p-6 rounded-xl border border-[#3B523A]"
+                style={{ fontFamily: 'JetBrains Mono, Consolas, monospace' }}
+              >
+                {resourcesText}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Form view
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#F2F4CA] to-white">
+      {/* Header */}
+      <header className="bg-[#082A19] text-white shadow-xl">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <Link href="/" className="flex items-center space-x-4">
+              <img src={RWFW_LOGO_SRC} alt="Root Work Framework" className="w-12 h-12" />
+              <div>
+                <h1 className="text-2xl font-bold" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Root Work Framework
+                </h1>
+                <p className="text-[#D4C862] text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Professional Lesson Planning
+                </p>
+              </div>
+            </Link>
+            <nav>
+              <Link
+                href="/"
+                className="text-[#D4C862] hover:text-white transition-colors font-medium"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                ← Back to Home
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Form */}
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 border-4 border-[#D4C862]">
+          <div className="text-center mb-12">
+            <h2
+              className="text-4xl font-bold text-[#082A19] mb-4"
+              style={{ fontFamily: 'Merriweather, Georgia, serif' }}
+            >
+              Create Comprehensive Lesson Plan
+            </h2>
+            <p
+              className="text-xl text-[#3B523A] leading-relaxed max-w-3xl mx-auto"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              Multi-day, trauma-informed plans with the 5 Rs, MTSS scaffolding, and assessment you can teach tomorrow.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-10">
+            {/* Core Information */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Subjects */}
+              <div className="lg:col-span-2">
+                <label
+                  className="block text-xl font-bold text-[#082A19] mb-4"
+                  style={{ fontFamily: 'Merriweather, Georgia, serif' }}
+                >
+                  Subject Area(s) <span className="text-red-600">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-6 border-3 border-[#3B523A] rounded-2xl bg-[#F2F4CA]/30">
+                  {SUBJECTS.map((subject) => (
+                    <label
+                      key={subject}
+                      className="flex items-center space-x-3 text-sm cursor-pointer hover:bg-white/70 p-3 rounded-lg transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.subjects.includes(subject)}
+                        onChange={() => handleSubjectChange(subject)}
+                        className="w-5 h-5 rounded border-[#3B523A] text-[#D4C862] focus:ring-[#D4C862] focus:ring-2"
+                      />
+                      <span
+                        className="text-[#2B2B2B] font-medium"
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      >
+                        {subject}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p
+                  className="text-[#3B523A] mt-3 text-lg"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  <span className="font-bold text-[#082A19]">{formData.subjects.length}</span> selected
+                  {formData.subjects.length > 0 && `: ${formData.subjects.join(', ')}`}
+                </p>
+              </div>
+
+              {/* Grade Level */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Grade Level <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="gradeLevel"
+                  value={formData.gradeLevel}
+                  onChange={handleInputChange}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]"
+                  required
+                >
+                  <option value="">Choose Grade Level</option>
+                  <option value="PreK">Pre-K</option>
+                  <option value="K">Kindergarten</option>
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i + 1} value={String(i + 1)}>
+                      Grade {i + 1}
+                    </option>
+                  ))}
+                  <option value="Mixed">Mixed Ages</option>
+                </select>
+              </div>
+
+              {/* Number of Days */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Number of Days <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="numberOfDays"
+                  value={formData.numberOfDays}
+                  onChange={handleInputChange}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]"
+                  required
+                >
+                  <option value="">Select Days</option>
+                  {[3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((days) => (
+                    <option key={days} value={String(days)}>
+                      {days} {days === 1 ? 'day' : 'days'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Topic */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Lesson Topic <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="topic"
+                  value={formData.topic}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Photosynthesis & Plant Growth, Civil Rights Movement…"
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]"
+                  required
+                />
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Duration per Day <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B]"
+                  required
+                >
+                  <option value="">Select Duration</option>
+                  <option value="45 minutes">45 minutes</option>
+                  <option value="50 minutes">50 minutes</option>
+                  <option value="60 minutes">60 minutes</option>
+                  <option value="75 minutes">75 minutes</option>
+                  <option value="90 minutes">90 minutes (Block)</option>
+                  <option value="120 minutes">120 minutes (Extended)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Optional Fields */}
+            <div className="space-y-8">
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Learning Objectives & Standards <span className="text-[#3B523A] text-lg font-normal ml-3">(optional)</span>
+                </label>
+                <textarea
+                  name="learningObjectives"
+                  value={formData.learningObjectives}
+                  onChange={handleInputChange}
+                  rows={5}
+                  placeholder="Shortcuts: “Georgia Standards”, “Common Core”, “NGSS”, “CASEL”…"
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Unit Context <span className="text-[#3B523A] text-lg font-normal ml-3">(optional)</span>
+                </label>
+                <textarea
+                  name="unitContext"
+                  value={formData.unitContext}
+                  onChange={handleInputChange}
+                  rows={3}
+                  placeholder="What larger unit/theme does this lesson connect to?"
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Special Considerations & Accommodations <span className="text-[#3B523A] text-lg font-normal ml-3">(optional)</span>
+                </label>
+                <textarea
+                  name="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={handleInputChange}
+                  rows={4}
+                  placeholder="Shortcuts: ELL, IEP, ADHD, autism, trauma-informed…"
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-4" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                  Available Resources & Materials <span className="text-[#3B523A] text-lg font-normal ml-3">(optional)</span>
+                </label>
+                <textarea
+                  name="availableResources"
+                  value={formData.availableResources}
+                  onChange={handleInputChange}
+                  rows={4}
+                  placeholder="Garden space, devices, lab, community partners, manipulatives…"
+                  className="w-full px-6 py-4 text-lg border-3 border-[#3B523A] rounded-xl focus:ring-4 focus:ring-[#D4C862] focus:border-[#D4C862] bg-white text-[#2B2B2B] resize-vertical"
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div className="bg-gradient-to-r from-[#F2F4CA] to-[#D4C862]/40 p-10 rounded-3xl border-4 border-[#D4C862]">
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="w-full bg-[#082A19] hover:bg-[#001C10] disabled:bg-[#3B523A] text-white font-bold py-6 px-10 rounded-2xl transition-all duration-300 flex items-center justify-center text-2xl shadow-2xl hover:shadow-3xl"
+                style={{ fontFamily: 'Merriweather, Georgia, serif' }}
+              >
+                Generate Professional Lesson Plan
+              </button>
+              <p className="text-[#082A19] mt-4 text-center text-lg font-semibold" style={{ fontFamily: 'Inter, sans-serif' }}>
+                Includes: 5 Rs • MTSS supports • Assessments • Teacher & student notes
+              </p>
+            </div>
+          </form>
+
+          {error && (
+            <div className="mt-10 p-8 bg-red-50 border-4 border-red-200 rounded-2xl">
+              <div className="flex items-start">
+                <svg className="w-8 h-8 text-red-500 mr-4 flex-shrink-0 mt-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-red-800 font-bold text-xl mb-2" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+                    Unable to Generate Lesson Plan
+                  </p>
+                  <p className="text-red-700 text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    {error}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
