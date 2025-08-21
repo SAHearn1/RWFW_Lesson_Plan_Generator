@@ -1,62 +1,15 @@
-// src/app/api/generate-lesson/route.ts - DEBUG VERSION to find the actual problem
+// src/app/api/generate-lesson/route.ts - FIXED DEBUG VERSION
 
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type MasterPromptRequest = {
-  subject: string;
-  gradeLevel: string;
-  topic: string;
-  duration: string;
-  numberOfDays: string;
-  learningObjectives?: string;
-  specialNeeds?: string;
-  availableResources?: string;
-  location?: string;
-  unitContext?: string;
-  lessonType?: string;
-  specialInstructions?: string;
-};
-
 function okJson(data: unknown, init: ResponseInit = {}) {
   return NextResponse.json(data, { ...init, headers: { 'Cache-Control': 'no-store' } });
 }
 
-async function parseLessonRequest(req: NextRequest): Promise<Partial<MasterPromptRequest> | null> {
-  console.log('=== PARSING REQUEST ===');
-  const ct = req.headers.get('content-type') || '';
-  console.log('Content-Type:', ct);
-
-  if (ct.includes('application/json')) {
-    try {
-      const json = await req.json();
-      console.log('Parsed JSON:', JSON.stringify(json, null, 2));
-      return json;
-    } catch (e) {
-      console.log('JSON parse error:', e);
-    }
-  }
-
-  try {
-    const raw = await req.text();
-    console.log('Raw text length:', raw.length);
-    console.log('Raw text preview:', raw.substring(0, 200));
-    if (raw && raw.trim().startsWith('{')) {
-      const json = JSON.parse(raw);
-      console.log('Parsed from text:', JSON.stringify(json, null, 2));
-      return json;
-    }
-  } catch (e) {
-    console.log('Text parse error:', e);
-  }
-
-  console.log('Could not parse request');
-  return null;
-}
-
-function buildSimpleDebugPrompt(data: MasterPromptRequest): string {
+function buildSimpleDebugPrompt(data: any): string {
   const numberOfDays = parseInt(data.numberOfDays || '3');
   console.log('Building prompt for', numberOfDays, 'days');
   
@@ -65,59 +18,59 @@ function buildSimpleDebugPrompt(data: MasterPromptRequest): string {
 CRITICAL REQUIREMENT: You must generate ALL ${numberOfDays} days. Generate Day 1, Day 2, Day 3, etc. up to Day ${numberOfDays}.
 
 DAY 1: Introduction
-- Learning Target: [target]
-- Activity: [activity]
-- Assessment: [assessment]
+- Learning Target: [target for day 1]
+- Activity: [activity for day 1] 
+- Assessment: [assessment for day 1]
 
 DAY 2: Development  
-- Learning Target: [target]
-- Activity: [activity]
-- Assessment: [assessment]
+- Learning Target: [target for day 2]
+- Activity: [activity for day 2]
+- Assessment: [assessment for day 2]
 
 DAY 3: Application
-- Learning Target: [target]
-- Activity: [activity]
-- Assessment: [assessment]
+- Learning Target: [target for day 3] 
+- Activity: [activity for day 3]
+- Assessment: [assessment for day 3]
 
 ${numberOfDays > 3 ? `
 DAY 4: Extension
-- Learning Target: [target]
-- Activity: [activity]
-- Assessment: [assessment]
+- Learning Target: [target for day 4]
+- Activity: [activity for day 4]
+- Assessment: [assessment for day 4]
 ` : ''}
 
 ${numberOfDays > 4 ? `
 DAY 5: Synthesis
-- Learning Target: [target]
-- Activity: [activity]
-- Assessment: [assessment]
+- Learning Target: [target for day 5]
+- Activity: [activity for day 5]
+- Assessment: [assessment for day 5]
 ` : ''}
 
-REMEMBER: Generate all ${numberOfDays} days completely. Do not stop early.`;
+REMEMBER: Generate all ${numberOfDays} days completely. Do not stop early. Include DAY 1 through DAY ${numberOfDays}.`;
 }
 
 export async function POST(request: NextRequest) {
-  console.log('=== LESSON PLAN API CALL START ===');
-  console.log('Request URL:', request.url);
-  console.log('Request method:', request.method);
-  
   try {
-    const parsed = await parseLessonRequest(request);
-    if (!parsed) {
-      console.log('ERROR: Could not parse request');
-      return okJson({ error: 'Could not parse request' }, { status: 400 });
+    console.log('=== LESSON PLAN API CALL START ===');
+    console.log('Request URL:', request.url);
+    
+    // Parse request body ONCE
+    let requestData;
+    try {
+      requestData = await request.json();
+      console.log('Request data received:', JSON.stringify(requestData, null, 2));
+    } catch (parseError) {
+      console.log('JSON parse error:', parseError);
+      return okJson({ error: 'Invalid JSON in request' }, { status: 400 });
     }
 
-    const subject = (parsed as any).subject?.trim?.() || 'English Language Arts';
-    const gradeLevel = (parsed as any).gradeLevel?.trim?.() || '9';
-    const topic = (parsed as any).topic?.trim?.() || 'Core Concept';
-    const duration = (parsed as any).duration?.trim?.() || '60 minutes';
-    const numberOfDays = (parsed as any).numberOfDays?.trim?.() || '3';
+    const subject = requestData.subject?.trim() || 'English Language Arts';
+    const gradeLevel = requestData.gradeLevel?.trim() || '9';
+    const topic = requestData.topic?.trim() || 'Core Concept';
+    const duration = requestData.duration?.trim() || '60 minutes';
+    const numberOfDays = requestData.numberOfDays?.trim() || '3';
 
-    const data: MasterPromptRequest = {
-      subject, gradeLevel, topic, duration, numberOfDays
-    };
-
+    const data = { subject, gradeLevel, topic, duration, numberOfDays };
     console.log('Final lesson data:', data);
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -127,12 +80,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('API key present:', !!apiKey);
+    console.log('API key length:', apiKey.length);
 
     const prompt = buildSimpleDebugPrompt(data);
     console.log('Prompt length:', prompt.length);
     console.log('Prompt preview:', prompt.substring(0, 300) + '...');
 
     console.log('Making Anthropic API call...');
+    
+    const anthropicRequest = {
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 10000,
+      temperature: 0.3,
+      messages: [{ role: 'user', content: prompt }]
+    };
+    
+    console.log('Anthropic request config:', JSON.stringify(anthropicRequest, null, 2));
+
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -140,33 +104,29 @@ export async function POST(request: NextRequest) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 10000, // Start with moderate amount for debugging
-        temperature: 0.3,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify(anthropicRequest)
     });
 
     console.log('Anthropic response status:', resp.status);
-    console.log('Anthropic response headers:', Object.fromEntries(resp.headers.entries()));
+    console.log('Anthropic response ok:', resp.ok);
 
     if (!resp.ok) {
       const errorText = await resp.text();
       console.log('Anthropic error response:', errorText);
-      return okJson({ error: `Anthropic API error: ${resp.status}` }, { status: 500 });
+      return okJson({ 
+        error: `Anthropic API error: ${resp.status}`,
+        details: errorText 
+      }, { status: 500 });
     }
 
     const payload = await resp.json();
-    console.log('Anthropic payload keys:', Object.keys(payload));
-    console.log('Anthropic payload structure:', {
-      id: payload.id,
-      type: payload.type,
-      role: payload.role,
-      model: payload.model,
-      contentType: Array.isArray(payload.content) ? 'array' : typeof payload.content,
-      contentLength: Array.isArray(payload.content) ? payload.content.length : 'not array'
-    });
+    console.log('Anthropic payload received');
+    console.log('Payload keys:', Object.keys(payload));
+    
+    if (payload.content && Array.isArray(payload.content)) {
+      console.log('Content array length:', payload.content.length);
+      console.log('First content item type:', payload.content[0]?.type);
+    }
 
     let lessonContent = '';
     if (Array.isArray(payload?.content)) {
@@ -174,8 +134,6 @@ export async function POST(request: NextRequest) {
       if (firstText?.text) {
         lessonContent = String(firstText.text);
       }
-    } else if (typeof payload?.content === 'string') {
-      lessonContent = payload.content;
     }
 
     console.log('Generated content length:', lessonContent.length);
@@ -186,37 +144,47 @@ export async function POST(request: NextRequest) {
     console.log('Day matches:', dayMatches);
 
     // Show content preview
-    console.log('Content preview (first 500 chars):', lessonContent.substring(0, 500));
-    console.log('Content preview (last 500 chars):', lessonContent.substring(Math.max(0, lessonContent.length - 500)));
+    console.log('Content preview (first 300 chars):', lessonContent.substring(0, 300));
+    if (lessonContent.length > 600) {
+      console.log('Content preview (last 300 chars):', lessonContent.substring(lessonContent.length - 300));
+    }
 
-    // Check if content was truncated
-    const endsAbruptly = !lessonContent.trim().endsWith('.') && !lessonContent.includes('DAY ' + numberOfDays);
-    console.log('Content appears truncated:', endsAbruptly);
-    console.log('Contains final day:', lessonContent.includes('DAY ' + numberOfDays));
-
+    // Check if content contains expected days
+    const expectedDays = parseInt(numberOfDays);
+    let containsAllDays = true;
+    for (let i = 1; i <= expectedDays; i++) {
+      const dayFound = lessonContent.includes(`DAY ${i}`);
+      console.log(`Contains DAY ${i}:`, dayFound);
+      if (!dayFound) containsAllDays = false;
+    }
+    
+    console.log('Contains all expected days:', containsAllDays);
     console.log('=== LESSON PLAN API CALL END ===');
 
     return okJson({
       lessonPlan: lessonContent,
-      htmlVersion: `<html><body><pre>${lessonContent}</pre></body></html>`,
+      htmlVersion: `<html><body><h1>DEBUG OUTPUT</h1><p>Days found: ${dayMatches.length}/${numberOfDays}</p><pre>${lessonContent}</pre></body></html>`,
       plainText: lessonContent,
       success: true,
       debug: {
         daysRequested: numberOfDays,
         daysFound: dayMatches.length,
         contentLength: lessonContent.length,
-        contentTruncated: endsAbruptly,
-        containsFinalDay: lessonContent.includes('DAY ' + numberOfDays)
+        containsAllDays,
+        dayMatches
       }
     });
 
   } catch (err) {
-    console.error('=== ERROR ===');
+    console.error('=== CRITICAL ERROR ===');
+    console.error('Error name:', (err as Error).name);
     console.error('Error message:', (err as Error).message);
     console.error('Error stack:', (err as Error).stack);
+    console.log('=== END ERROR ===');
     
     return okJson({
       error: (err as Error).message || 'Unknown error',
+      errorType: (err as Error).name,
       success: false
     }, { status: 500 });
   }
