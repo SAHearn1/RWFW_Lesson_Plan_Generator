@@ -480,3 +480,141 @@ export default function GeneratePage() {
                   <option value="Mixed">Mixed Ages</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Number of Days <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="numberOfDays"
+                  value={formData.numberOfDays}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  required
+                >
+                  <option value="">Select Days</option>
+                  {[3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map(days => (
+                    <option key={days} value={String(days)}>
+                      {days} {days === 1 ? 'day' : 'days'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Lesson Topic <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="topic"
+                  value={formData.topic}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Photosynthesis & Plant Growth"
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Duration per Day <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  required
+                >
+                  <option value="">Select Duration</option>
+                  <option value="45 minutes">45 minutes</option>
+                  <option value="50 minutes">50 minutes</option>
+                  <option value="60 minutes">60 minutes</option>
+                  <option value="75 minutes">75 minutes</option>
+                  <option value="90 minutes">90 minutes (Block)</option>
+                  <option value="120 minutes">120 minutes (Extended)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Optional fields */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Learning Objectives & Standards
+                  <span className="ml-2 text-sm font-normal text-[#3B523A]">(optional)</span>
+                </label>
+                <textarea
+                  name="learningObjectives"
+                  rows={4}
+                  value={formData.learningObjectives}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  placeholder="Shortcuts: “Georgia Standards”, “Common Core”, “NGSS” to auto-integrate."
+                />
+              </div>
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Unit Context <span className="ml-2 text-sm font-normal text-[#3B523A]">(optional)</span>
+                </label>
+                <textarea
+                  name="unitContext"
+                  rows={4}
+                  value={formData.unitContext}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  placeholder="Where does this lesson sit in the unit? What came before?"
+                />
+              </div>
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Special Considerations & Accommodations
+                  <span className="ml-2 text-sm font-normal text-[#3B523A]">(optional)</span>
+                </label>
+                <textarea
+                  name="specialNeeds"
+                  rows={4}
+                  value={formData.specialNeeds}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  placeholder="Shortcuts: ELL, IEP, ADHD, Autism, Trauma-informed…"
+                />
+              </div>
+              <div>
+                <label className="block text-xl font-bold text-[#082A19] mb-2">
+                  Available Resources & Materials
+                  <span className="ml-2 text-sm font-normal text-[#3B523A]">(optional)</span>
+                </label>
+                <textarea
+                  name="availableResources"
+                  rows={4}
+                  value={formData.availableResources}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-[#3B523A] rounded-xl"
+                  placeholder="Garden space, community partners, lab equipment, devices, etc."
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg text-red-800">{error}</div>
+            )}
+
+            <div className="bg-gradient-to-r from-[#F2F4CA] to-[#D4C862]/50 p-6 rounded-2xl border-4 border-[#D4C862]">
+              <button
+                type="submit"
+                className="w-full bg-[#082A19] hover:bg-[#001C10] text-white font-bold py-4 rounded-xl"
+              >
+                Generate RWFW Lesson Plan
+              </button>
+              <p className="text-center text-sm text-[#082A19] mt-3">
+                Includes Teacher & Student Notes • MTSS • Assessments • Styled HTML export
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
