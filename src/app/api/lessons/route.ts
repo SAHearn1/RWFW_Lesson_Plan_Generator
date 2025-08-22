@@ -2,7 +2,8 @@
 
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { AnthropicStream, StreamingTextResponse } from 'ai';
+// --- UPDATED IMPORTS ---
+import { AnthropicStream, StreamingTextResponse, toAIStream } from 'ai';
 
 import { masterPrompt } from '@/constants/prompts'; 
 
@@ -27,8 +28,6 @@ export async function POST(req: NextRequest) {
       - Additional Focus Areas: ${body.focus || 'None specified.'}
     `;
 
-    // --- THIS IS THE KEY UPGRADE ---
-    // We now ask the API to stream the response back.
     const response = await client.messages.create({
       model: 'claude-opus-4-1-20250805', 
       max_tokens: 32000,
@@ -38,11 +37,13 @@ export async function POST(req: NextRequest) {
       stream: true, // Enable streaming
     });
 
-    // Convert the response into a friendly text-stream
+    // --- THIS IS THE FIX ---
+    // Convert the Anthropic-native stream into a standard format.
     const stream = AnthropicStream(response);
+    const aiStream = toAIStream(stream);
 
-    // Respond with the stream
-    return new StreamingTextResponse(stream);
+    // Respond with the correctly formatted stream
+    return new StreamingTextResponse(aiStream);
 
   } catch (error: any) {
     console.error('[API_ERROR]', error);
