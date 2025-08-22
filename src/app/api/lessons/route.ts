@@ -1,4 +1,4 @@
-// File: src/app/api/lessons/route.ts
+
 
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText, CoreMessage } from 'ai';
