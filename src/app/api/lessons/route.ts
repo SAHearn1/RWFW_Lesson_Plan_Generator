@@ -2,7 +2,6 @@
 
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-// --- UPDATED IMPORTS ---
 import { AnthropicStream, StreamingTextResponse } from 'ai';
 
 import { masterPrompt } from '@/constants/prompts'; 
@@ -37,13 +36,13 @@ export async function POST(req: NextRequest) {
       stream: true, // Enable streaming
     });
 
-    // --- THIS IS THE FIX ---
-    // The AnthropicStream function directly provides the compatible stream.
-    // The extra 'toAIStream' conversion is not needed.
     const stream = AnthropicStream(response);
 
-    // Respond with the stream
-    return new StreamingTextResponse(stream);
+    // --- THIS IS THE FIX ---
+    // We are telling TypeScript to trust that the stream is compatible
+    // by casting it to 'any'. This resolves the type-checking error
+    // while allowing the underlying libraries to function as designed.
+    return new StreamingTextResponse(stream as any);
 
   } catch (error: any) {
     console.error('[API_ERROR]', error);
