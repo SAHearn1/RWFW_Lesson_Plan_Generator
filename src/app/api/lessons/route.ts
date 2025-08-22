@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     });
 
     // --- THIS IS THE FIX ---
-    // Convert the Anthropic-native stream into a standard format.
+    // Convert the Anthropic-native stream into a standard, AI-SDK-compatible format.
     const stream = AnthropicStream(response);
     const aiStream = toAIStream(stream);
 
