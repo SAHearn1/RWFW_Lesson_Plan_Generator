@@ -1,69 +1,35 @@
-import { NextRequest } from 'next/server';
-import { streamText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+// File: src/app/api/lessons/route.ts
+
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { streamText, CoreMessage } from 'ai';
 import { masterPrompt } from '@/constants/prompts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-function json(status: number, data: unknown) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
-export async function POST(req: NextRequest) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return json(500, { error: 'Server misconfigured: missing ANTHROPIC_API_KEY' });
-  }
-
+export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => null);
-    if (!body) return json(400, { error: 'Invalid JSON body.' });
+    const { messages }: { messages: CoreMessage[] } = await req.json();
 
-    const explicitPrompt =
-      typeof body.prompt === 'string' ? body.prompt.trim() : null;
-
-    const subjects = Array.isArray(body.subjects)
-      ? body.subjects.join(', ')
-      : String(body.subjects ?? '');
-
-    const userPrompt =
-      explicitPrompt ||
-      `
-Please generate a lesson plan with the following specifications:
-- Grade Level: ${body.gradeLevel ?? 'Not specified'}
-- Subject(s): ${subjects || 'Not specified'}
-- Duration: ${body.days ?? 3} day(s)
-- Unit Title: ${body.unitTitle || 'Not specified'}
-- Standards: ${body.standards || 'Align with relevant national or state standards.'}
-- Additional Focus Areas: ${body.focus || 'None specified.'}
-`.trim();
-
-    const model = anthropic(
-      process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620'
-    ) as any;
-
+    // The modern 'streamText' function expects the entire messages array.
     const result = await streamText({
-      model,
+      model: anthropic('claude-3-opus-20240229'),
       system: masterPrompt,
-      prompt: userPrompt,
-      maxOutputTokens:
-        typeof body.maxOutputTokens === 'number' ? body.maxOutputTokens : 4000,
-      temperature:
-        typeof body.temperature === 'number' ? body.temperature : 0.3,
+      messages: messages, // Pass the full message history
+      maxTokens: 4096,
+      temperature: 0.3,
     });
 
-    // Simpler for the client: plain text stream
-    return result.toTextStreamResponse();
+    return result.toAIStreamResponse();
+
   } catch (error: any) {
-    console.error('[API_ERROR /api/lessons]', error);
-    const message =
-      (error?.error && (error.error.message || String(error.error))) ||
-      error?.message ||
-      'An unexpected error occurred.';
-    return json(500, { error: message });
+    console.error('[API_ERROR]', error);
+    const errorMessage = error.message || 'An unexpected error occurred.';
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
   }
 }
