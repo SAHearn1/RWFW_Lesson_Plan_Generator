@@ -33,7 +33,7 @@ const parseMarkdown = (markdown: string) => {
   return structuredContent;
 };
 
-// --- PDF Generation Logic (Branded) ---
+// --- PDF Generation Logic (Branded & Fixed) ---
 export const createPdf = async (markdown: string, title: string) => {
   const content = parseMarkdown(markdown);
   const pdfDoc = await PDFDocument.create();
@@ -44,23 +44,22 @@ export const createPdf = async (markdown: string, title: string) => {
   const margin = 50;
   let y = height - margin;
 
-  // Header Band
-  page.drawRectangle({
-    x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
-  });
-  page.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
+  const drawHeader = (currentPage: any) => {
+    currentPage.drawRectangle({
+      x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
+    });
+    currentPage.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
+  };
 
+  drawHeader(page);
   y -= 50;
 
   for (const item of content) {
-    if (y < margin + 20) {
+    if (y < margin + 40) { // Check for space before drawing
       page = pdfDoc.addPage();
       y = height - margin;
-       page.drawRectangle({
-        x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
-      });
-      page.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
-      y-= 50;
+      drawHeader(page);
+      y -= 50;
     }
     if (item.type === 'heading') {
       const size = item.level === 1 ? 18 : item.level === 2 ? 16 : 14;
@@ -71,33 +70,28 @@ export const createPdf = async (markdown: string, title: string) => {
     } else if (item.type === 'paragraph') {
       const size = 11;
       const lineHeight = 14;
-      const lines = item.text.split('\n');
-      for (const line of lines) {
-        // Basic text wrapping
-        const words = line.split(' ');
-        let currentLine = '';
-        for (const word of words) {
-            const testLine = currentLine + word + ' ';
-            const textWidth = font.widthOfTextAtSize(testLine, size);
-            if (textWidth > width - 2 * margin) {
-                page.drawText(currentLine, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
-                y -= lineHeight;
-                currentLine = word + ' ';
-                if (y < margin + 20) {
-                    page = pdfDoc.addPage();
-                    y = height - margin;
-                }
-            } else {
-                currentLine = testLine;
-            }
-        }
-        page.drawText(currentLine, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
-        y -= lineHeight;
-        if (y < margin + 20) {
+      // --- THIS IS THE FIX: Robust text wrapping ---
+      const words = item.text.split(' ');
+      let line = '';
+      for (const word of words) {
+        const testLine = line + (line ? ' ' : '') + word;
+        const textWidth = font.widthOfTextAtSize(testLine, size);
+        if (textWidth > width - 2 * margin) {
+          page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
+          y -= lineHeight;
+          line = word;
+          if (y < margin + 20) {
             page = pdfDoc.addPage();
             y = height - margin;
+            drawHeader(page);
+            y -= 50;
+          }
+        } else {
+          line = testLine;
         }
       }
+      page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
+      y -= lineHeight;
       y -= 8; // Paragraph spacing
     }
   }
