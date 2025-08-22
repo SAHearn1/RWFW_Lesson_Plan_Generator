@@ -1,4 +1,4 @@
-// File: src/app/api/lessons/route.ts
+
 import { NextRequest } from 'next/server';
 import { anthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
