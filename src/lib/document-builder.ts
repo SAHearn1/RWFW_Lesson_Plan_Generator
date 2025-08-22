@@ -7,17 +7,14 @@ import {
   TextRun,
   HeadingLevel,
   AlignmentType,
-  ShadingType,
-  convertInchesToTwip,
 } from 'docx';
-import { PDFDocument, rgb, StandardFonts, cmyk } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // --- Define Brand Colors (for both PDF and DOCX) ---
 const brandColors = {
   evergreen: { hex: '082A19', rgb: { r: 8 / 255, g: 42 / 255, b: 25 / 255 } },
   leaf: { hex: '3B523A', rgb: { r: 59 / 255, g: 82 / 255, b: 58 / 255 } },
   charcoal: { hex: '2B2B2B', rgb: { r: 43 / 255, g: 43 / 255, b: 43 / 255 } },
-  goldLeaf: { hex: 'D4C862', rgb: { r: 212 / 255, g: 200 / 255, b: 98 / 255 } },
   white: { hex: 'FFFFFF', rgb: { r: 1, g: 1, b: 1 } },
 };
 
@@ -46,11 +43,12 @@ export const createPdf = async (markdown: string, title: string) => {
   const margin = 50;
   let y = height - margin;
 
-  // Header Band
+  // --- THIS IS THE FIX ---
+  // We now use the rgb() function directly from pdf-lib to create the color objects.
   page.drawRectangle({
-    x: 0, y: height - 35, width, height: 35, color: brandColors.evergreen.rgb,
+    x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
   });
-  page.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: brandColors.white.rgb });
+  page.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
 
   y -= 50;
 
@@ -63,14 +61,14 @@ export const createPdf = async (markdown: string, title: string) => {
       const size = item.level === 1 ? 18 : item.level === 2 ? 16 : 14;
       const color = item.level === 1 ? brandColors.evergreen.rgb : brandColors.leaf.rgb;
       y -= 10;
-      page.drawText(item.text, { x: margin, y, font: boldFont, size, color });
+      page.drawText(item.text, { x: margin, y, font: boldFont, size, color: rgb(color.r, color.g, color.b) });
       y -= size * 1.5;
     } else if (item.type === 'paragraph') {
       const size = 11;
       const lineHeight = 14;
       const lines = item.text.split('\n');
       for (const line of lines) {
-        page.drawText(line, { x: margin, y, font, size, color: brandColors.charcoal.rgb, lineHeight });
+        page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
         y -= lineHeight;
         if (y < margin + 20) {
             page = pdfDoc.addPage();
@@ -120,7 +118,7 @@ export const createDocx = async (markdown: string, title: string) => {
         styles: {
             paragraphStyles: [
                 { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", run: { size: 32, bold: true, color: brandColors.evergreen.hex, font: "Merriweather" } },
-                { id: "Title", name: "Title", basedOn: "Normal", next: "Normal", run: { size: 48, bold: true, color: brandColors.deep-canopy.hex, font: "Merriweather" } },
+                { id: "Title", name: "Title", basedOn: "Normal", next: "Normal", run: { size: 48, bold: true, color: brandColors.evergreen.hex, font: "Merriweather" } },
             ]
         },
         sections: [{ children: paragraphs }],
@@ -128,4 +126,3 @@ export const createDocx = async (markdown: string, title: string) => {
 
     return await Packer.toBuffer(doc);
 };
-
