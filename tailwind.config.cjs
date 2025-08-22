@@ -6,11 +6,10 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/features/**/*.{js,ts,jsx,tsx,mdx}", // Added to match full architecture
+    "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
-      // --- UPDATED: Official RWF Color Palette ---
       colors: {
         brand: {
           evergreen: '#082A19',
@@ -22,17 +21,14 @@ module.exports = {
           charcoal: '#2B2B2B',
         },
       },
-      // --- ADDED: Official RWF Typography ---
       fontFamily: {
-        sans: ["Inter", ...fontFamily.sans], // Primary UI & body font
-        serif: ["Merriweather", ...fontFamily.serif], // Primary headline font
+        sans: ["Inter", ...fontFamily.sans],
+        serif: ["Merriweather", ...fontFamily.serif],
       },
-      // --- UPDATED: Box shadow to match brand colors ---
       boxShadow: {
         brand: "0 12px 28px -8px rgba(8, 42, 25, 0.35), 0 8px 12px -10px rgba(8, 42, 25, 0.25)",
       },
-      // --- UPDATED: Prose styles to use brand colors ---
-      typography: ({ theme }) => ({
+      typography: (theme) => ({
         brand: {
           css: {
             "--tw-prose-body": theme("colors.brand.charcoal"),
