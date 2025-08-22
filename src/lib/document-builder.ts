@@ -1,5 +1,3 @@
-// File: src/lib/document-builder.ts
-
 import {
   Document,
   Packer,
