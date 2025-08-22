@@ -1,40 +1,46 @@
 /** @type {import('tailwindcss').Config} */
+const { fontFamily } = require('tailwindcss/defaultTheme');
+
 module.exports = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}"
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/features/**/*.{js,ts,jsx,tsx,mdx}", // Added to match full architecture
   ],
   theme: {
     extend: {
+      // --- UPDATED: Official RWF Color Palette ---
       colors: {
         brand: {
-          50:  "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81"
-        }
+          evergreen: '#082A19',
+          'deep-canopy': '#001C10',
+          leaf: '#3B523A',
+          'gold-leaf': '#D4C862',
+          'olive-gold': '#96812A',
+          'canvas-light': '#F2F4CA',
+          charcoal: '#2B2B2B',
+        },
       },
+      // --- ADDED: Official RWF Typography ---
+      fontFamily: {
+        sans: ["Inter", ...fontFamily.sans], // Primary UI & body font
+        serif: ["Merriweather", ...fontFamily.serif], // Primary headline font
+      },
+      // --- UPDATED: Box shadow to match brand colors ---
       boxShadow: {
-        // <-- This creates the `shadow-brand` class you’re using in globals.css
-        brand:
-          "0 12px 28px -8px rgba(79,70,229,0.35), 0 8px 12px -10px rgba(79,70,229,0.25)"
+        brand: "0 12px 28px -8px rgba(8, 42, 25, 0.35), 0 8px 12px -10px rgba(8, 42, 25, 0.25)",
       },
+      // --- UPDATED: Prose styles to use brand colors ---
       typography: ({ theme }) => ({
         brand: {
           css: {
-            "--tw-prose-body": theme("colors.slate.700"),
-            "--tw-prose-headings": theme("colors.slate.900"),
-            "--tw-prose-links": theme("colors.brand.700"),
-            "--tw-prose-bold": theme("colors.slate.900"),
-            "--tw-prose-quotes": theme("colors.slate.900"),
-            "--tw-prose-code": theme("colors.slate.900"),
+            "--tw-prose-body": theme("colors.brand.charcoal"),
+            "--tw-prose-headings": theme("colors.brand.deep-canopy"),
+            "--tw-prose-links": theme("colors.brand.leaf"),
+            "--tw-prose-bold": theme("colors.brand.deep-canopy"),
+            "--tw-prose-quotes": theme("colors.brand.evergreen"),
+            "--tw-prose-code": theme("colors.brand.charcoal"),
             "--tw-prose-hr": theme("colors.slate.200"),
           },
         },
