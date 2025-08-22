@@ -16,6 +16,7 @@ const brandColors = {
   leaf: { hex: '3B523A', rgb: { r: 59 / 255, g: 82 / 255, b: 58 / 255 } },
   charcoal: { hex: '2B2B2B', rgb: { r: 43 / 255, g: 43 / 255, b: 43 / 255 } },
   white: { hex: 'FFFFFF', rgb: { r: 1, g: 1, b: 1 } },
+  deepCanopy: { hex: '001C10', rgb: { r: 0, g: 28/255, b: 16/255 }},
 };
 
 // --- Shared Markdown Parser ---
@@ -59,6 +60,7 @@ export const createPdf = async (markdown: string, title: string) => {
         x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
       });
       page.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
+      y-= 50;
     }
     if (item.type === 'heading') {
       const size = item.level === 1 ? 18 : item.level === 2 ? 16 : 14;
@@ -71,7 +73,25 @@ export const createPdf = async (markdown: string, title: string) => {
       const lineHeight = 14;
       const lines = item.text.split('\n');
       for (const line of lines) {
-        page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
+        // Basic text wrapping
+        const words = line.split(' ');
+        let currentLine = '';
+        for (const word of words) {
+            const testLine = currentLine + word + ' ';
+            const textWidth = font.widthOfTextAtSize(testLine, size);
+            if (textWidth > width - 2 * margin) {
+                page.drawText(currentLine, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
+                y -= lineHeight;
+                currentLine = word + ' ';
+                if (y < margin + 20) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+            } else {
+                currentLine = testLine;
+            }
+        }
+        page.drawText(currentLine, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
         y -= lineHeight;
         if (y < margin + 20) {
             page = pdfDoc.addPage();
