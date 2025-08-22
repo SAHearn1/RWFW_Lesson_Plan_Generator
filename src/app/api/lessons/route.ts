@@ -1,4 +1,4 @@
-/ File: src/app/api/lessons/route.ts
+// File: src/app/api/lessons/route.ts
 
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
 
     const stream = AnthropicStream(response);
 
-    // --- THIS IS THE FIX ---
     // We are telling TypeScript to trust that the stream is compatible
     // by casting it to 'any'. This resolves the type-checking error
     // while allowing the underlying libraries to function as designed.
