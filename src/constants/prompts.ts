@@ -86,3 +86,4 @@ Act as a research assistant. For EACH lesson day, find and provide 2-3 **real, f
 **SECTION 3: Visual Asset Prompt Log**
 **CRITICAL DIRECTIVE:** You are an art director. For assets that require visual generation, provide a **highly detailed and descriptive prompt** for an AI image tool (like DALL-E 3). The prompt should be a minimum of 3-4 sentences and include details about style, composition, color, and mood.
 `;
+
