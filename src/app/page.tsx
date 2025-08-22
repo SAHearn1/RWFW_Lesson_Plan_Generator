@@ -3,88 +3,130 @@
 
 import React from 'react';
 
-// A simple Icon component for the feature list
-const CheckIcon = () => (
-  <svg className="h-6 w-6 flex-none text-brand-leaf" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+// --- Icon Components (from Lucide set, as per brand guide) ---
+const CheckCircleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 flex-none text-brand-leaf">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+    <polyline points="22 4 12 14.01 9 11.01"></polyline>
   </svg>
 );
+
+const BookOpenIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-brand-gold-leaf">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+    </svg>
+);
+
+const LightbulbIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-brand-gold-leaf">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+        <path d="M9 18h6"></path><path d="M10 22h4"></path>
+    </svg>
+);
+
+const ShieldCheckIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-brand-gold-leaf">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <path d="m9 12 2 2 4-4"></path>
+    </svg>
+);
+
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-brand-canvas-light font-sans text-brand-charcoal">
-      <div className="container mx-auto px-4 py-8 sm:py-12 max-w-5xl">
-        <header className="text-center mb-12">
-          <img
-            src="/images/rwfw-logo-1.jpg"
-            alt="Root Work Framework Logo"
-            className="mx-auto h-28 w-28 rounded-full shadow-lg mb-6 border-4 border-white"
-          />
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-brand-deep-canopy tracking-tight font-serif">
-            Root Work Framework
-          </h1>
-          <p className="mt-4 text-lg text-slate-700 max-w-2xl mx-auto">
-            Weaving academic rigor with healing-centered, biophilic practice.
-          </p>
-        </header>
+      <div className="relative isolate overflow-hidden bg-brand-evergreen">
+        {/* --- Hero Section --- */}
+        <div className="container mx-auto px-6 lg:px-8 py-24 sm:py-32">
+          <div className="text-center">
+            <img
+              src="/images/rwfw-logo-1.jpg"
+              alt="Root Work Framework Logo"
+              className="mx-auto h-32 w-32 rounded-full shadow-2xl mb-8 border-4 border-white/50"
+            />
+            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-white font-serif">
+              Root Work Framework
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-slate-300 max-w-2xl mx-auto">
+              A dual-purpose pedagogy that weaves academic rigor with healing-centered, biophilic practice. This platform is your partner in creating truly transformative learning experiences.
+            </p>
+            <div className="mt-10">
+              <a 
+                href="/generator"
+                className="rounded-md bg-brand-gold-leaf px-8 py-4 text-lg font-semibold text-brand-deep-canopy shadow-sm hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold-leaf transition-colors duration-300"
+              >
+                Begin Lesson Planning
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <main className="bg-white rounded-2xl shadow-xl p-6 sm:p-10">
-          <div className="prose prose-lg max-w-none prose-h2:font-serif prose-h2:text-brand-evergreen">
+      <div className="container mx-auto px-4 py-16 sm:py-24 max-w-5xl">
+        <main className="bg-white rounded-2xl shadow-xl p-8 sm:p-12">
+          <div className="prose prose-lg max-w-none prose-h2:font-serif prose-h2:text-brand-evergreen prose-h3:font-serif prose-h3:text-brand-leaf">
             
-            <h2 className="text-center">A New Approach to Lesson Planning</h2>
+            <h2 className="text-center">The Philosophy Behind the Platform</h2>
             <p>
-              Welcome. This tool is more than a generator; it's a partner in curriculum design, built on the foundational principles of the Root Work Framework. Our approach encourages and supports authentic, interdisciplinary lesson planning by developing a **living document** that you can use as a robust starting point for collaboration and refinement.
+              This tool is more than a generator; it's a partner in curriculum design, built on the foundational principles of the Root Work Framework. Our approach encourages and supports authentic, interdisciplinary lesson planning by developing a <strong>living document</strong> that you can use as a robust starting point for collaboration and refinement.
             </p>
             <p>
               Every lesson is structured around the **5Rs**: a pedagogical sequence designed to foster a trauma-informed, healing-centered classroom environment.
             </p>
-            <ul className="!my-8 space-y-4">
+            <ul className="!my-10 space-y-6">
               <li className="flex items-start gap-4">
-                <CheckIcon />
-                <span><strong>Relationships:</strong> Fostering community and connection first.</span>
+                <CheckCircleIcon />
+                <div><strong>Relationships:</strong> Fostering community, connection, and psychological safety as the prerequisite for learning.</div>
               </li>
               <li className="flex items-start gap-4">
-                <CheckIcon />
-                <span><strong>Routines:</strong> Establishing predictability and safety.</span>
+                <CheckCircleIcon />
+                <div><strong>Routines:</strong> Establishing predictable structures, grounding rituals, and clear expectations to create a safe and efficient learning environment.</div>
               </li>
               <li className="flex items-start gap-4">
-                <CheckIcon />
-                <span><strong>Relevance:</strong> Connecting content to students' lived experiences.</span>
+                <CheckCircleIcon />
+                <div><strong>Relevance:</strong> Connecting academic content to students' lives, cultures, and lived experiences to foster authentic engagement.</div>
               </li>
               <li className="flex items-start gap-4">
-                <CheckIcon />
-                <span><strong>Rigor:</strong> Engaging in deep, meaningful academic work.</span>
+                <CheckCircleIcon />
+                <div><strong>Rigor:</strong> Engaging in deep, meaningful academic work that challenges students to think critically and creatively.</div>
               </li>
               <li className="flex items-start gap-4">
-                <CheckIcon />
-                <span><strong>Reflection:</strong> Solidifying learning through metacognition.</span>
+                <CheckCircleIcon />
+                <div><strong>Reflection:</strong> Solidifying learning through metacognition, self-assessment, and the sharing of takeaways.</div>
               </li>
             </ul>
 
-            <div className="mt-12 p-6 bg-slate-50 rounded-xl border border-slate-200">
-                <h2 className="!mt-0">User Guide & Best Practices</h2>
-                <p>
-                    To get the highest quality experience, think of this AI as your brilliant but sometimes overly enthusiastic co-planner. Here’s a quick cheat sheet for the best results:
+            <div className="mt-16 p-8 bg-brand-canvas-light rounded-xl border border-brand-leaf/50">
+                <h2 className="!mt-0 text-center">A Quick Start Guide for Educators</h2>
+                <p className="text-center">
+                    To get the highest quality experience, think of this AI as your brilliant but sometimes overly enthusiastic co-planner. Here’s a cheat sheet for the best results:
                 </p>
-                <ol>
-                    <li>
-                        <strong>Use Natural Language:</strong> The "Standards Alignment" and "Learning Focus" fields are conversational. Don't just list codes; describe your goals. For example, instead of just "CCSS.ELA-LITERACY.W.9-10.3," try: <em>"Focus on W.9-10.3, especially helping students build narrative cohesion and use sensory details to create a vivid sense of place."</em>
-                    </li>
-                    <li>
-                        <strong>Aim for the "Sweet Spot":</strong> Our testing shows that generating **1-3 days** at a time produces the most detailed, complete, and well-formatted lesson plans. For longer units, generate plans in 3-day chunks and combine them.
-                    </li>
-                    <li>
-                        <strong>Always Review and Refine:</strong> The AI is a powerful tool for generating a first draft, but it is not a substitute for your professional expertise. Always review the generated content for accuracy, appropriateness, and potential "hallucinations" (plausible but incorrect information). The generated plan is your starting point, not your final product.
-                    </li>
-                </ol>
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div className="flex flex-col items-center">
+                        <BookOpenIcon />
+                        <h3 className="!mt-4">Use Natural Language</h3>
+                        <p className="text-base">The "Standards" and "Focus" fields are conversational. Describe your goals. Instead of just "W.9-10.3," try: <em>"Focus on W.9-10.3, especially using sensory details to create a vivid sense of place."</em></p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <LightbulbIcon />
+                        <h3 className="!mt-4">Aim for the Sweet Spot</h3>
+                        <p className="text-base">Our testing shows that generating **1-3 days** at a time produces the most detailed and complete plans. For longer units, simply generate plans in 3-day chunks and combine them.</p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <ShieldCheckIcon />
+                        <h3 className="!mt-4">Always Review & Refine</h3>
+                        <p className="text-base">The AI is a powerful first-draft tool, not a substitute for your professional expertise. Always review the generated content for accuracy, appropriateness, and potential "hallucinations."</p>
+                    </div>
+                </div>
             </div>
             
-            <div className="text-center mt-12">
+            <div className="text-center mt-16">
               <a 
                 href="/generator"
                 className="inline-block bg-brand-evergreen text-white py-4 px-10 rounded-lg font-semibold hover:bg-brand-deep-canopy transition-all duration-300 shadow-lg hover:shadow-xl font-serif tracking-wide text-xl"
               >
-                Begin Lesson Planning
+                Get Started
               </a>
             </div>
 
