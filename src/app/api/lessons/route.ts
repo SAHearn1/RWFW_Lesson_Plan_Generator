@@ -1,7 +1,7 @@
-// File: src/app/api/lessons/route.ts
+import { NextRequest } from 'next/server';
+import { streamText, type LanguageModelV1 } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { streamText } from 'ai';
 import { masterPrompt } from '@/constants/prompts';
 
 // Vercel-specific configuration
@@ -9,32 +9,48 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// Initialize the Anthropic provider, ensuring the API key is passed correctly.
-const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    // The modern SDK expects the prompt in a 'messages' array.
-    const { messages } = await req.json();
+    const body = await req.json();
 
-    // Use the modern 'streamText' function with the correct model identifier.
+    const subjects =
+      Array.isArray(body.subjects) ? body.subjects.join(', ') : String(body.subjects || '');
+
+    const userPrompt = `
+      Please generate a lesson plan with the following specifications:
+      - Grade Level: ${body.gradeLevel ?? 'Not specified'}
+      - Subject(s): ${subjects || 'Not specified'}
+      - Duration: ${body.days ?? 3} day(s)
+      - Unit Title: ${body.unitTitle || 'Not specified'}
+      - Standards: ${body.standards || 'Align with relevant national or state standards.'}
+      - Additional Focus Areas: ${body.focus || 'None specified.'}
+    `.trim();
+
+    // Temporary cast guards against duplicate @ai-sdk/provider versions in node_modules.
+    // Once all AI SDK packages are aligned, you can remove the cast.
+    const model = anthropic(
+      process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620'
+    ) as unknown as LanguageModelV1;
+
     const result = await streamText({
-      model: anthropic('claude-3-opus-20240229'),
+      model,
       system: masterPrompt,
-      messages: messages, // Pass the user's prompt here
-      maxTokens: 4096,
-      temperature: 0.3,
+      messages: [{ role: 'user', content: userPrompt }],
+      maxOutputTokens: typeof body.maxOutputTokens === 'number' ? body.maxOutputTokens : 4000,
+      temperature: typeof body.temperature === 'number' ? body.temperature : 0.3,
     });
 
-    // Respond with the stream using the built-in helper.
-    return result.toAIStreamResponse();
-
+    // v4+ replacement for StreamingTextResponse
+    return result.toDataStreamResponse();
   } catch (error: any) {
     console.error('[API_ERROR]', error);
-    const errorMessage = error.message || 'An unexpected error occurred.';
-    return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
+    const message =
+      (error?.error && (error.error.message || String(error.error))) ||
+      error?.message ||
+      'An unexpected error occurred.';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
-
