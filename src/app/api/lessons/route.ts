@@ -16,12 +16,15 @@ export async function POST(req: Request) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json();
 
-    // The modern 'streamText' function expects the entire messages array.
+    // The user's full prompt is the last message in the array sent by the useChat hook.
+    const userPrompt = messages[messages.length - 1].content as string;
+
     const result = await streamText({
-      model: anthropic('claude-3-opus-20240229'),
+      // --- THIS IS THE FIX: Using the correct, latest model name ---
+      model: anthropic('claude-opus-4-1-20250805'),
       system: masterPrompt,
-      messages: messages, // Pass the full message history
-      maxTokens: 4096,
+      prompt: userPrompt,
+      maxTokens: 4096, // Sticking with a safe max output for Opus 3/4 families
       temperature: 0.3,
     });
 
