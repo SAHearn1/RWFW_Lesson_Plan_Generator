@@ -1,5 +1,3 @@
-
-
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText, CoreMessage } from 'ai';
 import { masterPrompt } from '@/constants/prompts';
