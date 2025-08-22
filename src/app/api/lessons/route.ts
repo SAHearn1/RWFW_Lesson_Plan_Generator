@@ -1,4 +1,4 @@
-// File: src/app/api/lessons/route.ts
+/ File: src/app/api/lessons/route.ts
 
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
