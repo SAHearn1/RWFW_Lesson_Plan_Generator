@@ -1,26 +1,54 @@
-import type { Config } from "tailwindcss";
+/** @type {import('tailwindcss').Config} */
+const { fontFamily } = require('tailwindcss/defaultTheme');
 
-const config: Config = {
+module.exports = {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/features/**/*.{js,ts,jsx,tsx,mdx}", // Added to match full architecture
   ],
   theme: {
     extend: {
-      // Your brand's custom colors, fonts, etc. will go here
+      // --- UPDATED: Official RWF Color Palette ---
       colors: {
         brand: {
-          primary: '#2c5f2d', // Example: Rootwork Green
-          secondary: '#4a7c59',
+          evergreen: '#082A19',
+          'deep-canopy': '#001C10',
+          leaf: '#3B523A',
+          'gold-leaf': '#D4C862',
+          'olive-gold': '#96812A',
+          'canvas-light': '#F2F4CA',
+          charcoal: '#2B2B2B',
         },
       },
+      // --- ADDED: Official RWF Typography ---
+      fontFamily: {
+        sans: ["Inter", ...fontFamily.sans], // Primary UI & body font
+        serif: ["Merriweather", ...fontFamily.serif], // Primary headline font
+      },
+      // --- UPDATED: Box shadow to match brand colors ---
+      boxShadow: {
+        brand: "0 12px 28px -8px rgba(8, 42, 25, 0.35), 0 8px 12px -10px rgba(8, 42, 25, 0.25)",
+      },
+      // --- UPDATED: Prose styles to use brand colors ---
+      typography: ({ theme }) => ({
+        brand: {
+          css: {
+            "--tw-prose-body": theme("colors.brand.charcoal"),
+            "--tw-prose-headings": theme("colors.brand.deep-canopy"),
+            "--tw-prose-links": theme("colors.brand.leaf"),
+            "--tw-prose-bold": theme("colors.brand.deep-canopy"),
+            "--tw-prose-quotes": theme("colors.brand.evergreen"),
+            "--tw-prose-code": theme("colors.brand.charcoal"),
+            "--tw-prose-hr": theme("colors.slate.200"),
+          },
+        },
+      }),
     },
   },
   plugins: [
-    require("@tailwindcss/typography"),
     require("@tailwindcss/forms"),
+    require("@tailwindcss/typography"),
   ],
 };
-export default config;
