@@ -3,60 +3,89 @@
   <circle cx="256" cy="256" r="256" fill="#082A19"/>
 
   <!-- All Gold Leaf Elements -->
-  <g fill="#D4C862">
+  <g fill="#D4C862" stroke="#D4C862" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
     
     <!-- Central Sprout -->
-    <path d="M256 224C256 224 280 248 280 272C280 296 256 320 256 320C256 320 232 296 232 272C232 248 256 224 256 224Z" fill-opacity="0.1"/>
-    <path d="M256 320V288M256 224C242.745 224 232 246.745 232 260C232 273.255 242.745 288 256 288C269.255 288 280 273.255 280 260C280 246.745 269.255 224 256 224Z"/>
-    <path d="M256 224L264 208M256 224L248 208"/>
-    <path d="M288 248L304 240M224 248L208 240"/>
-    <path d="M280 288L296 304M232 288L216 304"/>
+    <g stroke-width="4">
+        <path d="M256 320 L 256 280" />
+        <path d="M256 220 C 235 235, 235 265, 256 280 C 277 265, 277 235, 256 220 Z" />
+        <path d="M256 220 C 265 200, 260 190, 256 180" />
+        <path d="M256 220 C 247 200, 252 190, 256 180" />
+        <path d="M238 250 C 220 245, 210 250, 200 240" />
+        <path d="M274 250 C 292 245, 302 250, 312 240" />
+    </g>
+    
+    <!-- Sun Rays -->
+    <g stroke-width="3">
+        <path d="M256 205 L 256 190" />
+        <path d="M280 215 L 290 200" />
+        <path d="M295 240 L 310 235" />
+        <path d="M295 270 L 310 275" />
+        <path d="M280 295 L 290 310" />
+        <path d="M256 305 L 256 320" />
+        <path d="M232 295 L 222 310" />
+        <path d="M217 270 L 202 275" />
+        <path d="M217 240 L 202 235" />
+        <path d="M232 215 L 222 200" />
+    </g>
 
     <!-- Scales of Justice (Top Left) -->
-    <g>
-      <path d="M128 128H192"/>
-      <path d="M160 128V144"/>
-      <path d="M144 144L128 168C128 168 136 176 144 168"/>
-      <path d="M176 144L192 168C192 168 184 176 176 168"/>
+    <g stroke-width="5">
+      <path d="M130 115 L 190 115" />
+      <path d="M160 115 L 160 135" />
+      <path d="M135 145 C 130 165, 150 165, 145 145" fill="none"/>
+      <path d="M175 145 C 170 165, 190 165, 185 145" fill="none"/>
+      <path d="M160 135 L 140 145" />
+      <path d="M160 135 L 180 145" />
     </g>
 
     <!-- Book (Top Right) -->
-    <g>
-      <path d="M320 160V128H368V160H320Z"/>
-      <path d="M328 136V152M336 136V152M344 136V152M352 136V152"/>
+    <g stroke-width="4">
+      <path d="M320 120 L 370 120 L 370 150 L 320 150 Z" />
+      <path d="M345 120 L 345 150" />
+      <path d="M328 128 L 340 128" fill="none" />
+      <path d="M328 135 L 340 135" fill="none" />
+      <path d="M328 142 L 340 142" fill="none" />
+      <path d="M350 128 L 362 128" fill="none" />
+      <path d="M350 135 L 362 135" fill="none" />
+      <path d="M350 142 L 362 142" fill="none" />
     </g>
 
     <!-- Brain (Left) -->
-    <g>
-      <path d="M128 256C128 242.745 117.255 232 104 232C90.7452 232 80 242.745 80 256C80 269.255 90.7452 280 104 280C117.255 280 128 269.255 128 256Z"/>
-      <path d="M104 232C112 232 112 224 104 224C96 224 96 232 104 232Z"/>
-      <path d="M88 248C80 248 80 240 88 240C96 240 96 248 88 248Z"/>
-      <path d="M120 248C128 248 128 240 120 240C112 240 112 248 120 248Z"/>
-      <path d="M88 264C80 264 80 256 88 256C96 256 96 264 88 264Z"/>
-      <path d="M120 264C128 264 128 256 120 256C112 256 112 264 120 264Z"/>
-      <path d="M104 280C112 280 112 288 104 288C96 288 96 280 104 280Z"/>
+    <g stroke-width="4" fill="none">
+        <path d="M125 240 C 110 230, 90 235, 85 250 C 80 265, 95 280, 110 275 C 125 270, 130 255, 125 240 Z" />
+        <path d="M105 275 C 100 285, 90 280, 85 270" />
+        <path d="M110 235 C 115 225, 125 230, 120 240" />
+        <path d="M90 240 C 80 245, 85 255, 95 255" />
+        <path d="M120 260 C 130 255, 125 245, 115 245" />
     </g>
 
     <!-- Beaker (Right) -->
-    <g>
-      <path d="M384 232V280H432V232"/>
-      <path d="M392 240H424"/>
-      <path d="M408 280V296"/>
-      <path d="M392 296H424"/>
+    <g stroke-width="5" fill="none">
+        <path d="M385 280 L 385 230 L 425 230 L 425 280" />
+        <path d="M395 255 C 405 265, 415 245, 420 255" />
+        <path d="M405 280 L 405 295" />
+        <path d="M390 295 L 420 295" />
     </g>
 
     <!-- Decorative Vines -->
-    <path d="M256 320C224 352 160 368 128 336" stroke="#D4C862" stroke-width="4" stroke-linecap="round"/>
-    <path d="M256 320C288 352 352 368 384 336" stroke="#D4C862" stroke-width="4" stroke-linecap="round"/>
-    <path d="M128 336C96 304 96 208 160 176" stroke="#D4C862" stroke-width="4" stroke-linecap="round"/>
-    <path d="M384 336C416 304 416 208 352 176" stroke="#D4C862" stroke-width="4" stroke-linecap="round"/>
-    <path d="M160 176C224 144 288 144 352 176" stroke="#D4C862" stroke-width="4" stroke-linecap="round"/>
+    <g stroke-width="6" fill="none">
+        <path d="M256 320 C 200 380, 100 380, 80 320" />
+        <path d="M256 320 C 312 380, 412 380, 432 320" />
+        <path d="M80 320 C 40 256, 120 150, 180 140" />
+        <path d="M432 320 C 472 256, 392 150, 332 140" />
+        <path d="M180 140 C 220 130, 292 130, 332 140" />
+    </g>
     
     <!-- Leaves -->
-    <circle cx="144" cy="352" r="8"/>
-    <circle cx="368" cy="352" r="8"/>
-    <circle cx="128" cy="192" r="8"/>
-    <circle cx="384" cy="192" r="8"/>
-    <circle cx="256" cy="160" r="8"/>
+    <g stroke="none">
+        <circle cx="200" cy="360" r="10"/>
+        <circle cx="312" cy="360" r="10"/>
+        <circle cx="100" cy="180" r="10"/>
+        <circle cx="412" cy="180" r="10"/>
+        <circle cx="256" cy="120" r="12"/>
+        <circle cx="290" cy="400" r="8"/>
+        <circle cx="222" cy="400" r="8"/>
+    </g>
   </g>
 </svg>
