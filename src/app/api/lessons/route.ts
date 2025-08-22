@@ -1,17 +1,14 @@
 // File: src/app/api/lessons/route.ts
-
 import { NextRequest } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
-import { AnthropicStream, StreamingTextResponse } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { streamText } from 'ai';
 
-import { masterPrompt } from '@/constants/prompts'; 
+import { masterPrompt } from '@/constants/prompts';
 
 // Vercel-specific configuration
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; 
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,33 +17,26 @@ export async function POST(req: NextRequest) {
     const userPrompt = `
       Please generate a lesson plan with the following specifications:
       - Grade Level: ${body.gradeLevel}
-      - Subject(s): ${body.subjects.join(', ')}
+      - Subject(s): ${(body.subjects || []).join(', ')}
       - Duration: ${body.days || 3} day(s)
       - Unit Title: ${body.unitTitle || 'Not specified'}
       - Standards: ${body.standards || 'Align with relevant national or state standards.'}
       - Additional Focus Areas: ${body.focus || 'None specified.'}
     `;
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-1-20250805', 
-      max_tokens: 32000,
-      temperature: 0.3,
+    const result = await streamText({
+      model: anthropic(process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620'), // set your model here
       system: masterPrompt,
       messages: [{ role: 'user', content: userPrompt }],
-      stream: true, // Enable streaming
+      maxOutputTokens: 4000,
+      temperature: 0.3,
     });
 
-    const stream = AnthropicStream(response);
-
-    // --- THIS IS THE FIX ---
-    // We are telling TypeScript to trust that the stream is compatible
-    // by casting it to 'any'. This resolves the type-checking error
-    // while allowing the underlying libraries to function as designed.
-    return new StreamingTextResponse(stream as any);
-
+    // v4+ replacement for StreamingTextResponse
+    return result.toDataStreamResponse();
   } catch (error: any) {
     console.error('[API_ERROR]', error);
-    const errorMessage = error.error?.message || 'An unexpected error occurred.';
+    const errorMessage = error?.error?.message || error?.message || 'An unexpected error occurred.';
     return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
   }
 }
