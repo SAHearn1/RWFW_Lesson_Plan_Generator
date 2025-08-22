@@ -43,8 +43,7 @@ export const createPdf = async (markdown: string, title: string) => {
   const margin = 50;
   let y = height - margin;
 
-  // --- THIS IS THE FIX ---
-  // We now use the rgb() function directly from pdf-lib to create the color objects.
+  // Header Band
   page.drawRectangle({
     x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
   });
@@ -56,6 +55,10 @@ export const createPdf = async (markdown: string, title: string) => {
     if (y < margin + 20) {
       page = pdfDoc.addPage();
       y = height - margin;
+       page.drawRectangle({
+        x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
+      });
+      page.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
     }
     if (item.type === 'heading') {
       const size = item.level === 1 ? 18 : item.level === 2 ? 16 : 14;
@@ -118,7 +121,7 @@ export const createDocx = async (markdown: string, title: string) => {
         styles: {
             paragraphStyles: [
                 { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", run: { size: 32, bold: true, color: brandColors.evergreen.hex, font: "Merriweather" } },
-                { id: "Title", name: "Title", basedOn: "Normal", next: "Normal", run: { size: 48, bold: true, color: brandColors.evergreen.hex, font: "Merriweather" } },
+                { id: "Title", name: "Title", basedOn: "Normal", next: "Normal", run: { size: 48, bold: true, color: brandColors.deepCanopy.hex, font: "Merriweather" } },
             ]
         },
         sections: [{ children: paragraphs }],
