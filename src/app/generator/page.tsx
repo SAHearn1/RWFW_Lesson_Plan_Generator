@@ -139,11 +139,19 @@ export default function GeneratorPage() {
             <div className="grid sm:grid-cols-2 gap-6">
                <div>
                 <label htmlFor="subjects" className="block text-sm font-medium text-brand-charcoal mb-2">Subject(s) *</label>
-                <select id="subjects" multiple value={subjects} onChange={(e) => setSubjects(Array.from(e.target.selectedOptions, option => option.value))} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-leaf h-32" required>
+                {/* --- THIS IS THE CORRECTED SECTION --- */}
+                <select id="subjects" multiple value={subjects} onChange={(e) => setSubjects(Array.from(e.target.selectedOptions, option => option.value))} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-leaf h-40" required>
                   <option value="English Language Arts">English Language Arts</option>
-                  <option value="Social Studies">Social Studies</option>
+                  <option value="Mathematics">Mathematics</option>
                   <option value="Science">Science</option>
+                  <option value="Social Studies / History">Social Studies / History</option>
                   <option value="Art">Art</option>
+                  <option value="Music">Music</option>
+                  <option value="Physical Education">Physical Education</option>
+                  <option value="Health">Health</option>
+                  <option value="World Languages">World Languages</option>
+                  <option value="Career & Technical Education (CTE)">Career & Technical Education (CTE)</option>
+                  <option value="Agriculture">Agriculture</option>
                   <option value="Special Education">Special Education</option>
                 </select>
                 <p className="mt-1 text-xs text-slate-500">Hold Ctrl/Cmd to select multiple.</p>
