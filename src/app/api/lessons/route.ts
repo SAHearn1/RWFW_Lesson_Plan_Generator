@@ -3,7 +3,7 @@
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 // --- UPDATED IMPORTS ---
-import { AnthropicStream, StreamingTextResponse, toAIStream } from 'ai';
+import { AnthropicStream, StreamingTextResponse } from 'ai';
 
 import { masterPrompt } from '@/constants/prompts'; 
 
@@ -38,12 +38,12 @@ export async function POST(req: NextRequest) {
     });
 
     // --- THIS IS THE FIX ---
-    // Convert the Anthropic-native stream into a standard, AI-SDK-compatible format.
+    // The AnthropicStream function directly provides the compatible stream.
+    // The extra 'toAIStream' conversion is not needed.
     const stream = AnthropicStream(response);
-    const aiStream = toAIStream(stream);
 
-    // Respond with the correctly formatted stream
-    return new StreamingTextResponse(aiStream);
+    // Respond with the stream
+    return new StreamingTextResponse(stream);
 
   } catch (error: any) {
     console.error('[API_ERROR]', error);
