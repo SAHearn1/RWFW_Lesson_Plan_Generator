@@ -22,8 +22,13 @@ export const authOptions: NextAuthOptions = {
   // Callbacks allow you to add custom logic and control the session data
   callbacks: {
     async session({ token, session }) {
-      if (token) {
-        session.user.id = token.id;
+      // --- THIS IS THE FIX ---
+      // We add a check to ensure session.user exists before assigning to it.
+      if (token && session.user) {
+        // The default User type in next-auth doesn't have an 'id'.
+        // We need to cast it to 'any' or extend the type to add it.
+        // For simplicity and to get you running, we'll cast here.
+        (session.user as any).id = token.id;
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.image = token.picture;
@@ -38,7 +43,9 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (!dbUser) {
-        token.id = user!.id;
+        if (user) {
+          token.id = user.id;
+        }
         return token;
       }
 
