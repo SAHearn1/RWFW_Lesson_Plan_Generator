@@ -3,34 +3,19 @@
 
 import React, { useState } from 'react';
 
-// --- Main App Component ---
 export default function HomePage() {
-  // State for the form inputs
   const [unitTitle, setUnitTitle] = useState('');
   const [gradeLevel, setGradeLevel] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
   const [days, setDays] = useState('3');
   const [standards, setStandards] = useState('');
   const [focus, setFocus] = useState('');
-
-  // State for the application's status
   const [lessonPlan, setLessonPlan] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [progress, setProgress] = useState(0);
-  const [generationStatus, setGenerationStatus] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Branded status messages aligned with the 5Rs
-  const statusMessages = [
-    "Establishing Relationships & Routines...",
-    "Connecting content to Relevant experiences...",
-    "Designing Rigorous, trauma-informed activities...",
-    "Curating resources for Reflection...",
-    "Finalizing your healing-centered lesson plan...",
-  ];
-
-  // --- Main Generator Function ---
+  // --- UPDATED: Simplified loading state for streaming ---
   const handleGeneratePlan = async () => {
     if (!unitTitle || !gradeLevel || subjects.length === 0) {
       setError('Please fill out all required fields.');
@@ -39,19 +24,7 @@ export default function HomePage() {
     }
     setError('');
     setIsLoading(true);
-    setLessonPlan('');
-    setProgress(0);
-    setGenerationStatus('Initializing generation...');
-
-    const progressInterval = setInterval(() => {
-        setProgress(prev => {
-            const newProgress = prev + 10;
-            if (newProgress > 95) return 95;
-            const messageIndex = Math.floor((newProgress / 100) * statusMessages.length);
-            setGenerationStatus(statusMessages[messageIndex]);
-            return newProgress;
-        });
-    }, 2000); // Slower interval for a more deliberate feel
+    setLessonPlan(''); // Clear previous plan
 
     try {
       const response = await fetch('/api/lessons', {
@@ -59,21 +32,37 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ unitTitle, gradeLevel, subjects, days: parseInt(days), standards, focus }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'An unknown error occurred.');
-      setLessonPlan(data.lessonPlan);
-      setProgress(100);
-      setGenerationStatus('✅ Your lesson plan is ready!');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'An unknown error occurred.');
+      }
+      
+      if (!response.body) {
+        throw new Error('The response body is empty.');
+      }
+
+      // --- THIS IS THE KEY UPGRADE ---
+      // Read the data from the stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        // Append the new chunk to the existing lesson plan text
+        setLessonPlan((prev) => prev + chunkValue);
+      }
+
     } catch (err: any) {
       setError(err.message);
-      setGenerationStatus('❌ An error occurred.');
     } finally {
-      clearInterval(progressInterval);
       setIsLoading(false);
     }
   };
 
-  // --- Download Handler ---
   const handleDownload = async (format: 'pdf' | 'docx') => {
     if (!lessonPlan) return;
     setIsDownloading(true);
@@ -106,7 +95,6 @@ export default function HomePage() {
     }
   };
   
-  // --- Markdown Renderer ---
   const renderMarkdown = (markdown: string): string => {
     if (!markdown) return ''; 
     const teacherNoteHtml = '<div class="teacher-note"><p class="font-bold text-brand-leaf">Teacher Note:</p><p>$1</p></div>';
@@ -133,12 +121,13 @@ export default function HomePage() {
       `}</style>
       <div className="container mx-auto px-4 py-8 sm:py-12 max-w-5xl">
         <header className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 rounded-full bg-white text-brand-evergreen px-5 py-2 mb-4 shadow-sm border border-slate-200">
-            <span className="text-2xl">🌱</span>
-            <h2 className="font-semibold tracking-wide text-lg font-serif">Root Work Framework</h2>
-          </div>
+          <img
+            src="/images/RWFW Logo 1.jpg"
+            alt="Root Work Framework Logo"
+            className="mx-auto h-28 w-28 rounded-full shadow-lg mb-6 border-4 border-white"
+          />
           <h1 className="text-4xl sm:text-5xl font-extrabold text-brand-deep-canopy tracking-tight font-serif">
-            Lesson Plan Generator
+            Root Work Framework
           </h1>
           <p className="mt-4 text-lg text-slate-700 max-w-2xl mx-auto">
             Weaving academic rigor with healing-centered, biophilic practice.
@@ -193,34 +182,28 @@ export default function HomePage() {
                 </div>
             </div>
             <button onClick={handleGeneratePlan} disabled={isLoading} className="w-full bg-brand-evergreen text-white py-4 px-6 rounded-lg font-semibold hover:bg-brand-deep-canopy disabled:opacity-50 flex items-center justify-center text-lg transition-all duration-300 shadow-lg hover:shadow-xl font-serif tracking-wide">
-              Generate Lesson Plan
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  <span>Generating...</span>
+                </>
+              ) : '🌱 Generate Lesson Plan'}
             </button>
           </div>
 
-          {(isLoading || error || lessonPlan) && (
+          {/* --- UPDATED: Simplified Results Display for Streaming --- */}
+          {(error || lessonPlan) && (
             <div className="mt-10 pt-8 border-t border-slate-200">
-              {isLoading && (
-                <div className="p-6 rounded-lg border bg-brand-canvas-light border-slate-200">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-leaf"></div>
-                    <h3 className="text-lg font-medium text-brand-evergreen font-serif">Building your lesson...</h3>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2.5">
-                    <div className="bg-brand-leaf h-2.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                  </div>
-                  <p className="text-center text-sm text-brand-evergreen mt-2 font-medium">{generationStatus}</p>
-                </div>
-              )}
               {error && <div className="p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg mb-6">{error}</div>}
-              {!isLoading && lessonPlan && (
+              {lessonPlan && (
                 <>
                   <div className="flex flex-wrap gap-4 items-center justify-between mb-6 bg-slate-50 p-4 rounded-lg">
-                    <h2 className="text-xl font-bold text-brand-evergreen font-serif">Your Lesson Plan is Ready</h2>
+                    <h2 className="text-xl font-bold text-brand-evergreen font-serif">Your Lesson Plan</h2>
                     <div className="flex gap-4">
-                      <button onClick={() => handleDownload('pdf')} disabled={isDownloading} className="bg-red-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
+                      <button onClick={() => handleDownload('pdf')} disabled={isDownloading || isLoading} className="bg-red-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
                         {isDownloading ? '...' : '📄'} Download PDF
                       </button>
-                      <button onClick={() => handleDownload('docx')} disabled={isDownloading} className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+                      <button onClick={() => handleDownload('docx')} disabled={isDownloading || isLoading} className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
                         {isDownloading ? '...' : '📝'} Download DOCX
                       </button>
                     </div>
