@@ -1,34 +1,32 @@
 // File: src/app/api/lessons/route.ts
 
-import { streamText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { streamText, CoreMessage } from 'ai';
 import { masterPrompt } from '@/constants/prompts';
 
-// Vercel-specific configuration
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// Initialize the Anthropic provider, ensuring the API key is passed correctly.
 const anthropic = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(req: Request) {
   try {
-    // The 'useCompletion' hook sends the user's input as a 'prompt' property.
-    const { prompt } = await req.json();
+    const { messages }: { messages: CoreMessage[] } = await req.json();
 
-    // Use the modern 'streamText' function.
+    // The user's full prompt is the last message in the array sent by the useChat hook.
+    const userPrompt = messages[messages.length - 1].content as string;
+
     const result = await streamText({
       model: anthropic('claude-3-opus-20240229'),
       system: masterPrompt,
-      prompt: prompt, // Pass the user's prompt string here
+      prompt: userPrompt, // We now pass the extracted string prompt
       maxTokens: 4096,
       temperature: 0.3,
     });
 
-    // Respond with the stream using the built-in helper.
     return result.toAIStreamResponse();
 
   } catch (error: any) {
