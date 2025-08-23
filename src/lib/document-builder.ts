@@ -8,6 +8,7 @@ import {
   HeadingLevel,
   AlignmentType,
   BorderStyle,
+  Header, // <--- 1. Import the Header class
 } from 'docx';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
@@ -32,9 +33,9 @@ export const createPdf = async (markdown: string, title: string) => {
 
   const drawHeader = (currentPage: any, pageNum: number) => {
     currentPage.drawRectangle({
-      x: 0, y: height - 35, width, height: 35, color: brandColors.evergreen.pdf, // Use .pdf property
+      x: 0, y: height - 35, width, height: 35, color: brandColors.evergreen.pdf,
     });
-    currentPage.drawText(`${title} | Page ${pageNum}`, { x: margin, y: height - 25, font: boldFont, size: 12, color: brandColors.white.pdf }); // Use .pdf property
+    currentPage.drawText(`${title} | Page ${pageNum}`, { x: margin, y: height - 25, font: boldFont, size: 12, color: brandColors.white.pdf });
   };
 
   drawHeader(page, 1);
@@ -51,20 +52,19 @@ export const createPdf = async (markdown: string, title: string) => {
 
     let currentFont = font;
     let fontSize = 11;
-    let color = brandColors.charcoal.pdf; // Use .pdf property
+    let color = brandColors.charcoal.pdf;
     let text = line.trim();
 
     if (line.startsWith('# ')) {
-      currentFont = boldFont; fontSize = 18; color = brandColors.evergreen.pdf; text = line.substring(2); y -= 10; // Use .pdf property
+      currentFont = boldFont; fontSize = 18; color = brandColors.evergreen.pdf; text = line.substring(2); y -= 10;
     } else if (line.startsWith('## ')) {
-      currentFont = boldFont; fontSize = 16; color = brandColors.evergreen.pdf; text = line.substring(3); y -= 8; // Use .pdf property
+      currentFont = boldFont; fontSize = 16; color = brandColors.evergreen.pdf; text = line.substring(3); y -= 8;
     } else if (line.startsWith('### ')) {
-      currentFont = boldFont; fontSize = 14; color = brandColors.leaf.pdf; text = line.substring(4); y -= 6; // Use .pdf property
+      currentFont = boldFont; fontSize = 14; color = brandColors.leaf.pdf; text = line.substring(4); y -= 6;
     } else if (line.startsWith('#### ')) {
-      currentFont = boldFont; fontSize = 12; color = brandColors.leaf.pdf; text = line.substring(5); y -= 4; // Use .pdf property
+      currentFont = boldFont; fontSize = 12; color = brandColors.leaf.pdf; text = line.substring(5); y -= 4;
     }
 
-    // Simple word wrapping
     const words = text.split(' ');
     let currentLine = '';
     for (const word of words) {
@@ -92,7 +92,7 @@ export const createPdf = async (markdown: string, title: string) => {
 };
 
 
-// --- DOCX Generation Logic (Unchanged) ---
+// --- DOCX Generation Logic (Corrected) ---
 export const createDocx = async (markdown: string, title: string) => {
     const lines = markdown.split('\n');
     const paragraphs: Paragraph[] = [];
@@ -129,10 +129,15 @@ export const createDocx = async (markdown: string, title: string) => {
         },
         sections: [{
             headers: {
-                default: new Paragraph({
-                    children: [new TextRun({ text: title, color: brandColors.evergreen.hex })],
-                    alignment: AlignmentType.CENTER,
-                    border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } }
+                // --- 2. Wrap the Paragraph in a new Header() ---
+                default: new Header({
+                    children: [
+                        new Paragraph({
+                            children: [new TextRun({ text: title, color: brandColors.evergreen.hex })],
+                            alignment: AlignmentType.CENTER,
+                            border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } }
+                        })
+                    ]
                 })
             },
             children: paragraphs
