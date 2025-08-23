@@ -1,3 +1,5 @@
+// File: src/lib/document-builder.ts
+
 import {
   Document,
   Packer,
@@ -73,8 +75,7 @@ export const createPdf = async (markdown: string, title: string) => {
       let line = '';
       for (const word of words) {
         const testLine = line + (line ? ' ' : '') + word;
-        const textWidth = font.widthOfTextAtSize(testLine, size);
-        if (textWidth > width - 2 * margin) {
+        if (font.widthOfTextAtSize(testLine, size) > width - 2 * margin) {
           page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
           y -= lineHeight;
           line = word;
