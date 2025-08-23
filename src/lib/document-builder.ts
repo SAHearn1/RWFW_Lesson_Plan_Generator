@@ -1,4 +1,4 @@
-// File: src/lib/document-builder.ts (Corrected)
+// File: src/lib/document-builder.ts (Complete and Corrected)
 
 import {
   Document,
@@ -8,11 +8,12 @@ import {
   HeadingLevel,
   AlignmentType,
   BorderStyle,
-  Header, // <--- 1. Import the Header class
+  Header, // <-- FIX #2: Header class is imported
 } from 'docx';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // --- Define Brand Colors (Corrected for pdf-lib) ---
+// FIX #1: Using the rgb() helper from pdf-lib to create valid Color objects
 const brandColors = {
   evergreen: { hex: '082A19', pdf: rgb(8 / 255, 42 / 255, 25 / 255) },
   leaf: { hex: '3B523A', pdf: rgb(59 / 255, 82 / 255, 58 / 255) },
@@ -65,6 +66,7 @@ export const createPdf = async (markdown: string, title: string) => {
       currentFont = boldFont; fontSize = 12; color = brandColors.leaf.pdf; text = line.substring(5); y -= 4;
     }
 
+    // Simple word wrapping
     const words = text.split(' ');
     let currentLine = '';
     for (const word of words) {
@@ -129,7 +131,7 @@ export const createDocx = async (markdown: string, title: string) => {
         },
         sections: [{
             headers: {
-                // --- 2. Wrap the Paragraph in a new Header() ---
+                // FIX #2: The Paragraph object is correctly wrapped in a new Header()
                 default: new Header({
                     children: [
                         new Paragraph({
