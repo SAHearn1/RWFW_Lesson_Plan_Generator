@@ -1,4 +1,4 @@
-// File: src/lib/document-builder.ts
+// File: src/lib/document-builder.ts (Corrected)
 
 import {
   Document,
@@ -11,16 +11,16 @@ import {
 } from 'docx';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-// --- Define Brand Colors ---
+// --- Define Brand Colors (Corrected for pdf-lib) ---
 const brandColors = {
-  evergreen: { hex: '082A19', rgb: { r: 8 / 255, g: 42 / 255, b: 25 / 255 } },
-  leaf: { hex: '3B523A', rgb: { r: 59 / 255, g: 82 / 255, b: 58 / 255 } },
-  charcoal: { hex: '2B2B2B', rgb: { r: 43 / 255, g: 43 / 255, b: 43 / 255 } },
-  white: { hex: 'FFFFFF', rgb: { r: 1, g: 1, b: 1 } },
+  evergreen: { hex: '082A19', pdf: rgb(8 / 255, 42 / 255, 25 / 255) },
+  leaf: { hex: '3B523A', pdf: rgb(59 / 255, 82 / 255, 58 / 255) },
+  charcoal: { hex: '2B2B2B', pdf: rgb(43 / 255, 43 / 255, 43 / 255) },
+  white: { hex: 'FFFFFF', pdf: rgb(1, 1, 1) },
   deepCanopy: { hex: '001C10' },
 };
 
-// --- PDF Generation Logic (Rewritten for Reliability) ---
+// --- PDF Generation Logic (Corrected) ---
 export const createPdf = async (markdown: string, title: string) => {
   const pdfDoc = await PDFDocument.create();
   let page = pdfDoc.addPage();
@@ -32,9 +32,9 @@ export const createPdf = async (markdown: string, title: string) => {
 
   const drawHeader = (currentPage: any, pageNum: number) => {
     currentPage.drawRectangle({
-      x: 0, y: height - 35, width, height: 35, color: brandColors.evergreen.rgb,
+      x: 0, y: height - 35, width, height: 35, color: brandColors.evergreen.pdf, // Use .pdf property
     });
-    currentPage.drawText(`${title} | Page ${pageNum}`, { x: margin, y: height - 25, font: boldFont, size: 12, color: brandColors.white.rgb });
+    currentPage.drawText(`${title} | Page ${pageNum}`, { x: margin, y: height - 25, font: boldFont, size: 12, color: brandColors.white.pdf }); // Use .pdf property
   };
 
   drawHeader(page, 1);
@@ -51,17 +51,17 @@ export const createPdf = async (markdown: string, title: string) => {
 
     let currentFont = font;
     let fontSize = 11;
-    let color = brandColors.charcoal.rgb;
+    let color = brandColors.charcoal.pdf; // Use .pdf property
     let text = line.trim();
 
     if (line.startsWith('# ')) {
-      currentFont = boldFont; fontSize = 18; color = brandColors.evergreen.rgb; text = line.substring(2); y -= 10;
+      currentFont = boldFont; fontSize = 18; color = brandColors.evergreen.pdf; text = line.substring(2); y -= 10; // Use .pdf property
     } else if (line.startsWith('## ')) {
-      currentFont = boldFont; fontSize = 16; color = brandColors.evergreen.rgb; text = line.substring(3); y -= 8;
+      currentFont = boldFont; fontSize = 16; color = brandColors.evergreen.pdf; text = line.substring(3); y -= 8; // Use .pdf property
     } else if (line.startsWith('### ')) {
-      currentFont = boldFont; fontSize = 14; color = brandColors.leaf.rgb; text = line.substring(4); y -= 6;
+      currentFont = boldFont; fontSize = 14; color = brandColors.leaf.pdf; text = line.substring(4); y -= 6; // Use .pdf property
     } else if (line.startsWith('#### ')) {
-      currentFont = boldFont; fontSize = 12; color = brandColors.leaf.rgb; text = line.substring(5); y -= 4;
+      currentFont = boldFont; fontSize = 12; color = brandColors.leaf.pdf; text = line.substring(5); y -= 4; // Use .pdf property
     }
 
     // Simple word wrapping
@@ -92,7 +92,7 @@ export const createPdf = async (markdown: string, title: string) => {
 };
 
 
-// --- DOCX Generation Logic (Branded) ---
+// --- DOCX Generation Logic (Unchanged) ---
 export const createDocx = async (markdown: string, title: string) => {
     const lines = markdown.split('\n');
     const paragraphs: Paragraph[] = [];
@@ -127,7 +127,7 @@ export const createDocx = async (markdown: string, title: string) => {
                 { id: "Heading3", name: "Heading 3", basedOn: "Normal", next: "Normal", run: { size: 24, bold: true, color: brandColors.charcoal.hex, font: "Inter" } },
             ]
         },
-        sections: [{ 
+        sections: [{
             headers: {
                 default: new Paragraph({
                     children: [new TextRun({ text: title, color: brandColors.evergreen.hex })],
@@ -135,7 +135,7 @@ export const createDocx = async (markdown: string, title: string) => {
                     border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } }
                 })
             },
-            children: paragraphs 
+            children: paragraphs
         }],
     });
 
