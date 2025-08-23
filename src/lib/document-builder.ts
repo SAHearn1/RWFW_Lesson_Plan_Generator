@@ -7,124 +7,113 @@ import {
   TextRun,
   HeadingLevel,
   AlignmentType,
+  BorderStyle,
 } from 'docx';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-// --- Define Brand Colors (for both PDF and DOCX) ---
+// --- Define Brand Colors ---
 const brandColors = {
   evergreen: { hex: '082A19', rgb: { r: 8 / 255, g: 42 / 255, b: 25 / 255 } },
   leaf: { hex: '3B523A', rgb: { r: 59 / 255, g: 82 / 255, b: 58 / 255 } },
   charcoal: { hex: '2B2B2B', rgb: { r: 43 / 255, g: 43 / 255, b: 43 / 255 } },
   white: { hex: 'FFFFFF', rgb: { r: 1, g: 1, b: 1 } },
-  deepCanopy: { hex: '001C10', rgb: { r: 0, g: 28/255, b: 16/255 }},
+  deepCanopy: { hex: '001C10' },
 };
 
-// --- Shared Markdown Parser ---
-const parseMarkdown = (markdown: string) => {
-  const lines = markdown.split('\n');
-  const structuredContent: { type: string; text: string; level?: number }[] = [];
-  lines.forEach(line => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('# ')) structuredContent.push({ type: 'heading', text: trimmed.substring(2), level: 1 });
-    else if (trimmed.startsWith('## ')) structuredContent.push({ type: 'heading', text: trimmed.substring(3), level: 2 });
-    else if (trimmed.startsWith('### ')) structuredContent.push({ type: 'heading', text: trimmed.substring(4), level: 3 });
-    else if (trimmed !== '') structuredContent.push({ type: 'paragraph', text: trimmed });
-  });
-  return structuredContent;
-};
-
-// --- PDF Generation Logic (Branded & Fixed) ---
+// --- PDF Generation Logic (Rewritten for Reliability) ---
 export const createPdf = async (markdown: string, title: string) => {
-  const content = parseMarkdown(markdown);
   const pdfDoc = await PDFDocument.create();
   let page = pdfDoc.addPage();
   const { width, height } = page.getSize();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const margin = 50;
-  let y = height - margin;
+  let y = height - 40;
 
-  const drawHeader = (currentPage: any) => {
+  const drawHeader = (currentPage: any, pageNum: number) => {
     currentPage.drawRectangle({
-      x: 0, y: height - 35, width, height: 35, color: rgb(brandColors.evergreen.rgb.r, brandColors.evergreen.rgb.g, brandColors.evergreen.rgb.b),
+      x: 0, y: height - 35, width, height: 35, color: brandColors.evergreen.rgb,
     });
-    currentPage.drawText(title, { x: margin, y: height - 25, font: boldFont, size: 14, color: rgb(brandColors.white.rgb.r, brandColors.white.rgb.g, brandColors.white.rgb.b) });
+    currentPage.drawText(`${title} | Page ${pageNum}`, { x: margin, y: height - 25, font: boldFont, size: 12, color: brandColors.white.rgb });
   };
 
-  drawHeader(page);
-  y -= 50;
+  drawHeader(page, 1);
+  y -= 30;
 
-  for (const item of content) {
-    if (y < margin + 40) { // Check for space before drawing
+  const lines = markdown.split('\n');
+
+  for (const line of lines) {
+    if (y < margin) {
       page = pdfDoc.addPage();
-      y = height - margin;
-      drawHeader(page);
-      y -= 50;
+      drawHeader(page, pdfDoc.getPageCount());
+      y = height - 70;
     }
-    if (item.type === 'heading') {
-      const size = item.level === 1 ? 18 : item.level === 2 ? 16 : 14;
-      const color = item.level === 1 ? brandColors.evergreen.rgb : brandColors.leaf.rgb;
-      y -= 10;
-      page.drawText(item.text, { x: margin, y, font: boldFont, size, color: rgb(color.r, color.g, color.b) });
-      y -= size * 1.5;
-    } else if (item.type === 'paragraph') {
-      const size = 11;
-      const lineHeight = 14;
-      // --- THIS IS THE FIX: Robust text wrapping ---
-      const words = item.text.split(' ');
-      let line = '';
-      for (const word of words) {
-        const testLine = line + (line ? ' ' : '') + word;
-        if (font.widthOfTextAtSize(testLine, size) > width - 2 * margin) {
-          page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
-          y -= lineHeight;
-          line = word;
-          if (y < margin + 20) {
-            page = pdfDoc.addPage();
-            y = height - margin;
-            drawHeader(page);
-            y -= 50;
-          }
+
+    let currentFont = font;
+    let fontSize = 11;
+    let color = brandColors.charcoal.rgb;
+    let text = line.trim();
+
+    if (line.startsWith('# ')) {
+      currentFont = boldFont; fontSize = 18; color = brandColors.evergreen.rgb; text = line.substring(2); y -= 10;
+    } else if (line.startsWith('## ')) {
+      currentFont = boldFont; fontSize = 16; color = brandColors.evergreen.rgb; text = line.substring(3); y -= 8;
+    } else if (line.startsWith('### ')) {
+      currentFont = boldFont; fontSize = 14; color = brandColors.leaf.rgb; text = line.substring(4); y -= 6;
+    } else if (line.startsWith('#### ')) {
+      currentFont = boldFont; fontSize = 12; color = brandColors.leaf.rgb; text = line.substring(5); y -= 4;
+    }
+
+    // Simple word wrapping
+    const words = text.split(' ');
+    let currentLine = '';
+    for (const word of words) {
+        const testLine = currentLine + (currentLine ? ' ' : '') + word;
+        if (font.widthOfTextAtSize(testLine, fontSize) > width - margin * 2) {
+            page.drawText(currentLine, { x: margin, y, font: currentFont, size: fontSize, color });
+            y -= (fontSize * 1.2);
+            currentLine = word;
+            if (y < margin) {
+                page = pdfDoc.addPage();
+                drawHeader(page, pdfDoc.getPageCount());
+                y = height - 70;
+            }
         } else {
-          line = testLine;
+            currentLine = testLine;
         }
-      }
-      page.drawText(line, { x: margin, y, font, size, color: rgb(brandColors.charcoal.rgb.r, brandColors.charcoal.rgb.g, brandColors.charcoal.rgb.b), lineHeight });
-      y -= lineHeight;
-      y -= 8; // Paragraph spacing
+    }
+    if (currentLine) {
+        page.drawText(currentLine, { x: margin, y, font: currentFont, size: fontSize, color });
+        y -= (fontSize * 1.2);
     }
   }
 
   return await pdfDoc.save();
 };
 
+
 // --- DOCX Generation Logic (Branded) ---
 export const createDocx = async (markdown: string, title: string) => {
-    const content = parseMarkdown(markdown);
+    const lines = markdown.split('\n');
+    const paragraphs: Paragraph[] = [];
 
-    const paragraphs: Paragraph[] = [
-        new Paragraph({ 
-            text: title, 
-            heading: HeadingLevel.TITLE, 
-            alignment: AlignmentType.CENTER,
-        }),
-    ];
-
-    content.forEach(item => {
-        if (item.type === 'heading') {
-            const level = item.level === 1 ? HeadingLevel.HEADING_1 : item.level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
-            paragraphs.push(new Paragraph({ 
-                children: [new TextRun({ text: item.text, color: brandColors.evergreen.hex, bold: true })],
-                heading: level,
-            }));
-        } else if (item.type === 'paragraph') {
+    lines.forEach(line => {
+        if (line.startsWith('# ')) {
+            paragraphs.push(new Paragraph({ text: line.substring(2), heading: HeadingLevel.HEADING_1 }));
+        } else if (line.startsWith('## ')) {
+            paragraphs.push(new Paragraph({ text: line.substring(3), heading: HeadingLevel.HEADING_2 }));
+        } else if (line.startsWith('### ')) {
+            paragraphs.push(new Paragraph({ text: line.substring(4), heading: HeadingLevel.HEADING_3 }));
+        } else if (line.trim() === '') {
+            paragraphs.push(new Paragraph({ text: '' }));
+        } else {
             const children: TextRun[] = [];
-            if (item.text.includes('[Teacher Note:')) {
-                children.push(new TextRun({ text: item.text, color: brandColors.leaf.hex, italics: true }));
-            } else if (item.text.includes('[Student Note:')) {
-                children.push(new TextRun({ text: item.text, color: "4F7DA5", bold: true }));
+            if (line.includes('[Teacher Note:')) {
+                children.push(new TextRun({ text: line, color: brandColors.leaf.hex, italics: true }));
+            } else if (line.includes('[Student Note:')) {
+                children.push(new TextRun({ text: line, color: "4F7DA5", bold: true }));
             } else {
-                children.push(new TextRun({ text: item.text, color: brandColors.charcoal.hex }));
+                children.push(new TextRun({ text: line, color: brandColors.charcoal.hex }));
             }
             paragraphs.push(new Paragraph({ children }));
         }
@@ -134,10 +123,20 @@ export const createDocx = async (markdown: string, title: string) => {
         styles: {
             paragraphStyles: [
                 { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", run: { size: 32, bold: true, color: brandColors.evergreen.hex, font: "Merriweather" } },
-                { id: "Title", name: "Title", basedOn: "Normal", next: "Normal", run: { size: 48, bold: true, color: brandColors.deepCanopy.hex, font: "Merriweather" } },
+                { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", run: { size: 28, bold: true, color: brandColors.leaf.hex, font: "Merriweather" } },
+                { id: "Heading3", name: "Heading 3", basedOn: "Normal", next: "Normal", run: { size: 24, bold: true, color: brandColors.charcoal.hex, font: "Inter" } },
             ]
         },
-        sections: [{ children: paragraphs }],
+        sections: [{ 
+            headers: {
+                default: new Paragraph({
+                    children: [new TextRun({ text: title, color: brandColors.evergreen.hex })],
+                    alignment: AlignmentType.CENTER,
+                    border: { bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } }
+                })
+            },
+            children: paragraphs 
+        }],
     });
 
     return await Packer.toBuffer(doc);
