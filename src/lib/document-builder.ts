@@ -8,12 +8,11 @@ import {
   HeadingLevel,
   AlignmentType,
   BorderStyle,
-  Header, // <-- FIX #2: The Header class is imported here
+  Header,
 } from 'docx';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // --- Define Brand Colors (Corrected for pdf-lib) ---
-// FIX #1: Using the rgb() helper from pdf-lib to create valid Color objects
 const brandColors = {
   evergreen: { hex: '082A19', pdf: rgb(8 / 255, 42 / 255, 25 / 255) },
   leaf: { hex: '3B523A', pdf: rgb(59 / 255, 82 / 255, 58 / 255) },
@@ -131,7 +130,6 @@ export const createDocx = async (markdown: string, title: string) => {
         },
         sections: [{
             headers: {
-                // FIX #2: The Paragraph object is now correctly wrapped in a new Header()
                 default: new Header({
                     children: [
                         new Paragraph({
