@@ -1,4 +1,4 @@
-// File: tailwind.config.ts
+// File: tailwind.config.ts (Corrected)
 
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
@@ -30,9 +30,9 @@ const config: Config = {
       boxShadow: {
         brand: "0 12px 28px -8px rgba(8, 42, 25, 0.35), 0 8px 12px -10px rgba(8, 42, 25, 0.25)",
       },
-      // --- THIS SECTION IS FIXED ---
-      // We explicitly type the 'theme' parameter to satisfy TypeScript.
-      typography: (theme: (path: string) => string) => ({
+      // --- THIS SECTION IS CORRECTED ---
+      // The function signature is updated to ({ theme }) to match the modern plugin API.
+      typography: ({ theme }) => ({
         brand: {
           css: {
             "--tw-prose-body": theme("colors.brand.charcoal"),
