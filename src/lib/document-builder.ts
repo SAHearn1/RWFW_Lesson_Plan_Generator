@@ -8,7 +8,7 @@ import {
   HeadingLevel,
   AlignmentType,
   BorderStyle,
-  Header, // <-- The Header class is imported
+  Header,
 } from 'docx';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
@@ -130,7 +130,6 @@ export const createDocx = async (markdown: string, title: string) => {
         },
         sections: [{
             headers: {
-                // THIS IS THE FIX: The Paragraph object is correctly wrapped in a new Header()
                 default: new Header({
                     children: [
                         new Paragraph({
