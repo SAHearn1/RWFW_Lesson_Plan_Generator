@@ -31,8 +31,8 @@ const config: Config = {
         brand: "0 12px 28px -8px rgba(8, 42, 25, 0.35), 0 8px 12px -10px rgba(8, 42, 25, 0.25)",
       },
       // --- THIS SECTION IS CORRECTED ---
-      // The function signature is updated to ({ theme }) to match the modern plugin API.
-      typography: ({ theme }) => ({
+      // We explicitly type the object being destructured to resolve the 'any' type error.
+      typography: ({ theme }: { theme: (path: string) => string }) => ({
         brand: {
           css: {
             "--tw-prose-body": theme("colors.brand.charcoal"),
