@@ -61,20 +61,27 @@ export async function POST(req: NextRequest) {
     // Wait for all image generations to complete
     const results = await Promise.all(generationPromises);
 
-    // Extract the image URLs from the results, skipping any incomplete payloads
-    const imageUrls = results
-      .map((result) => result.data?.[0]?.url)
-      .filter((url): url is string => Boolean(url));
+    // Extract the image URLs from the results, ensuring each response is complete
+    const imageUrls: string[] = [];
 
-    if (imageUrls.length !== results.length) {
-      console.error(
-        '[ASSET_API_ERROR] Incomplete response payload from OpenAI',
-        { resultsCount: results.length, imageUrlsFound: imageUrls.length },
-      );
-      return NextResponse.json(
-        { error: 'Failed to generate all visual assets.' },
-        { status: 502 },
-      );
+    for (let index = 0; index < results.length; index += 1) {
+      const result = results[index];
+      const url = result.data?.[0]?.url;
+
+      if (!url) {
+        console.error('[ASSET_API_ERROR] Incomplete response payload from OpenAI', {
+          resultIndex: index,
+          hasData: Boolean(result.data),
+          dataLength: result.data?.length ?? 0,
+        });
+
+        return NextResponse.json(
+          { error: 'Failed to generate all visual assets.' },
+          { status: 502 },
+        );
+      }
+
+      imageUrls.push(url);
     }
 
     // --- 3. Send the successful response back to the frontend ---
