@@ -96,10 +96,10 @@ You can also check all of the **details and demos** on my blog post:
 
 ### 2. Install dependencies
 
-It is encouraged to use **pnpm** so the husky hooks can work properly.
+Install dependencies with your preferred package manager. The project and CI now default to **npm**, but pnpm and yarn will also work if you already have them configured locally.
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 3. Run the development server
@@ -107,7 +107,7 @@ pnpm install
 You can start the server using this command:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. You can start editing the page by modifying `src/pages/index.tsx`.
