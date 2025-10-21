@@ -8,7 +8,6 @@ const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
 const prismaUnavailable = !prisma;
-const sessionStrategy: NextAuthOptions['session']['strategy'] = prismaUnavailable ? 'jwt' : 'database';
 
 if (googleConfigMissing) {
   console.warn(
@@ -66,13 +65,22 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, user }) {
-      if (sessionStrategy !== 'jwt') {
+      if (!prisma) {
         if (user) {
           token.sub = user.id;
           token.name = user.name ?? token.name;
           token.email = user.email ?? token.email;
           token.picture = user.image ?? token.picture;
         }
+
+        return token;
+      }
+
+      const dbUser = token.email
+        ? await prisma.user.findUnique({
+            where: { email: token.email },
+          })
+        : null;
 
         return token;
       }
