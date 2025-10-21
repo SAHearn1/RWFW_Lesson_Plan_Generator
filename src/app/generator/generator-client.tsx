@@ -1,10 +1,14 @@
 'use client';
 
-import { useChat } from 'ai/react';
 import React, { FormEvent, useMemo, useState } from 'react';
 
 type GeneratorClientProps = {
   userName?: string | null;
+};
+
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
 };
 
 export default function GeneratorClient({ userName }: GeneratorClientProps) {
@@ -15,17 +19,16 @@ export default function GeneratorClient({ userName }: GeneratorClientProps) {
   const [standards, setStandards] = useState('');
   const [focus, setFocus] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-
-  const { messages, append, isLoading, error } = useChat({
-    api: '/api/lessons',
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const latestAssistantMessage = useMemo(() => {
     const lastMessage = messages[messages.length - 1];
     return lastMessage?.role === 'assistant' ? lastMessage.content : '';
   }, [messages]);
 
-  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!unitTitle || !gradeLevel || subjects.length === 0) {
@@ -34,7 +37,46 @@ export default function GeneratorClient({ userName }: GeneratorClientProps) {
 
     const prompt = `Please generate a lesson plan with the following specifications:\n- Grade Level: ${gradeLevel}\n- Subject(s): ${subjects.join(', ')}\n- Duration: ${days} day(s)\n- Unit Title: ${unitTitle || 'Not specified'}\n- Standards: ${standards || 'Align with relevant national or state standards.'}\n- Additional Focus Areas: ${focus || 'None specified.'}`;
 
-    void append({ role: 'user', content: prompt });
+    const nextMessages: Message[] = [
+      ...messages,
+      { role: 'user', content: prompt },
+    ];
+
+    setMessages(nextMessages);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/lessons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: nextMessages }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate lesson plan.');
+      }
+
+      const data: { message?: string; error?: string } = await response.json();
+
+      if (!data.message) {
+        throw new Error(data.error ?? 'Failed to generate lesson plan.');
+      }
+
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { role: 'assistant', content: data.message as string },
+      ]);
+    } catch (requestError) {
+      console.error(requestError);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Failed to generate lesson plan.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDownload = async (format: 'pdf' | 'docx') => {
@@ -300,7 +342,7 @@ export default function GeneratorClient({ userName }: GeneratorClientProps) {
             <div className='mt-10 border-t border-slate-200 pt-8'>
               {error && (
                 <div className='mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800'>
-                  {error.message}
+                  {error}
                 </div>
               )}
               {latestAssistantMessage && (

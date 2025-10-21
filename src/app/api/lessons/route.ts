@@ -1,18 +1,16 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
-import type { CoreMessage } from 'ai';
-import { streamText } from 'ai';
 import { getServerSession } from 'next-auth';
 
 import { masterPrompt } from '@/constants/prompts';
 import { authOptions } from '@/lib/auth';
 
+type LessonMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
-
-const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 const jsonHeaders = {
   'Content-Type': 'application/json',
@@ -29,17 +27,77 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages }: { messages: CoreMessage[] } = await req.json();
+    const { messages = [] }: { messages?: LessonMessage[] } = await req.json();
 
-    const result = await streamText({
-      model: anthropic('claude-3-opus-20240229'),
-      system: masterPrompt,
-      messages,
-      maxTokens: 4096,
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'No messages provided.' }), {
+        status: 400,
+        headers: jsonHeaders,
+      });
+    }
+
+    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+    if (!anthropicApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Anthropic API key is not configured.' }),
+        {
+          status: 500,
+          headers: jsonHeaders,
+        },
+      );
+    }
+
+    const payload = {
+      model: 'claude-3-opus-20240229',
+      max_tokens: 4096,
       temperature: 0.3,
+      system: masterPrompt,
+      messages: messages.map((message) => ({
+        role: message.role,
+        content: [
+          {
+            type: 'text' as const,
+            text: message.content,
+          },
+        ],
+      })),
+    };
+
+    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        ...jsonHeaders,
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(payload),
     });
 
-    return result.toAIStreamResponse();
+    if (!anthropicResponse.ok) {
+      const errorResponse = await anthropicResponse.text();
+      console.error('[ANTHROPIC_ERROR]', errorResponse);
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate lesson plan.' }),
+        {
+          status: anthropicResponse.status,
+          headers: jsonHeaders,
+        },
+      );
+    }
+
+    const anthropicData: {
+      content?: { type: string; text?: string }[];
+    } = await anthropicResponse.json();
+
+    const assistantText = (anthropicData.content ?? [])
+      .filter((item) => item.type === 'text' && item.text)
+      .map((item) => item.text ?? '')
+      .join('\n');
+
+    return new Response(JSON.stringify({ message: assistantText }), {
+      status: 200,
+      headers: jsonHeaders,
+    });
   } catch (error) {
     console.error('[API_ERROR]', error);
     const errorMessage =
