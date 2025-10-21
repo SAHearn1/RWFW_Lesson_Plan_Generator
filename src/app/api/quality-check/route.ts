@@ -8,8 +8,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 180; // Allow up to 3 minutes for detailed analysis
 
-// Initialize the OpenAI client. This uses the same API key as the asset generator.
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+
+  return new OpenAI({ apiKey });
+};
 
 // This is the core of the feature: a detailed prompt that turns the AI into an expert reviewer.
 const qualityCheckSystemPrompt = `
@@ -34,7 +40,9 @@ export async function POST(req: NextRequest) {
     if (!lessonPlanText || typeof lessonPlanText !== 'string') {
       return NextResponse.json({ error: 'Lesson plan text is required.' }, { status: 400 });
     }
-    if (!process.env.OPENAI_API_KEY) {
+    const openai = getOpenAIClient();
+
+    if (!openai) {
       console.error("CRITICAL: OPENAI_API_KEY is not configured.");
       return NextResponse.json({ error: 'Application not configured for quality analysis.' }, { status: 500 });
     }

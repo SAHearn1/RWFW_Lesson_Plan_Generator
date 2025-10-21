@@ -24,7 +24,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", ...fontFamily.sans],
+        sans: [...fontFamily.sans],
         serif: ["Merriweather", ...fontFamily.serif],
       },
       boxShadow: {

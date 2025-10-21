@@ -6,23 +6,32 @@ import { prisma } from '@/lib/db';
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleConfigMissing = !googleClientId || !googleClientSecret;
 
-if (!googleClientId || !googleClientSecret) {
-  throw new Error('Google OAuth environment variables are not set');
+if (googleConfigMissing) {
+  console.warn('Google OAuth environment variables are not set. Authentication routes will respond with an error until configured.');
 }
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: googleClientId,
-      clientSecret: googleClientSecret,
+      clientId: googleClientId ?? 'missing-google-client-id',
+      clientSecret: googleClientSecret ?? 'missing-google-client-secret',
     }),
   ],
   session: {
     strategy: 'jwt',
   },
   callbacks: {
+    async signIn() {
+      if (googleConfigMissing) {
+        console.error('Google OAuth environment variables are not set.');
+        return false;
+      }
+
+      return true;
+    },
     async session({ token, session }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;

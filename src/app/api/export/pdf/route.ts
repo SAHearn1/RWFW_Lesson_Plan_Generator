@@ -46,6 +46,14 @@ function sanitizeFilename(name: string, ext = 'pdf') {
   return `${base}.${ext}`;
 }
 
+const streamFromBytes = (bytes: Uint8Array) =>
+  new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+
 // Minimal Markdown-ish → PDF renderer (headings, bullets, numbered lists, paragraphs)
 async function buildPdfFromMarkdown(markdown: string, docTitle = 'Lesson Plan'): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
@@ -156,7 +164,7 @@ export async function POST(req: NextRequest) {
       const mod = await import('@/lib/document-builder').catch(() => null as any);
       if (mod?.createPdf) {
         const pdfBytes: Uint8Array = await mod.createPdf(markdown, title);
-        return new NextResponse(pdfBytes, {
+        return new NextResponse(streamFromBytes(pdfBytes), {
           status: 200,
           headers: {
             'Content-Type': 'application/pdf',
@@ -171,7 +179,7 @@ export async function POST(req: NextRequest) {
 
     // Fallback: local renderer with pdf-lib
     const pdfBytes = await buildPdfFromMarkdown(markdown, title);
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(streamFromBytes(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

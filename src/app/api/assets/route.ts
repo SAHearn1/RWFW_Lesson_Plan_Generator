@@ -8,9 +8,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // Allow up to 5 minutes for generating multiple assets
 
-// Initialize the OpenAI client for DALL-E 3
-// Note: This requires a new environment variable: OPENAI_API_KEY
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+
+  return new OpenAI({ apiKey });
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +26,9 @@ export async function POST(req: NextRequest) {
     if (!assetPrompts || !Array.isArray(assetPrompts) || assetPrompts.length === 0) {
       return NextResponse.json({ error: 'An array of asset prompts is required.' }, { status: 400 });
     }
-    if (!process.env.OPENAI_API_KEY) {
+    const openai = getOpenAIClient();
+
+    if (!openai) {
       console.error("CRITICAL: OPENAI_API_KEY is not configured.");
       return NextResponse.json({ error: 'Application not configured for asset generation.' }, { status: 500 });
     }
@@ -44,8 +51,15 @@ export async function POST(req: NextRequest) {
     // Wait for all image generations to complete
     const results = await Promise.all(generationPromises);
 
-    // Extract the image URLs from the results
-    const imageUrls = results.map(result => result.data[0].url);
+    // Extract the image URLs from the results, skipping any incomplete payloads
+    const imageUrls = results
+      .map((result) => result.data?.[0]?.url)
+      .filter((url): url is string => Boolean(url));
+
+    if (imageUrls.length !== results.length) {
+      console.error("[ASSET_API_ERROR] Incomplete response payload from OpenAI", { resultsCount: results.length, imageUrlsFound: imageUrls.length });
+      return NextResponse.json({ error: 'Failed to generate all visual assets.' }, { status: 502 });
+    }
 
     // --- 3. Send the successful response back to the frontend ---
     return NextResponse.json({ imageUrls });

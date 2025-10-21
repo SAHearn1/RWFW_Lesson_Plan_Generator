@@ -11,10 +11,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Use the robust document builder to generate the DOCX buffer
-    const buffer = await createDocx(markdown, title || 'Lesson Plan');
+    const buffer: Buffer = await createDocx(markdown, title || 'Lesson Plan');
+
+    const fileContents = buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength,
+    );
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(fileContents));
+        controller.close();
+      },
+    });
 
     // Return the generated buffer as a file download
-    return new NextResponse(buffer, {
+    return new NextResponse(stream, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

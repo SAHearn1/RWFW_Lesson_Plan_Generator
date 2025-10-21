@@ -78,8 +78,8 @@ export default function GeneratorClient({ userName }: GeneratorClientProps) {
       '<div class="student-note"><p class="font-bold text-blue-800">Student Note:</p><p>$1</p></div>';
 
     return markdown
-      .replace(/\[Teacher Note: (.*?)\]/gs, teacherNoteHtml)
-      .replace(/\[Student Note: (.*?)\]/gs, studentNoteHtml)
+      .replace(/\[Teacher Note: ([\s\S]*?)\]/g, teacherNoteHtml)
+      .replace(/\[Student Note: ([\s\S]*?)\]/g, studentNoteHtml)
       .replace(/^# (.*$)/gm, '<h1 class="text-3xl font-bold my-4 font-serif text-brand-deep-canopy">$1</h1>')
       .replace(/^## (.*$)/gm, '<h2 class="text-2xl font-bold mt-8 mb-3 font-serif text-brand-evergreen">$1</h2>')
       .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold mt-6 mb-2 text-brand-leaf">$1</h3>')
