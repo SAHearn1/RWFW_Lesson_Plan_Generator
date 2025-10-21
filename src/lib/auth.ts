@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: sessionStrategy,
   },
   callbacks: {
     async signIn() {
@@ -41,8 +41,21 @@ export const authOptions: NextAuthOptions = {
 
       return true;
     },
-    async session({ token, session }) {
-      if (session.user && token.sub) {
+    async session({ session, token, user }) {
+      if (!session.user) {
+        return session;
+      }
+
+      if (user) {
+        session.user.id = user.id;
+        session.user.email = user.email ?? session.user.email;
+        session.user.name = user.name ?? session.user.name;
+        session.user.image = user.image ?? session.user.image;
+
+        return session;
+      }
+
+      if (token && token.sub) {
         session.user.id = token.sub;
         session.user.email = token.email ?? session.user.email;
         session.user.name = token.name ?? session.user.name;
@@ -69,18 +82,44 @@ export const authOptions: NextAuthOptions = {
           })
         : null;
 
-      if (!dbUser) {
+        return token;
+      }
+
+      if (!prisma) {
         if (user) {
           token.sub = user.id;
+          token.name = user.name ?? token.name;
+          token.email = user.email ?? token.email;
+          token.picture = user.image ?? token.picture;
         }
 
         return token;
       }
 
-      token.sub = dbUser.id;
-      token.name = dbUser.name ?? token.name;
-      token.email = dbUser.email ?? token.email;
-      token.picture = dbUser.image ?? token.picture;
+      if (!token.email) {
+        return token;
+      }
+
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email },
+        });
+
+        if (!dbUser) {
+          if (user) {
+            token.sub = user.id;
+          }
+
+          return token;
+        }
+
+        token.sub = dbUser.id;
+        token.name = dbUser.name ?? token.name;
+        token.email = dbUser.email ?? token.email;
+        token.picture = dbUser.image ?? token.picture;
+      } catch (error) {
+        console.error('Failed to look up user during JWT callback:', error);
+      }
 
       return token;
     },
