@@ -1,8 +1,10 @@
-// File: src/app/api/lessons/route.ts
-
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { streamText, CoreMessage } from 'ai';
+import type { CoreMessage } from 'ai';
+import { streamText } from 'ai';
+import { getServerSession } from 'next-auth';
+
 import { masterPrompt } from '@/constants/prompts';
+import { authOptions } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,28 +14,40 @@ const anthropic = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+};
+
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: jsonHeaders,
+    });
+  }
+
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json();
 
     const result = await streamText({
-      // --- UPGRADED MODEL & TOKEN LIMIT ---
-      model: anthropic('claude-opus-4-1-20250805'),
+      model: anthropic('claude-3-opus-20240229'),
       system: masterPrompt,
-      messages: messages,
-      // --- THIS IS THE KEY UPGRADE ---
-      // We are giving the AI the maximum possible space to generate a complete,
-      // detailed, and resource-rich lesson plan.
-      maxTokens: 32000,
+      messages,
+      maxTokens: 4096,
       temperature: 0.3,
     });
 
     return result.toAIStreamResponse();
-
-  } catch (error: any)
-    {
+  } catch (error) {
     console.error('[API_ERROR]', error);
-    const errorMessage = error.message || 'An unexpected error occurred.';
-    return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred.';
+
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: jsonHeaders,
+    });
   }
 }

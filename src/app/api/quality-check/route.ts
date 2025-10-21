@@ -8,8 +8,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 180; // Allow up to 3 minutes for detailed analysis
 
-// Initialize the OpenAI client. This uses the same API key as the asset generator.
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+
+  return new OpenAI({ apiKey });
+};
 
 // This is the core of the feature: a detailed prompt that turns the AI into an expert reviewer.
 const qualityCheckSystemPrompt = `
@@ -32,11 +38,19 @@ export async function POST(req: NextRequest) {
 
     // --- 1. Validate the input ---
     if (!lessonPlanText || typeof lessonPlanText !== 'string') {
-      return NextResponse.json({ error: 'Lesson plan text is required.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Lesson plan text is required.' },
+        { status: 400 },
+      );
     }
-    if (!process.env.OPENAI_API_KEY) {
-      console.error("CRITICAL: OPENAI_API_KEY is not configured.");
-      return NextResponse.json({ error: 'Application not configured for quality analysis.' }, { status: 500 });
+    const openai = getOpenAIClient();
+
+    if (!openai) {
+      console.error('CRITICAL: OPENAI_API_KEY is not configured.');
+      return NextResponse.json(
+        { error: 'Application not configured for quality analysis.' },
+        { status: 500 },
+      );
     }
 
     // --- (Future) Authenticate the user and check for premium status ---
@@ -44,35 +58,37 @@ export async function POST(req: NextRequest) {
 
     // --- 2. Call the OpenAI API for analysis ---
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // A powerful model is needed for nuanced analysis
+      model: 'gpt-4o', // A powerful model is needed for nuanced analysis
       messages: [
         {
-          role: "system",
+          role: 'system',
           content: qualityCheckSystemPrompt,
         },
         {
-          role: "user",
+          role: 'user',
           content: `Please analyze the following lesson plan:\n\n---\n\n${lessonPlanText}`,
         },
       ],
       // This is crucial: it forces the AI to return a valid JSON object
-      response_format: { type: "json_object" }, 
+      response_format: { type: 'json_object' },
     });
 
     const report = response.choices[0].message.content;
 
     if (!report) {
-      throw new Error("AI analysis returned an empty response.");
+      throw new Error('AI analysis returned an empty response.');
     }
-    
+
     // The response is already a JSON string, so we can parse it directly
     const structuredReport = JSON.parse(report);
 
     // --- 3. Send the structured report back to the frontend ---
     return NextResponse.json({ qualityReport: structuredReport });
-
   } catch (error: any) {
     console.error('[QUALITY_API_ERROR]', error);
-    return NextResponse.json({ error: 'Failed to perform quality analysis.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to perform quality analysis.' },
+      { status: 500 },
+    );
   }
 }
