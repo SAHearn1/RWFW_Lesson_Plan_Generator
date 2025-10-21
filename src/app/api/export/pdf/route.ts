@@ -1,6 +1,6 @@
 // File: src/app/api/export/pdf/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,8 +46,19 @@ function sanitizeFilename(name: string, ext = 'pdf') {
   return `${base}.${ext}`;
 }
 
+const streamFromBytes = (bytes: Uint8Array) =>
+  new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+
 // Minimal Markdown-ish → PDF renderer (headings, bullets, numbered lists, paragraphs)
-async function buildPdfFromMarkdown(markdown: string, docTitle = 'Lesson Plan'): Promise<Uint8Array> {
+async function buildPdfFromMarkdown(
+  markdown: string,
+  docTitle = 'Lesson Plan',
+): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.setTitle(docTitle);
 
@@ -63,7 +74,12 @@ async function buildPdfFromMarkdown(markdown: string, docTitle = 'Lesson Plan'):
 
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
 
-  const drawLine = (txt: string, font: any, size: number, color = rgb(0, 0, 0)) => {
+  const drawLine = (
+    txt: string,
+    font: any,
+    size: number,
+    color = rgb(0, 0, 0),
+  ) => {
     const wrapped = wrapText(txt, maxWidth, font, size);
     for (const w of wrapped) {
       if (y < margin + size + 6) {
@@ -134,8 +150,8 @@ export async function POST(req: NextRequest) {
     typeof body?.content === 'string'
       ? body.content
       : typeof body?.markdown === 'string'
-      ? body.markdown
-      : '';
+        ? body.markdown
+        : '';
 
   if (!markdown.trim()) {
     return new NextResponse('Markdown content is required', { status: 400 });
@@ -145,18 +161,20 @@ export async function POST(req: NextRequest) {
     typeof body?.title === 'string'
       ? body.title
       : typeof body?.filename === 'string'
-      ? body.filename.replace(/\.pdf$/i, '')
-      : 'Lesson Plan';
+        ? body.filename.replace(/\.pdf$/i, '')
+        : 'Lesson Plan';
 
   const filename = sanitizeFilename(title, 'pdf');
 
   try {
     // Try your existing robust builder first (if present)
     try {
-      const mod = await import('@/lib/document-builder').catch(() => null as any);
+      const mod = await import('@/lib/document-builder').catch(
+        () => null as any,
+      );
       if (mod?.createPdf) {
         const pdfBytes: Uint8Array = await mod.createPdf(markdown, title);
-        return new NextResponse(pdfBytes, {
+        return new NextResponse(streamFromBytes(pdfBytes), {
           status: 200,
           headers: {
             'Content-Type': 'application/pdf',
@@ -171,7 +189,7 @@ export async function POST(req: NextRequest) {
 
     // Fallback: local renderer with pdf-lib
     const pdfBytes = await buildPdfFromMarkdown(markdown, title);
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(streamFromBytes(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

@@ -5,11 +5,14 @@ import { render, screen } from '@testing-library/react';
 import HomePage from '@/app/page';
 
 describe('Homepage', () => {
-  it('renders the Components', () => {
+  it('renders the brand hero content', () => {
     render(<HomePage />);
 
-    const heading = screen.getByText(/A starter for Next.js/i);
-
-    expect(heading).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Root Work Framework/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Begin Lesson Planning/i }),
+    ).toBeInTheDocument();
   });
 });
