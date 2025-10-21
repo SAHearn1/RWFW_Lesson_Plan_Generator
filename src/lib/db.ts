@@ -8,11 +8,25 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-// This prevents creating a new Prisma Client on every hot reload in development.
-export const prisma =
-  global.prisma ||
-  new PrismaClient({
-    log: ['query'],
-  });
+const databaseUrl = process.env.DATABASE_URL;
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+if (!databaseUrl) {
+  console.warn(
+    'DATABASE_URL environment variable is not set. Prisma Client will not be initialised and any database features will be disabled.',
+  );
+}
+
+// Prevent creating a new Prisma Client on every hot reload in development while also
+// avoiding instantiation when the DATABASE_URL is not configured (such as in preview demos).
+const prismaClient = databaseUrl
+  ? global.prisma ||
+    new PrismaClient({
+      log: ['query'],
+    })
+  : undefined;
+
+if (databaseUrl && process.env.NODE_ENV !== 'production') {
+  global.prisma = prismaClient;
+}
+
+export const prisma = prismaClient;
