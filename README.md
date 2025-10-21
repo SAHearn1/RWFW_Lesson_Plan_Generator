@@ -34,6 +34,24 @@ This repository is 🔋 battery packed with:
 - 🗺 Site Map — Automatically generate sitemap.xml
 - 📦 Expansion Pack — Easily install common libraries, additional components, and configs.
 
+## Authentication & Data Collection
+
+This application now uses [NextAuth.js](https://next-auth.js.org/) with a Prisma adapter to handle secure user sign-in and persistence. When a visitor authenticates, their profile (name, email, avatar) is stored in the connected PostgreSQL database. The generator interface and AI endpoints are protected so only signed-in educators can request new plans, allowing you to track usage per user.
+
+### Required Environment Variables
+
+Configure the following variables locally (`.env`) and on Vercel before deploying:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB_NAME"
+NEXTAUTH_SECRET="generate_a_strong_secret"
+NEXTAUTH_URL="https://your-vercel-domain.vercel.app" # or http://localhost:3000 for local dev
+GOOGLE_CLIENT_ID="your-google-oauth-client-id"
+GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
+```
+
+Create a Google OAuth Client (Web application) and add the callback URL `https://your-domain.vercel.app/api/auth/callback/google` (or `http://localhost:3000/api/auth/callback/google` for local development).
+
 See the 👉 [feature details and changelog](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/blob/main/CHANGELOG.md) 👈 for more.
 
 You can also check all of the **details and demos** on my blog post:

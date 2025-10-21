@@ -2,6 +2,9 @@
 
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText, CoreMessage } from 'ai';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
 import { masterPrompt } from '@/constants/prompts';
 
 export const runtime = 'nodejs';
@@ -14,6 +17,12 @@ const anthropic = createAnthropic({
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     const { messages }: { messages: CoreMessage[] } = await req.json();
 
     const result = await streamText({
