@@ -21,11 +21,11 @@ if (!databaseUrl) {
 const prismaClient = databaseUrl
   ? global.prisma ||
     new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      log: ['query'],
     })
   : undefined;
 
-if (databaseUrl && process.env.NODE_ENV !== 'production' && prismaClient) {
+if (databaseUrl && process.env.NODE_ENV !== 'production') {
   global.prisma = prismaClient;
 }
 
