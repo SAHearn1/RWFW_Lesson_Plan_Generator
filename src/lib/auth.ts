@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
+const prismaUnavailable = !prisma;
 
 if (googleConfigMissing) {
   console.warn(
@@ -14,8 +15,14 @@ if (googleConfigMissing) {
   );
 }
 
+if (prismaUnavailable) {
+  console.warn(
+    'DATABASE_URL is not configured. Authentication will fall back to JWT-only sessions without database persistence.',
+  );
+}
+
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: prisma ? PrismaAdapter(prisma) : undefined,
   providers: [
     GoogleProvider({
       clientId: googleClientId ?? 'missing-google-client-id',
@@ -45,6 +52,17 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, user }) {
+      if (!prisma) {
+        if (user) {
+          token.sub = user.id;
+          token.name = user.name ?? token.name;
+          token.email = user.email ?? token.email;
+          token.picture = user.image ?? token.picture;
+        }
+
+        return token;
+      }
+
       const dbUser = token.email
         ? await prisma.user.findUnique({
             where: { email: token.email },
