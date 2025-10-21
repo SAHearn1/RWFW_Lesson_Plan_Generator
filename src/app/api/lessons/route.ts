@@ -3,8 +3,8 @@ import type { CoreMessage } from 'ai';
 import { streamText } from 'ai';
 import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/lib/auth';
 import { masterPrompt } from '@/constants/prompts';
+import { authOptions } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

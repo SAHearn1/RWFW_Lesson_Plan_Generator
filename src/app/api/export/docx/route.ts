@@ -1,6 +1,7 @@
 // File: src/app/api/export/docx/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createDocx } from '@/lib/document-builder';
 
 export async function POST(req: NextRequest) {
@@ -28,7 +29,8 @@ export async function POST(req: NextRequest) {
     return new NextResponse(stream, {
       status: 200,
       headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${title || 'lesson-plan'}.docx"`,
       },
     });

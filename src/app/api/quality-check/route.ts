@@ -38,13 +38,19 @@ export async function POST(req: NextRequest) {
 
     // --- 1. Validate the input ---
     if (!lessonPlanText || typeof lessonPlanText !== 'string') {
-      return NextResponse.json({ error: 'Lesson plan text is required.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Lesson plan text is required.' },
+        { status: 400 },
+      );
     }
     const openai = getOpenAIClient();
 
     if (!openai) {
-      console.error("CRITICAL: OPENAI_API_KEY is not configured.");
-      return NextResponse.json({ error: 'Application not configured for quality analysis.' }, { status: 500 });
+      console.error('CRITICAL: OPENAI_API_KEY is not configured.');
+      return NextResponse.json(
+        { error: 'Application not configured for quality analysis.' },
+        { status: 500 },
+      );
     }
 
     // --- (Future) Authenticate the user and check for premium status ---
@@ -52,35 +58,37 @@ export async function POST(req: NextRequest) {
 
     // --- 2. Call the OpenAI API for analysis ---
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // A powerful model is needed for nuanced analysis
+      model: 'gpt-4o', // A powerful model is needed for nuanced analysis
       messages: [
         {
-          role: "system",
+          role: 'system',
           content: qualityCheckSystemPrompt,
         },
         {
-          role: "user",
+          role: 'user',
           content: `Please analyze the following lesson plan:\n\n---\n\n${lessonPlanText}`,
         },
       ],
       // This is crucial: it forces the AI to return a valid JSON object
-      response_format: { type: "json_object" }, 
+      response_format: { type: 'json_object' },
     });
 
     const report = response.choices[0].message.content;
 
     if (!report) {
-      throw new Error("AI analysis returned an empty response.");
+      throw new Error('AI analysis returned an empty response.');
     }
-    
+
     // The response is already a JSON string, so we can parse it directly
     const structuredReport = JSON.parse(report);
 
     // --- 3. Send the structured report back to the frontend ---
     return NextResponse.json({ qualityReport: structuredReport });
-
   } catch (error: any) {
     console.error('[QUALITY_API_ERROR]', error);
-    return NextResponse.json({ error: 'Failed to perform quality analysis.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to perform quality analysis.' },
+      { status: 500 },
+    );
   }
 }

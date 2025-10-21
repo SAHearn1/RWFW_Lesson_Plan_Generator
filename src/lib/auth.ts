@@ -9,7 +9,9 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
 
 if (googleConfigMissing) {
-  console.warn('Google OAuth environment variables are not set. Authentication routes will respond with an error until configured.');
+  console.warn(
+    'Google OAuth environment variables are not set. Authentication routes will respond with an error until configured.',
+  );
 }
 
 export const authOptions: NextAuthOptions = {

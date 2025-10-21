@@ -23,28 +23,38 @@ export async function POST(req: NextRequest) {
     const { assetPrompts } = body; // Expect an array of strings
 
     // --- 1. Validate the input ---
-    if (!assetPrompts || !Array.isArray(assetPrompts) || assetPrompts.length === 0) {
-      return NextResponse.json({ error: 'An array of asset prompts is required.' }, { status: 400 });
+    if (
+      !assetPrompts ||
+      !Array.isArray(assetPrompts) ||
+      assetPrompts.length === 0
+    ) {
+      return NextResponse.json(
+        { error: 'An array of asset prompts is required.' },
+        { status: 400 },
+      );
     }
     const openai = getOpenAIClient();
 
     if (!openai) {
-      console.error("CRITICAL: OPENAI_API_KEY is not configured.");
-      return NextResponse.json({ error: 'Application not configured for asset generation.' }, { status: 500 });
+      console.error('CRITICAL: OPENAI_API_KEY is not configured.');
+      return NextResponse.json(
+        { error: 'Application not configured for asset generation.' },
+        { status: 500 },
+      );
     }
-    
+
     // --- (Future) Authenticate the user and check for premium status ---
     // Here, you would add logic to verify the user has a premium subscription
     // before allowing them to use this resource-intensive feature.
 
     // --- 2. Generate an image for each prompt ---
-    const generationPromises = assetPrompts.map(prompt => {
+    const generationPromises = assetPrompts.map((prompt) => {
       return openai.images.generate({
-        model: "dall-e-3", // The highest quality model
+        model: 'dall-e-3', // The highest quality model
         prompt: `Instructional diagram for a lesson plan, clear and simple, educational style. Content: ${prompt}`, // We add context to the prompt for better results
         n: 1, // Generate one image per prompt
-        size: "1024x1024", // Standard high-quality size
-        quality: "standard",
+        size: '1024x1024', // Standard high-quality size
+        quality: 'standard',
       });
     });
 
@@ -57,15 +67,23 @@ export async function POST(req: NextRequest) {
       .filter((url): url is string => Boolean(url));
 
     if (imageUrls.length !== results.length) {
-      console.error("[ASSET_API_ERROR] Incomplete response payload from OpenAI", { resultsCount: results.length, imageUrlsFound: imageUrls.length });
-      return NextResponse.json({ error: 'Failed to generate all visual assets.' }, { status: 502 });
+      console.error(
+        '[ASSET_API_ERROR] Incomplete response payload from OpenAI',
+        { resultsCount: results.length, imageUrlsFound: imageUrls.length },
+      );
+      return NextResponse.json(
+        { error: 'Failed to generate all visual assets.' },
+        { status: 502 },
+      );
     }
 
     // --- 3. Send the successful response back to the frontend ---
     return NextResponse.json({ imageUrls });
-
   } catch (error: any) {
     console.error('[ASSET_API_ERROR]', error);
-    return NextResponse.json({ error: 'Failed to generate visual assets.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate visual assets.' },
+      { status: 500 },
+    );
   }
 }
