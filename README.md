@@ -50,6 +50,8 @@ GOOGLE_CLIENT_ID="your-google-oauth-client-id"
 GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
 ```
 
+> ⚠️ **Do not commit your `.env` file.** Keep these secrets local by ensuring `.env` stays untracked (it is now covered in `.gitignore`) and add the same values to Vercel via **Settings → Environment Variables** for your production deployment.
+
 Create a Google OAuth Client (Web application) and add the callback URL `https://your-domain.vercel.app/api/auth/callback/google` (or `http://localhost:3000/api/auth/callback/google` for local development).
 
 See the 👉 [feature details and changelog](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/blob/main/CHANGELOG.md) 👈 for more.
