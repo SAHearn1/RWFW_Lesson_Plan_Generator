@@ -32,10 +32,10 @@ export async function POST(req: Request) {
     const { messages }: { messages: CoreMessage[] } = await req.json();
 
     const result = await streamText({
-      model: anthropic('claude-opus-4-1-20250805'),
+      model: anthropic('claude-3-opus-20240229'),
       system: masterPrompt,
       messages,
-      maxTokens: 32000,
+      maxTokens: 4096,
       temperature: 0.3,
     });
 
