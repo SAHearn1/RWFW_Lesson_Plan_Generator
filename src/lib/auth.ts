@@ -25,6 +25,12 @@ if (prismaUnavailable) {
   );
 }
 
+if (prismaUnavailable) {
+  console.warn(
+    'DATABASE_URL is not configured. Authentication will fall back to JWT-only sessions without database persistence.',
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: prisma ? PrismaAdapter(prisma) : undefined,
   providers: [
