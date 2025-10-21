@@ -1,62 +1,60 @@
-// File: src/lib/auth.ts
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import type { NextAuthOptions } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
 
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "@/lib/db";
+import { prisma } from '@/lib/db';
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (!googleClientId || !googleClientSecret) {
+  throw new Error('Google OAuth environment variables are not set');
+}
 
 export const authOptions: NextAuthOptions = {
-  // Use Prisma to store user accounts, sessions, etc.
   adapter: PrismaAdapter(prisma),
-  // We'll start with Google as a sign-in option. We can add more later.
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
     }),
   ],
-  // Define how user sessions are managed (JWT is standard and secure)
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
   },
-  // Callbacks allow you to add custom logic and control the session data
   callbacks: {
     async session({ token, session }) {
-      // --- THIS IS THE FIX ---
-      // We add a check to ensure session.user exists before assigning to it.
-      if (token && session.user) {
-        // The default User type in next-auth doesn't have an 'id'.
-        // We need to cast it to 'any' or extend the type to add it.
-        // For simplicity and to get you running, we'll cast here.
-        (session.user as any).id = token.id;
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture;
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        session.user.email = token.email ?? session.user.email;
+        session.user.name = token.name ?? session.user.name;
+        session.user.image = token.picture ?? session.user.image;
       }
+
       return session;
     },
     async jwt({ token, user }) {
-      const dbUser = await prisma.user.findFirst({
-        where: {
-          email: token.email,
-        },
-      });
+      const dbUser = token.email
+        ? await prisma.user.findUnique({
+            where: { email: token.email },
+          })
+        : null;
 
       if (!dbUser) {
         if (user) {
-          token.id = user.id;
+          token.sub = user.id;
         }
+
         return token;
       }
 
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-        picture: dbUser.image,
-      };
+      token.sub = dbUser.id;
+      token.name = dbUser.name ?? token.name;
+      token.email = dbUser.email ?? token.email;
+      token.picture = dbUser.image ?? token.picture;
+
+      return token;
     },
   },
-  // Point to your secret key in the environment variables
   secret: process.env.NEXTAUTH_SECRET,
 };
