@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 cat > src/types/next-auth.d.ts <<'EOF'
 import { DefaultSession, DefaultUser } from "next-auth";
+=======
+<<<<<<< HEAD
+import { DefaultSession, DefaultUser } from 'next-auth';
+=======
+import { DefaultSession, DefaultUser } from "next-auth";
+>>>>>>> d8e11c2 (chore(lint): eslint --fix import sort)
+>>>>>>> c255c5f (chore(lint): sort imports and remove unused import)
 
 declare module "next-auth" {
   interface Session {
