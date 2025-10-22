@@ -1,7 +1,6 @@
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-
 import { prisma } from '@/lib/db';
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -14,27 +13,11 @@ const prismaUnavailable = !prisma;
 const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
 
 if (googleConfigMissing) {
-  console.warn(
-    'Google OAuth env vars are not set. Auth routes will error until configured.'
-  );
+  console.warn('Google OAuth env vars are not set. Auth routes will error until configured.');
 }
 
 if (prismaUnavailable) {
-  console.warn(
-    'DATABASE_URL is not configured. Falling back to JWT-only sessions without DB persistence.'
-  );
-}
-
-if (prismaUnavailable) {
-  console.warn(
-    'DATABASE_URL is not configured. Authentication will fall back to JWT-only sessions without database persistence.',
-  );
-}
-
-if (prismaUnavailable) {
-  console.warn(
-    'DATABASE_URL is not configured. Authentication will fall back to JWT-only sessions without database persistence.',
-  );
+  console.warn('DATABASE_URL is not configured. Falling back to JWT-only sessions (no DB).');
 }
 
 export const authOptions: NextAuthOptions = {
@@ -45,9 +28,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: googleClientSecret ?? 'missing-google-client-secret',
     }),
   ],
-  session: {
-    strategy: sessionStrategy,
-  },
+  session: { strategy: sessionStrategy },
   callbacks: {
     async signIn() {
       if (googleConfigMissing) {
@@ -58,10 +39,8 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token, user }) {
-      // Guard
       if (!session.user) return session;
 
-      // Prefer the freshly-signed-in user object if present
       if (user) {
         session.user.id = user.id;
         session.user.email = user.email ?? session.user.email;
@@ -70,7 +49,6 @@ export const authOptions: NextAuthOptions = {
         return session;
       }
 
-      // Otherwise populate from token
       if (token?.sub) {
         session.user.id = token.sub;
         session.user.email = (token as any).email ?? session.user.email;
@@ -82,7 +60,6 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user }) {
-      // On initial sign-in, copy fields from `user` to the token
       if (user) {
         token.sub = user.id;
         token.name = user.name ?? token.name;
@@ -90,18 +67,11 @@ export const authOptions: NextAuthOptions = {
         (token as any).picture = user.image ?? (token as any).picture;
       }
 
-      // If no email, nothing more we can enrich
       if (!token.email) return token;
-
-      // If no Prisma/DB, stop here (JWT-only mode)
       if (!prisma) return token;
 
-      // Enrich token from DB
       try {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-        });
-
+        const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
         if (dbUser) {
           token.sub = dbUser.id;
           token.name = dbUser.name ?? token.name;
