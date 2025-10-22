@@ -10,7 +10,6 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
 const prismaUnavailable = !prisma;
 
-// Choose session strategy based on DB availability
 const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
 
 if (googleConfigMissing) {
