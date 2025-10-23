@@ -1,18 +1,19 @@
-// !STARTERCONF You should delete this page
-
-import { render, screen } from '@testing-library/react';
-
 import HomePage from '@/app/page';
 
-describe('Homepage', () => {
-  it('renders the brand hero content', () => {
-    render(<HomePage />);
+const redirect = jest.fn();
 
-    expect(
-      screen.getByRole('heading', { name: /Root Work Framework/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Begin Lesson Planning/i }),
-    ).toBeInTheDocument();
+jest.mock('next/navigation', () => ({
+  redirect: (...args: unknown[]) => redirect(...args),
+}));
+
+describe('Homepage', () => {
+  beforeEach(() => {
+    redirect.mockClear();
+  });
+
+  it('redirects visitors to the lesson plan generator', () => {
+    HomePage();
+
+    expect(redirect).toHaveBeenCalledWith('/generator');
   });
 });
