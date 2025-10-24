@@ -2,6 +2,7 @@ import 'server-only';
 
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import type { NextAuthOptions } from 'next-auth';
+import NextAuth from 'next-auth';
 import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 
@@ -16,14 +17,11 @@ const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 
 const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
 
-const configuredNextAuthUrl = process.env.NEXTAUTH_URL ?? process.env.VERCEL_URL;
-
-if (configuredNextAuthUrl) {
-  const normalisedUrl = configuredNextAuthUrl.startsWith('http')
-    ? configuredNextAuthUrl
-    : `https://${configuredNextAuthUrl}`;
-
-  process.env.NEXTAUTH_URL = normalisedUrl.replace(/\/$/, '');
+if (!process.env.NEXTAUTH_URL) {
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    process.env.NEXTAUTH_URL = `https://${vercelUrl}`;
+  }
 }
 
 if (googleConfigMissing) {
@@ -107,6 +105,8 @@ export const authOptions: NextAuthOptions = {
   },
   secret: nextAuthSecret,
 };
+
+export const authHandler = NextAuth(authOptions);
 
 export function getServerAuthSession() {
   return getServerSession(authOptions);
