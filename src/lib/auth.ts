@@ -1,9 +1,9 @@
 // src/lib/auth.ts
 import 'server-only';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import NextAuth, { getServerSession } from 'next-auth';
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -83,6 +83,8 @@ export const authOptions: NextAuthOptions = {
   },
   secret: nextAuthSecret,
 };
+
+export const authHandler = NextAuth(authOptions);
 
 export function getServerAuthSession() {
   return getServerSession(authOptions);

@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { SiteHeader } from '@/components/navigation/site-header';
-import { AuthProvider } from '@/components/providers/session-provider';
+import Providers from './providers';
 
 export const metadata: Metadata = {
   title: 'Rootwork Framework Lesson Plan Generator',
@@ -20,10 +20,10 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className='font-sans'>
-        <AuthProvider>
+        <Providers>
           <SiteHeader />
           <main>{children}</main>
-        </AuthProvider>
+        </Providers>
         <Analytics />
       </body>
     </html>
