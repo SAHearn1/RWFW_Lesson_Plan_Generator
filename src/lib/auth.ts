@@ -44,6 +44,9 @@ export const authOptions: NextAuthOptions = {
       clientSecret: googleClientSecret ?? 'missing-google-client-secret',
     }),
   ],
+  pages: {
+    error: '/auth/error',
+  },
   session: { strategy: sessionStrategy },
   callbacks: {
     async signIn() {

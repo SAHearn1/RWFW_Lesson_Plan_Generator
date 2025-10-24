@@ -10,7 +10,10 @@ jest.mock('next-auth', () => ({
 
 jest.mock('@/lib/auth', () => {
   const authOptions = Symbol('NextAuthOptions');
-  return { authOptions };
+  return {
+    authOptions,
+    getServerAuthSession: () => getServerSession(authOptions),
+  };
 });
 
 jest.mock('@/app/generator/sign-in-prompt', () => {
