@@ -1,13 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
 
 import { AuthButtons } from './auth-buttons';
 
 export async function SiteHeader() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuthSession();
 
   return (
     <header className='bg-brand-deep-canopy text-white'>
