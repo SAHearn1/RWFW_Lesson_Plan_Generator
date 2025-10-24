@@ -1,43 +1,49 @@
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import type { NextAuthOptions } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
+import "server-only";
 
-import { prisma } from '@/lib/db';
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import NextAuth, { getServerSession, type NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+
+import { prisma } from "@/lib/db";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
 const googleConfigMissing = !googleClientId || !googleClientSecret;
+
 const prismaUnavailable = !prisma;
+const sessionStrategy: "jwt" | "database" = prismaUnavailable ? "jwt" : "database";
+const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 
-const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
-
-if (googleConfigMissing) {
-  console.warn('Google OAuth env vars are not set. Auth routes will error until configured.');
+// Backfill NEXTAUTH_URL on Vercel if missing
+if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
+  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
 }
 
-if (prismaUnavailable) {
-  console.warn('DATABASE_URL is not configured. Falling back to JWT-only sessions (no DB).');
+interface RootAuthOptions extends NextAuthOptions {
+  trustHost?: boolean;
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: RootAuthOptions = {
   adapter: prisma ? PrismaAdapter(prisma) : undefined,
   providers: [
     GoogleProvider({
-      clientId: googleClientId ?? 'missing-google-client-id',
-      clientSecret: googleClientSecret ?? 'missing-google-client-secret',
+      clientId: googleClientId ?? "missing-google-client-id",
+      clientSecret: googleClientSecret ?? "missing-google-client-secret",
     }),
   ],
+  pages: {
+    // UI route, not an API path
+    error: "/auth/error",
+  },
   session: { strategy: sessionStrategy },
   callbacks: {
     async signIn() {
       if (googleConfigMissing) {
-        console.error('Google OAuth environment variables are not set.');
+        console.error("Google OAuth environment variables are not set.");
         return false;
       }
       return true;
     },
-
     async session({ session, token, user }) {
       if (!session.user) return session;
 
@@ -58,7 +64,6 @@ export const authOptions: NextAuthOptions = {
 
       return session;
     },
-
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
@@ -67,8 +72,7 @@ export const authOptions: NextAuthOptions = {
         (token as any).picture = user.image ?? (token as any).picture;
       }
 
-      if (!token.email) return token;
-      if (!prisma) return token;
+      if (!token.email || !prisma) return token;
 
       try {
         const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
@@ -78,12 +82,20 @@ export const authOptions: NextAuthOptions = {
           token.email = dbUser.email ?? token.email;
           (token as any).picture = dbUser.image ?? (token as any).picture;
         }
-      } catch (error) {
-        console.error('JWT callback DB lookup failed:', error);
+      } catch (err) {
+        console.error("JWT callback DB lookup failed:", err);
       }
 
       return token;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: nextAuthSecret,
+  trustHost: true,
 };
+
+// Export a handler for easy re-use in the route file
+export const authHandler = NextAuth(authOptions);
+
+export function getServerAuthSession() {
+  return getServerSession(authOptions);
+}

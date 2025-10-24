@@ -1,29 +1,35 @@
-import '@/styles/globals.css';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import type { ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/react";
 
-import { Analytics } from '@vercel/analytics/react';
-import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { SiteHeader } from "@/components/navigation/site-header";
+import { getServerAuthSession } from "@/lib/auth";
 
-import { SiteHeader } from '@/components/navigation/site-header';
-import { AuthProvider } from '@/components/providers/session-provider';
+import Providers from "./providers";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Rootwork Framework Lesson Plan Generator',
-  description: 'Healing-Centered Lesson Design',
+  title: "Rootwork Framework Lesson Plan Generator",
+  description: "Healing-Centered Lesson Design",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: ReactNode;
-}>) {
+}) {
+  const session = await getServerAuthSession();
+
   return (
-    <html lang='en'>
-      <body className='font-sans'>
-        <AuthProvider>
+    <html lang="en">
+      <body className={inter.className}>
+        <Providers session={session}>
           <SiteHeader />
           <main>{children}</main>
-        </AuthProvider>
+        </Providers>
         <Analytics />
       </body>
     </html>
