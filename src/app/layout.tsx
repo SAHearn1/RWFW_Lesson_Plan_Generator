@@ -1,30 +1,19 @@
-import '@/styles/globals.css';
+import { SessionProvider } from 'next-auth/react';
+import React from 'react';
 
-import { Analytics } from '@vercel/analytics/react';
-import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { getServerAuthSession } from '@/lib/auth';
 
-import { SiteHeader } from '@/components/navigation/site-header';
-import { AuthProvider } from '@/components/providers/session-provider';
-
-export const metadata: Metadata = {
-  title: 'Rootwork Framework Lesson Plan Generator',
-  description: 'Healing-Centered Lesson Design',
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getServerAuthSession();
+
   return (
-    <html lang='en'>
-      <body className='font-sans'>
-        <AuthProvider>
-          <SiteHeader />
-          <main>{children}</main>
-        </AuthProvider>
-        <Analytics />
+    <html>
+      <body>
+        <SessionProvider session={session}>{children}</SessionProvider>
       </body>
     </html>
   );
