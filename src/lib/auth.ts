@@ -2,6 +2,7 @@ import 'server-only';
 
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import type { NextAuthOptions } from 'next-auth';
+import NextAuth from 'next-auth';
 import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 
@@ -12,8 +13,16 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
 const googleConfigMissing = !googleClientId || !googleClientSecret;
 const prismaUnavailable = !prisma;
+const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 
 const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
+
+if (!process.env.NEXTAUTH_URL) {
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    process.env.NEXTAUTH_URL = `https://${vercelUrl}`;
+  }
+}
 
 if (googleConfigMissing) {
   console.warn('Google OAuth env vars are not set. Auth routes will error until configured.');
@@ -21,6 +30,12 @@ if (googleConfigMissing) {
 
 if (prismaUnavailable) {
   console.warn('DATABASE_URL is not configured. Falling back to JWT-only sessions (no DB).');
+}
+
+if (!nextAuthSecret) {
+  console.warn(
+    'NEXTAUTH_SECRET is not set. Sessions will be re-encrypted on every deploy until configured.'
+  );
 }
 
 export const authOptions: NextAuthOptions = {
@@ -88,8 +103,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: nextAuthSecret,
 };
+
+export const authHandler = NextAuth(authOptions);
 
 export function getServerAuthSession() {
   return getServerSession(authOptions);
