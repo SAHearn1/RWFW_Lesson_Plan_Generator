@@ -1,39 +1,22 @@
+// src/lib/auth.ts
 import 'server-only';
-
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import NextAuth, { getServerSession, type NextAuthOptions } from 'next-auth';
+import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-
+import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
 const googleConfigMissing = !googleClientId || !googleClientSecret;
+
 const prismaUnavailable = !prisma;
+const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
 const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 
-const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
-
-if (!process.env.NEXTAUTH_URL) {
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
-    process.env.NEXTAUTH_URL = `https://${vercelUrl}`;
-  }
-}
-
-if (googleConfigMissing) {
-  console.warn('Google OAuth env vars are not set. Auth routes will error until configured.');
-}
-
-if (prismaUnavailable) {
-  console.warn('DATABASE_URL is not configured. Falling back to JWT-only sessions (no DB).');
-}
-
-if (!nextAuthSecret) {
-  console.warn(
-    'NEXTAUTH_SECRET is not set. Sessions will be re-encrypted on every deploy until configured.'
-  );
+// Backfill NEXTAUTH_URL on Vercel if missing
+if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
+  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -45,6 +28,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   pages: {
+    // IMPORTANT: UI route, not an API route
     error: '/auth/error',
   },
   session: { strategy: sessionStrategy },
@@ -56,7 +40,6 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-
     async session({ session, token, user }) {
       if (!session.user) return session;
 
@@ -67,17 +50,14 @@ export const authOptions: NextAuthOptions = {
         session.user.image = user.image ?? session.user.image;
         return session;
       }
-
       if (token?.sub) {
         session.user.id = token.sub;
         session.user.email = (token as any).email ?? session.user.email;
         session.user.name = (token as any).name ?? session.user.name;
         session.user.image = (token as any).picture ?? session.user.image;
       }
-
       return session;
     },
-
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
@@ -85,9 +65,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email ?? token.email;
         (token as any).picture = user.image ?? (token as any).picture;
       }
-
-      if (!token.email) return token;
-      if (!prisma) return token;
+      if (!token.email || !prisma) return token;
 
       try {
         const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
@@ -97,17 +75,14 @@ export const authOptions: NextAuthOptions = {
           token.email = dbUser.email ?? token.email;
           (token as any).picture = dbUser.image ?? (token as any).picture;
         }
-      } catch (error) {
-        console.error('JWT callback DB lookup failed:', error);
+      } catch (err) {
+        console.error('JWT callback DB lookup failed:', err);
       }
-
       return token;
     },
   },
   secret: nextAuthSecret,
 };
-
-export const authHandler = NextAuth(authOptions);
 
 export function getServerAuthSession() {
   return getServerSession(authOptions);
