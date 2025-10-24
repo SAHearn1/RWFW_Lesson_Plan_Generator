@@ -1,13 +1,14 @@
+import "./globals.css";
+
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
-import { Analytics } from "@vercel/analytics/react";
 
 import { SiteHeader } from "@/components/navigation/site-header";
 import { getServerAuthSession } from "@/lib/auth";
 
 import Providers from "./providers";
-import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
