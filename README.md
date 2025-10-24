@@ -54,6 +54,38 @@ GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
 
 Create a Google OAuth Client (Web application) and add the callback URL `https://your-domain.vercel.app/api/auth/callback/google` (or `http://localhost:3000/api/auth/callback/google` for local development).
 
+### Troubleshooting NextAuth endpoints
+
+If you receive `Invalid regular expression flags` in the browser console while testing `/api/auth` routes, remember that the console treats bare strings that start and end with `/` as regular expression literals. Test with the browser address bar instead (`https://<your-domain>/api/auth/session`) or call fetch directly:
+
+```ts
+fetch('/api/auth/session')
+  .then((response) => response.json())
+  .then(console.log);
+```
+
+Seeing 404s on `/api/auth/*` usually means the NextAuth route is not being hit. Walk through the following checks:
+
+1. **Verify the handler file path.** It must live at `src/app/api/auth/[...nextauth]/route.ts`:
+
+   ```ts
+   import NextAuth from 'next-auth';
+   import { authOptions } from '@/lib/auth';
+
+   export const runtime = 'nodejs';
+   export const dynamic = 'force-dynamic';
+
+   const handler = NextAuth(authOptions);
+   export { handler as GET, handler as POST };
+   ```
+
+   Remove any stale `pages/api/auth/[...nextauth].ts` files so only a single handler exists.
+2. **Ensure API routes are enabled.** Do not set `output: 'export'` in `next.config.js`—that setting removes API routes.
+3. **Bypass middleware for auth routes.** If you add `src/middleware.ts`, make sure it returns `NextResponse.next()` when `pathname.startsWith('/api/auth')`, or exclude `api` in the matcher.
+4. **Avoid rewriting auth routes.** When using custom rewrites, prepend `{ source: '/api/:path*', destination: '/api/:path*' }` so `/api/auth/*` is untouched.
+5. **Use default basePath and pages.** Do not override `basePath` in `authOptions`, and if you configure `pages.error`, point it to a normal page route (not an API path).
+6. **Re-test in production.** Visit `https://<your-domain>/api/auth/session` for JSON and `https://<your-domain>/api/auth/signin` for the NextAuth UI.
+
 See the 👉 [feature details and changelog](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter/blob/main/CHANGELOG.md) 👈 for more.
 
 You can also check all of the **details and demos** on my blog post:
