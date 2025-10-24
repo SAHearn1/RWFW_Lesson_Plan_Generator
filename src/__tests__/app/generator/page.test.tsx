@@ -1,10 +1,17 @@
+import type { Session } from 'next-auth';
+
 import GeneratorPage from '@/app/generator/page';
 
-const getServerAuthSession = jest.fn();
+const getServerSession = jest.fn();
 
-jest.mock('@/lib/auth', () => ({
-  getServerAuthSession: (...args: unknown[]) => getServerAuthSession(...args),
+jest.mock('next-auth', () => ({
+  getServerSession: (...args: unknown[]) => getServerSession(...args),
 }));
+
+jest.mock('@/lib/auth', () => {
+  const authOptions = Symbol('NextAuthOptions');
+  return { authOptions };
+});
 
 jest.mock('@/app/generator/sign-in-prompt', () => {
   const SignInPrompt = (...args: unknown[]) => ['SignInPrompt', ...args];
@@ -16,6 +23,7 @@ jest.mock('@/app/generator/generator-client', () => ({
   default: (...args: unknown[]) => ['GeneratorClient', ...args],
 }));
 
+const { authOptions } = jest.requireMock('@/lib/auth') as { authOptions: symbol };
 const { SignInPrompt } = jest.requireMock('@/app/generator/sign-in-prompt') as {
   SignInPrompt: (...args: unknown[]) => unknown;
 };
@@ -25,28 +33,28 @@ const { default: GeneratorClient } = jest.requireMock('@/app/generator/generator
 
 describe('GeneratorPage', () => {
   beforeEach(() => {
-    getServerAuthSession.mockReset();
+    getServerSession.mockReset();
   });
 
   it('prompts visitors to sign in when no session is available', async () => {
-    getServerAuthSession.mockResolvedValueOnce(null);
+    getServerSession.mockResolvedValueOnce(null);
 
     const result = (await GeneratorPage()) as unknown as { type: unknown };
 
-    expect(getServerAuthSession).toHaveBeenCalledWith();
+    expect(getServerSession).toHaveBeenCalledWith(authOptions);
     expect(result.type).toBe(SignInPrompt);
   });
 
   it('renders the generator when a session exists', async () => {
-    const session = { user: { name: 'Test User' } };
-    getServerAuthSession.mockResolvedValueOnce(session);
+    const session = { user: { name: 'Test User' } } satisfies Partial<Session>;
+    getServerSession.mockResolvedValueOnce(session);
 
     const result = (await GeneratorPage()) as unknown as {
       type: unknown;
       props: { userName?: string | null };
     };
 
-    expect(getServerAuthSession).toHaveBeenCalledWith();
+    expect(getServerSession).toHaveBeenCalledWith(authOptions);
     expect(result.type).toBe(GeneratorClient);
     expect(result.props.userName).toBe('Test User');
   });
