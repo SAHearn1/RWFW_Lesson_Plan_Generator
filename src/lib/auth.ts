@@ -10,7 +10,7 @@ interface ExtendedJWT {
   name?: string;
   email?: string;
   picture?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 import { prisma } from "@/lib/db";
@@ -47,7 +47,7 @@ interface UserWithId {
 }
 
 export const authOptions: RootAuthOptions = {
-  adapter: !prismaUnavailable ? PrismaAdapter(prisma) : undefined,
+  adapter: !prismaUnavailable ? PrismaAdapter(prisma!) : undefined,
   providers: [
     GoogleProvider({
       clientId: googleClientId ?? "missing-google-client-id",
@@ -55,11 +55,11 @@ export const authOptions: RootAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token, user }) {
+    async session({ session, token, user }: { session: any; token: any; user?: UserWithId }) {
       if (!session.user) return session;
 
       if (user) {
-        session.user.id = (user as any).id;
+        session.user.id = (user as UserWithId).id;
         session.user.email = user.email ?? session.user.email;
         session.user.name = user.name ?? session.user.name;
         session.user.image = user.image ?? session.user.image;
@@ -93,10 +93,11 @@ export const authOptions: RootAuthOptions = {
         extToken.picture = (user as any).image ?? extToken.picture;
       }
 
-      if (!extToken.email || prismaUnavailable) return extToken;
+      if (!extToken.email || prismaUnavailable || !prisma) return extToken;
 
       try {
         const dbUser = await prisma.user.findUnique({ where: { email: extToken.email } });
+        
         if (dbUser) {
           extToken.sub = dbUser.id;
           extToken.name = dbUser.name ?? extToken.name;
