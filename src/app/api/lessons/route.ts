@@ -1,7 +1,5 @@
-import { getServerSession } from 'next-auth';
-
 import { masterPrompt } from '@/constants/prompts';
-import { authOptions } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
 
 type LessonMessage = {
   role: 'user' | 'assistant';
@@ -17,7 +15,7 @@ const jsonHeaders = {
 };
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuthSession();
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
