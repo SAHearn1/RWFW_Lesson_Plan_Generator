@@ -1,25 +1,6 @@
-2025-10-24T13:02:13.590Z eslint:cli CLI args: [ './src/lib/auth.ts', './src/app/api/auth/[...nextauth]/route.ts', '--debug' ]
-2025-10-24T13:02:13.590Z eslint:cli Using flat config? true
-2025-10-24T13:02:13.594Z eslint:cli Running on files
-2025-10-24T13:02:13.596Z eslint:eslint Using config loader LegacyConfigLoader
-2025-10-24T13:02:13.596Z eslint:eslint Using file patterns: ./src/lib/auth.ts,./src/app/api/auth/[...nextauth]/route.ts
-2025-10-24T13:02:13.596Z eslint:eslint Deleting cache file at /workspaces/RWFW_Lesson_Plan_Generator/.eslintcache
-2025-10-24T13:02:13.597Z eslint:config-loader Calculating config for file /workspaces/RWFW_Lesson_Plan_Generator/src/lib/auth.ts
-2025-10-24T13:02:13.597Z eslint:config-loader Searching for eslint.config.js
-2025-10-24T13:02:13.598Z eslint:config-loader Calculating config for file /workspaces/RWFW_Lesson_Plan_Generator/src/app/api/auth/[...nextauth]/route.ts
 
-Oops! Something went wrong! :(
+/workspaces/RWFW_Lesson_Plan_Generator/jest.config.js
+  1:1  error  Definition for rule '@typescript-eslint/no-var-requires' was not found  @typescript-eslint/no-var-requires
 
-ESLint: 9.38.0
-
-ESLint couldn't find an eslint.config.(js|mjs|cjs) file.
-
-From ESLint v9.0.0, the default configuration file is now eslint.config.js.
-If you are using a .eslintrc.* file, please follow the migration guide
-to update your configuration file to the new format:
-
-https://eslint.org/docs/latest/use/configure/migration-guide
-
-If you still have problems after following the migration guide, please stop by
-https://eslint.org/chat/help to chat with the team.
+✖ 1 problem (1 error, 0 warnings)
 
