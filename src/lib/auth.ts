@@ -19,7 +19,11 @@ if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
   process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
 }
 
-export const authOptions: NextAuthOptions = {
+interface RootAuthOptions extends NextAuthOptions {
+  trustHost?: boolean;
+}
+
+export const authOptions: RootAuthOptions = {
   adapter: prisma ? PrismaAdapter(prisma) : undefined,
   providers: [
     GoogleProvider({
@@ -86,6 +90,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: nextAuthSecret,
+  trustHost: true,
 };
 
 // Export a handler for easy re-use in the route file

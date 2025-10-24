@@ -54,6 +54,8 @@ GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
 
 Create a Google OAuth Client (Web application) and add the callback URL `https://your-domain.vercel.app/api/auth/callback/google` (or `http://localhost:3000/api/auth/callback/google` for local development).
 
+> ✅ **Double-check your OAuth settings.** The callback URL must match the value configured in the Google Cloud console *and* the `NEXTAUTH_URL` environment variable. When using Vercel previews or a custom domain, update both places so Google redirects back to your deployment successfully.
+
 ### Troubleshooting NextAuth endpoints
 
 If you receive `Invalid regular expression flags` in the browser console while testing `/api/auth` routes, remember that the console treats bare strings that start and end with `/` as regular expression literals. Test with the browser address bar instead (`https://<your-domain>/api/auth/session`) or call fetch directly:

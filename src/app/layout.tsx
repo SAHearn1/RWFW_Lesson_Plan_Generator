@@ -3,7 +3,15 @@ import React from 'react';
 
 import { getServerAuthSession } from '@/lib/auth';
 
-export default async function RootLayout({
+import { SiteHeader } from '@/components/navigation/site-header';
+import Providers from './providers';
+
+export const metadata: Metadata = {
+  title: 'Rootwork Framework Lesson Plan Generator',
+  description: 'Healing-Centered Lesson Design',
+};
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -11,9 +19,13 @@ export default async function RootLayout({
   const session = await getServerAuthSession();
 
   return (
-    <html>
-      <body>
-        <SessionProvider session={session}>{children}</SessionProvider>
+    <html lang='en'>
+      <body className='font-sans'>
+        <Providers>
+          <SiteHeader />
+          <main>{children}</main>
+        </Providers>
+        <Analytics />
       </body>
     </html>
   );
