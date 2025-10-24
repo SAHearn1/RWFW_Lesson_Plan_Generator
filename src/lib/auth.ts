@@ -1,5 +1,9 @@
+import 'server-only';
+
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import type { NextAuthOptions } from 'next-auth';
+import NextAuth from 'next-auth';
+import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 
 import { prisma } from '@/lib/db';
@@ -11,6 +15,13 @@ const googleConfigMissing = !googleClientId || !googleClientSecret;
 const prismaUnavailable = !prisma;
 
 const sessionStrategy: 'jwt' | 'database' = prismaUnavailable ? 'jwt' : 'database';
+
+if (!process.env.NEXTAUTH_URL) {
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    process.env.NEXTAUTH_URL = `https://${vercelUrl}`;
+  }
+}
 
 if (googleConfigMissing) {
   console.warn('Google OAuth env vars are not set. Auth routes will error until configured.');
@@ -87,3 +98,9 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+export const authHandler = NextAuth(authOptions);
+
+export function getServerAuthSession() {
+  return getServerSession(authOptions);
+}
