@@ -5,6 +5,8 @@ import { type NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import GoogleProvider from "next-auth/providers/google";
 
+import { prisma } from "@/lib/db";
+
 interface ExtendedJWT {
   sub?: string;
   name?: string;
@@ -13,12 +15,9 @@ interface ExtendedJWT {
   [key: string]: unknown;
 }
 
-import { prisma } from "@/lib/db";
-
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
-
 const prismaUnavailable = typeof prisma === "undefined" || prisma === null;
 const sessionStrategy: "jwt" | "database" = prismaUnavailable ? "jwt" : "database";
 const nextAuthSecret = process.env.NEXTAUTH_SECRET;
@@ -61,7 +60,6 @@ export const authOptions: RootAuthOptions = {
   callbacks: {
     async session({ session, token, user }: { session: any; token: any; user?: UserWithId }) {
       if (!session.user) return session;
-
       if (user) {
         session.user.id = (user as UserWithId).id;
         session.user.email = user.email ?? session.user.email;
@@ -69,9 +67,7 @@ export const authOptions: RootAuthOptions = {
         session.user.image = user.image ?? session.user.image;
         return session;
       }
-
       const extToken = token as ExtendedJWT;
-
       if (extToken?.sub) {
         session.user.id = extToken.sub;
       }
@@ -84,21 +80,17 @@ export const authOptions: RootAuthOptions = {
       if (extToken.picture) {
         session.user.image = extToken.picture ?? session.user.image;
       }
-
       return session;
     },
     async jwt({ token, user }) {
       const extToken = token as ExtendedJWT;
-
       if (user) {
         extToken.sub = (user as any).id;
         extToken.name = (user as any).name ?? extToken.name;
         extToken.email = (user as any).email ?? extToken.email;
         extToken.picture = (user as any).image ?? extToken.picture;
       }
-
       if (!extToken.email || prismaUnavailable || !prisma) return extToken;
-
       try {
         const dbUser = await prisma.user.findUnique({ where: { email: extToken.email } });
         
