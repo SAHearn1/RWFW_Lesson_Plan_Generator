@@ -54,6 +54,10 @@ export const authOptions: RootAuthOptions = {
       clientSecret: googleClientSecret ?? "missing-google-client-secret",
     }),
   ],
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
   callbacks: {
     async session({ session, token, user }: { session: any; token: any; user?: UserWithId }) {
       if (!session.user) return session;
