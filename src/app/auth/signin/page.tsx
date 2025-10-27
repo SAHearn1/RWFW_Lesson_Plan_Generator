@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { signIn } from 'next-auth/react';
 import { FormEvent, useState } from 'react';
 
 export default function SignInPage() {
@@ -340,7 +339,7 @@ export default function SignInPage() {
                 <a href="#" className="text-[#d4af37] no-underline hover:underline">
                   Privacy Policy
                 </a>
-                . We&apos;ll never share your lesson plans or personal data without your
+                . We'll never share your lesson plans or personal data without your
                 permission.
               </p>
             </form>
