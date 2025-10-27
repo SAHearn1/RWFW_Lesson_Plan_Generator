@@ -20,8 +20,8 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen bg-[#1a3a2e]">
       {/* Hero Section */}
-      <div className="bg-[#1a3a2e] text-white px-8 py-16 text-center">
-        <div className="w-[120px] h-[120px] mx-auto mb-8">
+      <div className="bg-[#1a3a2e] px-8 py-16 text-center text-white">
+        <div className="mx-auto mb-8 h-[120px] w-[120px]">
           <Image
             src="/Emblem_of_Knowledge_and_Balance.png"
             alt="Root Work Framework Logo - Emblem of Knowledge and Balance"
@@ -30,10 +30,10 @@ export default function SignInPage() {
             priority
           />
         </div>
-        <h1 className="text-5xl mb-4 font-normal tracking-wide font-serif">
+        <h1 className="font-serif text-5xl font-normal tracking-wide">
           Root Work Framework
         </h1>
-        <p className="text-lg max-w-2xl mx-auto opacity-90 leading-relaxed font-serif">
+        <p className="mx-auto max-w-2xl font-serif text-lg leading-relaxed opacity-90">
           A dual-purpose pedagogy that weaves academic rigor with healing-centered,
           biophilic practice. This platform is your partner in creating truly
           transformative learning experiences.
@@ -41,9 +41,9 @@ export default function SignInPage() {
       </div>
 
       {/* Auth Container */}
-      <div className="bg-[#f5f0e1] px-8 py-16 min-h-[60vh]">
-        <div className="max-w-[500px] mx-auto bg-white rounded-lg p-12 shadow-lg">
-          <h2 className="text-2xl text-[#1a3a2e] mb-8 text-center font-serif">
+      <div className="bg-[#f5f0e1] px-8 py-16">
+        <div className="mx-auto max-w-[500px] rounded-lg bg-white p-12 shadow-lg">
+          <h2 className="mb-8 text-center font-serif text-2xl text-[#1a3a2e]">
             Welcome Back
           </h2>
 
@@ -51,7 +51,7 @@ export default function SignInPage() {
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full p-4 border-2 border-[#e0d5b7] bg-[#fefdfb] rounded flex items-center justify-center gap-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-3 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] p-4 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               width="20"
@@ -81,7 +81,7 @@ export default function SignInPage() {
           </button>
 
           {/* Info Text */}
-          <p className="text-sm text-[#6b6b6b] mt-6 leading-relaxed text-center font-serif">
+          <p className="mt-6 text-center font-serif text-sm leading-relaxed text-[#6b6b6b]">
             By signing in, you agree to our{' '}
             <a href="#" className="text-[#d4af37] no-underline hover:underline">
               Terms of Service
@@ -90,15 +90,15 @@ export default function SignInPage() {
             <a href="#" className="text-[#d4af37] no-underline hover:underline">
               Privacy Policy
             </a>
-            . We&apos;ll never share your lesson plans or personal data without your
+            . We will never share your lesson plans or personal data without your
             permission.
           </p>
 
           {/* Back Link */}
-          <div className="text-center mt-8 pt-8 border-t border-[#e0d5b7]">
+          <div className="mt-8 border-t border-[#e0d5b7] pt-8 text-center">
             <a
               href="/"
-              className="text-[#d4af37] no-underline text-base font-serif hover:underline"
+              className="font-serif text-base text-[#d4af37] no-underline hover:underline"
             >
               ← Back to Generator Home
             </a>
@@ -108,7 +108,7 @@ export default function SignInPage() {
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&display=swap');
-        
+
         .font-serif {
           font-family: 'EB Garamond', 'Garamond', 'Georgia', 'Times New Roman', serif;
         }
@@ -116,3 +116,4 @@ export default function SignInPage() {
     </div>
   );
 }
+
