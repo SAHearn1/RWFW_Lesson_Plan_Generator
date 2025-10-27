@@ -358,7 +358,7 @@ export default function SignInPage() {
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&display=swap');
-        
+
         .font-serif {
           font-family: 'EB Garamond', 'Garamond', 'Georgia', 'Times New Roman', serif;
         }
@@ -366,3 +366,4 @@ export default function SignInPage() {
     </div>
   );
 }
+
