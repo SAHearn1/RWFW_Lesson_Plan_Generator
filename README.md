@@ -136,7 +136,37 @@ Install dependencies with your preferred package manager. The project and CI now
 npm install
 ```
 
-### 3. Run the development server
+### 3. Install Specify CLI (Optional)
+
+This project supports [GitHub Spec Kit](https://github.com/github/spec-kit) for spec-driven development. To use the specify CLI tool:
+
+1. Install [uv](https://docs.astral.sh/uv/) (Python package manager):
+
+   ```bash
+   pip install uv
+   ```
+
+2. Install specify-cli:
+
+   ```bash
+   uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+   ```
+
+3. Verify installation:
+
+   ```bash
+   specify check
+   ```
+
+The Specify CLI enables you to:
+- Create specifications for features using `/speckit.specify`
+- Generate technical implementation plans with `/speckit.plan`
+- Break down work into actionable tasks with `/speckit.tasks`
+- Execute implementations with `/speckit.implement`
+
+For more information, visit the [Spec Kit documentation](https://github.github.io/spec-kit/).
+
+### 4. Run the development server
 
 You can start the server using this command:
 
@@ -146,7 +176,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. You can start editing the page by modifying `src/pages/index.tsx`.
 
-### 4. Change defaults
+### 5. Change defaults
 
 There are some things you need to change including title, urls, favicons, etc.
 
@@ -154,7 +184,7 @@ Find all comments with !STARTERCONF, then follow the guide.
 
 Don't forget to change the package name in package.json
 
-### 5. Commit Message Convention
+### 6. Commit Message Convention
 
 This starter is using [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/), it is mandatory to use it to commit changes.
 

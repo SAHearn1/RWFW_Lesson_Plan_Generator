@@ -29,6 +29,20 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install uv
+        run: pip install uv
+
+      - name: 🌱 Install specify-cli
+        run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+
+      - name: ✅ Verify specify-cli installation
+        run: specify check
+
       - name: 📥 Install deps
         run: npm install
 
