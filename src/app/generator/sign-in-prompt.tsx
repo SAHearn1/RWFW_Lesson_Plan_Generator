@@ -14,6 +14,16 @@ export function SignInPrompt() {
         <div className='mt-8 flex justify-center'>
           <AuthButtons isAuthenticated={false} />
         </div>
+        <div className='mt-6 flex justify-center'>
+          <a
+            href='https://SAHearn1.github.io/Lesson-plan-explainer/'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='rounded bg-[#d4af37] px-6 py-3 text-base font-serif font-semibold text-[#1a3a2e] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#c9a32a] hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#d4af37]/30'
+          >
+            Lesson Plan Overview
+          </a>
+        </div>
       </div>
     </div>
   );
