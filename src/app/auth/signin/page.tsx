@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { signIn } from 'next-auth/react';
 import { FormEvent, useState } from 'react';
 
 export default function SignInPage() {
@@ -115,7 +116,7 @@ export default function SignInPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg
                     width="18"
@@ -146,7 +147,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={handleFacebookClick}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                 >
                   <svg
                     width="18"
@@ -156,7 +157,7 @@ export default function SignInPage() {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.16.256-.288.702-.384 1.335-.096.632-.098 1.351-.098 2.154v1.26h3.146l-.44 3.667h-2.705v7.98h-3.847z"
+                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.383-.374.569-.374 1.398v1.236h3.478l-.606 3.667h-2.872v7.98h-4.144z"
                       fill="#1877F2"
                     />
                   </svg>
@@ -178,7 +179,7 @@ export default function SignInPage() {
                     name="email"
                     required
                     placeholder="you@example.com"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                   />
                 </label>
                 <label className="block font-serif text-base text-[#1a3a2e]">
@@ -188,7 +189,7 @@ export default function SignInPage() {
                     name="password"
                     required
                     placeholder="Enter your password"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                   />
                 </label>
               </div>
@@ -228,7 +229,7 @@ export default function SignInPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg
                     width="18"
@@ -259,7 +260,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={handleFacebookClick}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                 >
                   <svg
                     width="18"
@@ -269,7 +270,7 @@ export default function SignInPage() {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.16.256-.288.702-.384 1.335-.096.632-.098 1.351-.098 2.154v1.26h3.146l-.44 3.667h-2.705v7.98h-3.847z"
+                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.383-.374.569-.374 1.398v1.236h3.478l-.606 3.667h-2.872v7.98h-4.144z"
                       fill="#1877F2"
                     />
                   </svg>
@@ -291,7 +292,7 @@ export default function SignInPage() {
                     name="name"
                     required
                     placeholder="Jane Educator"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                   />
                 </label>
                 <label className="block font-serif text-base text-[#1a3a2e]">
@@ -301,7 +302,7 @@ export default function SignInPage() {
                     name="email"
                     required
                     placeholder="you@example.com"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                   />
                 </label>
                 <label className="block font-serif text-base text-[#1a3a2e]">
@@ -312,7 +313,7 @@ export default function SignInPage() {
                     minLength={8}
                     required
                     placeholder="At least 8 characters"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37]"
                   />
                 </label>
               </div>
