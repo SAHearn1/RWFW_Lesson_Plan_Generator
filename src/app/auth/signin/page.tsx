@@ -81,22 +81,26 @@ export default function SignInPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('signin')}
-                className={`px-4 py-4 text-center text-lg font-serif transition-all ${
+                className={
+                  `px-4 py-4 text-center text-lg font-serif transition-all ${
                   activeTab === 'signin'
                     ? 'border-b-4 border-[#d4af37] text-[#1a3a2e]'
                     : 'border-b-4 border-transparent text-[#8b8b8b] hover:text-[#1a3a2e]'
-                }`}
+                }`
+                }
               >
                 Sign In
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('signup')}
-                className={`px-4 py-4 text-center text-lg font-serif transition-all ${
+                className={
+                  `px-4 py-4 text-center text-lg font-serif transition-all ${
                   activeTab === 'signup'
                     ? 'border-b-4 border-[#d4af37] text-[#1a3a2e]'
                     : 'border-b-4 border-transparent text-[#8b8b8b] hover:text-[#1a3a2e]'
-                }`}
+                }`
+                }
               >
                 Create Account
               </button>
@@ -111,7 +115,7 @@ export default function SignInPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2 disabled:opacity-50"
                 >
                   <svg
                     width="18"
@@ -142,7 +146,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={handleFacebookClick}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-white"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                 >
                   <svg
                     width="18"
@@ -152,7 +156,7 @@ export default function SignInPage() {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"
+                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.16.256-.288.702-.384 1.335-.096.632-.098 1.351-.098 2.154v1.26h3.146l-.44 3.667h-2.705v7.98h-3.847z"
                       fill="#1877F2"
                     />
                   </svg>
@@ -174,7 +178,7 @@ export default function SignInPage() {
                     name="email"
                     required
                     placeholder="you@example.com"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#d4af37]/20"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                   />
                 </label>
                 <label className="block font-serif text-base text-[#1a3a2e]">
@@ -184,7 +188,7 @@ export default function SignInPage() {
                     name="password"
                     required
                     placeholder="Enter your password"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#d4af37]/20"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                   />
                 </label>
               </div>
@@ -209,7 +213,7 @@ export default function SignInPage() {
 
               <button
                 type="submit"
-                className="w-full rounded bg-[#d4af37] px-4 py-3 text-lg font-serif text-[#1a3a2e] transition-all hover:-translate-y-0.5 hover:bg-[#c9a32a] hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#d4af37]/30"
+                className="w-full rounded bg-[#d4af37] px-4 py-3 text-lg font-serif text-[#1a3a2e] transition-all hover:-translate-y-0.5 hover:bg-[#c9a32a] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
               >
                 Sign In
               </button>
@@ -224,7 +228,7 @@ export default function SignInPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2 disabled:opacity-50"
                 >
                   <svg
                     width="18"
@@ -255,7 +259,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={handleFacebookClick}
-                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-white"
+                  className="flex items-center justify-center gap-2 rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-4 py-3 font-serif text-base text-[#1a3a2e] transition-all hover:border-[#d4af37] hover:bg-[#fefdfb] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                 >
                   <svg
                     width="18"
@@ -265,7 +269,7 @@ export default function SignInPage() {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"
+                      d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.16.256-.288.702-.384 1.335-.096.632-.098 1.351-.098 2.154v1.26h3.146l-.44 3.667h-2.705v7.98h-3.847z"
                       fill="#1877F2"
                     />
                   </svg>
@@ -287,7 +291,7 @@ export default function SignInPage() {
                     name="name"
                     required
                     placeholder="Jane Educator"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#d4af37]/20"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                   />
                 </label>
                 <label className="block font-serif text-base text-[#1a3a2e]">
@@ -297,7 +301,7 @@ export default function SignInPage() {
                     name="email"
                     required
                     placeholder="you@example.com"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#d4af37]/20"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                   />
                 </label>
                 <label className="block font-serif text-base text-[#1a3a2e]">
@@ -308,7 +312,7 @@ export default function SignInPage() {
                     minLength={8}
                     required
                     placeholder="At least 8 characters"
-                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#d4af37]/20"
+                    className="mt-2 w-full rounded border-2 border-[#e0d5b7] bg-[#fefdfb] px-3 py-3 text-base font-serif text-[#1a3a2e] transition-all placeholder:text-[#a8a8a8] focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
                   />
                 </label>
               </div>
@@ -325,21 +329,17 @@ export default function SignInPage() {
 
               <button
                 type="submit"
-                className="w-full rounded bg-[#d4af37] px-4 py-3 text-lg font-serif text-[#1a3a2e] transition-all hover:-translate-y-0.5 hover:bg-[#c9a32a] hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#d4af37]/30"
+                className="w-full rounded bg-[#d4af37] px-4 py-3 text-lg font-serif text-[#1a3a2e] transition-all hover:-translate-y-0.5 hover:bg-[#c9a32a] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:ring-offset-2"
               >
                 Create Account
               </button>
 
               <p className="text-sm leading-relaxed text-[#6b6b6b] font-serif">
                 By creating an account, you agree to our{' '}
-                <a href="#" className="text-[#d4af37] no-underline hover:underline">
-                  Terms of Service
-                </a>{' '}
+                <a href="#" className="text-[#d4af37] no-underline hover:underline">Terms of Service</a>{' '}
                 and{' '}
-                <a href="#" className="text-[#d4af37] no-underline hover:underline">
-                  Privacy Policy
-                </a>
-                . We'll never share your lesson plans or personal data without your
+                <a href="#" className="text-[#d4af37] no-underline hover:underline">Privacy Policy</a>
+                . We&apos;ll never share your lesson plans or personal data without your
                 permission.
               </p>
             </form>
@@ -366,4 +366,3 @@ export default function SignInPage() {
     </div>
   );
 }
-
