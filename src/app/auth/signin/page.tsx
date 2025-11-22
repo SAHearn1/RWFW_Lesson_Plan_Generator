@@ -1,17 +1,18 @@
-'use client';
-
 import React from 'react';
-
+import { GoogleButton, FacebookButton } from './SocialButtons';
+// TODO: Replace this placeholder with actual signIn import
+// Placeholder implementation
 const SignInPage = () => {
-    // TODO: Replace this with the actual Firebase signIn function
-    const handleSignIn = async () => {
-        console.log('Firebase signIn implementation needed here.');
-    };
-
     return (
-        <div>
+        <div className="signin-page">
             <h1>Sign In</h1>
-            <button onClick={handleSignIn}>Sign In with Firebase</button>
+            <form>
+                <input type="email" placeholder="Email" required />
+                <input type="password" placeholder="Password" required />
+                <button type="submit">Sign In</button>
+            </form>
+            <GoogleButton />
+            <FacebookButton />
         </div>
     );
 };
