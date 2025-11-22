@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { FormEvent, useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { FormEvent, useState } from 'react';
 
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
