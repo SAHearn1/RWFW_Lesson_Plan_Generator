@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { FormEvent, useState } from 'react';
+import { signIn } from 'next-auth/react';
 
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
