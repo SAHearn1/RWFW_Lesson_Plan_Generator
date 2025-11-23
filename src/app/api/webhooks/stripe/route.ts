@@ -4,18 +4,26 @@ import Stripe from 'stripe';
 
 import { prisma } from '@/lib/db';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-11-17.clover',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 // Disable body parsing, we need the raw body for signature verification
 export const runtime = 'nodejs';
 
+// Lazy initialize Stripe client
+function getStripeClient() {
+  const apiKey = process.env.STRIPE_SECRET_KEY;
+  if (!apiKey) {
+    throw new Error('STRIPE_SECRET_KEY not configured');
+  }
+  return new Stripe(apiKey, {
+    apiVersion: '2025-11-17.clover',
+  });
+}
+
 export async function POST(req: Request) {
   try {
+    // Initialize Stripe client
+    const stripe = getStripeClient();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
     // Get the raw body
     const body = await req.text();
     const headersList = await headers();
@@ -64,7 +72,7 @@ export async function POST(req: Request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutSessionCompleted(session);
+        await handleCheckoutSessionCompleted(stripe, session);
         break;
       }
 
@@ -88,13 +96,13 @@ export async function POST(req: Request) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
-        await handleInvoicePaymentSucceeded(invoice);
+        await handleInvoicePaymentSucceeded(stripe, invoice);
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        await handleInvoicePaymentFailed(invoice);
+        await handleInvoicePaymentFailed(stripe, invoice);
         break;
       }
 
@@ -123,6 +131,7 @@ export async function POST(req: Request) {
 // Event Handlers
 
 async function handleCheckoutSessionCompleted(
+  stripe: Stripe,
   session: Stripe.Checkout.Session
 ) {
   if (!prisma) {
@@ -306,7 +315,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('[STRIPE_WEBHOOK] User downgraded to USER role');
 }
 
-async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Invoice) {
   if (!prisma) {
     console.error('[STRIPE_WEBHOOK] Database not available');
     return;
@@ -354,7 +363,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('[STRIPE_WEBHOOK] Subscription renewed successfully');
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+async function handleInvoicePaymentFailed(stripe: Stripe, invoice: Stripe.Invoice) {
   if (!prisma) {
     console.error('[STRIPE_WEBHOOK] Database not available');
     return;
