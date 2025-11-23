@@ -57,8 +57,8 @@ export default function SignInPage() {
       <div className="bg-[#1a3a2e] text-white px-6 py-16 text-center">
         <div className="h-[120px] w-[120px] mx-auto mb-8">
           <Image
-            src="/Emblem_of_Knowledge_and_Balance.png"
-            alt="Root Work Framework Logo - Emblem of Knowledge and Balance"
+            src="/images/rwfw-logo-1.jpg"
+            alt="Root Work Framework Logo"
             width={120}
             height={120}
             priority
