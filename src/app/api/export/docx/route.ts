@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { createDocx } from '@/lib/document-builder';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { markdown, title } = await req.json();
