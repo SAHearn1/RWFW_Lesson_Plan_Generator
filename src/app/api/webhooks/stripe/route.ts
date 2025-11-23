@@ -37,6 +37,14 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!prisma) {
+      console.error('[STRIPE_WEBHOOK] Database not configured');
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      );
+    }
+
     // Verify the webhook signature
     let event: Stripe.Event;
     try {
