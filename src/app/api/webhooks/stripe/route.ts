@@ -145,7 +145,7 @@ async function handleCheckoutSessionCompleted(
   }
 
   // Retrieve the full subscription details
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
   // Find user by email (from session) or create/update subscription
   const customerEmail = session.customer_email || session.customer_details?.email;
@@ -172,13 +172,13 @@ async function handleCheckoutSessionCompleted(
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
       status: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodEnd: new Date((subscription.current_period_end as number) * 1000),
     },
     update: {
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
       status: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodEnd: new Date((subscription.current_period_end as number) * 1000),
     },
   });
 
@@ -222,7 +222,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       data: {
         stripeSubscriptionId: subscription.id,
         status: subscription.status,
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodEnd: new Date(((subscription as any).current_period_end as number) * 1000),
       },
     });
 
@@ -258,7 +258,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     where: { id: existingSubscription.id },
     data: {
       status: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodEnd: new Date(((subscription as any).current_period_end as number) * 1000),
     },
   });
 
@@ -315,9 +315,9 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('[STRIPE_WEBHOOK] Invoice payment succeeded:', invoice.id);
 
   const subscriptionId =
-    typeof invoice.subscription === 'string'
-      ? invoice.subscription
-      : invoice.subscription?.id;
+    typeof (invoice as any).subscription === 'string'
+      ? (invoice as any).subscription
+      : (invoice as any).subscription?.id;
 
   if (!subscriptionId) {
     console.log('[STRIPE_WEBHOOK] No subscription associated with invoice');
@@ -325,7 +325,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   }
 
   // Retrieve subscription to get current period end
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
   const existingSubscription = await prisma.subscription.findUnique({
     where: { stripeSubscriptionId: subscriptionId },
@@ -341,7 +341,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     where: { id: existingSubscription.id },
     data: {
       status: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodEnd: new Date((subscription.current_period_end as number) * 1000),
     },
   });
 
@@ -363,9 +363,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log('[STRIPE_WEBHOOK] Invoice payment failed:', invoice.id);
 
   const subscriptionId =
-    typeof invoice.subscription === 'string'
-      ? invoice.subscription
-      : invoice.subscription?.id;
+    typeof (invoice as any).subscription === 'string'
+      ? (invoice as any).subscription
+      : (invoice as any).subscription?.id;
 
   if (!subscriptionId) {
     console.log('[STRIPE_WEBHOOK] No subscription associated with invoice');
@@ -382,7 +382,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   }
 
   // Update subscription status to past_due or unpaid
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
   await prisma.subscription.update({
     where: { id: existingSubscription.id },
