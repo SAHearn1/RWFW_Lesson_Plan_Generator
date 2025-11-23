@@ -1,8 +1,8 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 
 export default function Home() {
