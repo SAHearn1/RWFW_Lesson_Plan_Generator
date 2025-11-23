@@ -1,6 +1,7 @@
 'use client';
 
-import { signIn, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 type AuthButtonsProps = {
@@ -10,14 +11,10 @@ type AuthButtonsProps = {
 
 export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
-  const handleSignIn = async () => {
-    try {
-      setIsSubmitting(true);
-      await signIn('google', { callbackUrl: '/generator' });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSignIn = () => {
+    router.push('/auth/signin');
   };
 
   const handleSignOut = async () => {
@@ -50,10 +47,9 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
         <button
           type='button'
           onClick={handleSignIn}
-          disabled={isSubmitting}
           className='rounded-md bg-brand-gold-leaf px-3 py-1.5 text-sm font-semibold text-brand-deep-canopy shadow-sm transition hover:bg-white disabled:opacity-60'
         >
-          {isSubmitting ? 'Opening…' : 'Sign in'}
+          Sign in
         </button>
       )}
     </div>
