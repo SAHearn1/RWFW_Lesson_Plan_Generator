@@ -125,6 +125,11 @@ export async function POST(req: Request) {
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
 ) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Checkout session completed:', session.id);
 
   const customerId =
@@ -187,6 +192,11 @@ async function handleCheckoutSessionCompleted(
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Subscription created:', subscription.id);
 
   const customerId =
@@ -227,6 +237,11 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Subscription updated:', subscription.id);
 
   const existingSubscription = await prisma.subscription.findUnique({
@@ -258,6 +273,11 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Subscription deleted:', subscription.id);
 
   const existingSubscription = await prisma.subscription.findUnique({
@@ -287,6 +307,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Invoice payment succeeded:', invoice.id);
 
   const subscriptionId =
@@ -330,6 +355,11 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Invoice payment failed:', invoice.id);
 
   const subscriptionId =
@@ -372,6 +402,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 async function handleSubscriptionTrialWillEnd(subscription: Stripe.Subscription) {
+  if (!prisma) {
+    console.error('[STRIPE_WEBHOOK] Database not available');
+    return;
+  }
+
   console.log('[STRIPE_WEBHOOK] Subscription trial will end:', subscription.id);
 
   // This is where you could send an email notification to the user
