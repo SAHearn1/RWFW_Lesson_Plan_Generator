@@ -25,7 +25,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: [...fontFamily.sans],
-        serif: ['Merriweather', ...fontFamily.serif],
+        serif: ['var(--font-eb-garamond)', 'EB Garamond', 'Garamond', 'Georgia', ...fontFamily.serif],
       },
       boxShadow: {
         brand:
