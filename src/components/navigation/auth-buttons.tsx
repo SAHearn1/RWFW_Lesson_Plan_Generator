@@ -14,7 +14,7 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const handleSignIn = async () => {
     try {
       setIsSubmitting(true);
-      await signIn('google', { callbackUrl: '/generator' });
+      await signIn('google', { callbackUrl: '/' });
     } finally {
       setIsSubmitting(false);
     }
