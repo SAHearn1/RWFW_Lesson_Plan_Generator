@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import { FormEvent, useState } from 'react';
 
+import { buildSiteUrl } from '@/lib/site-url';
+
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');

@@ -3,6 +3,8 @@
 import { signIn, signOut } from 'next-auth/react';
 import { useState } from 'react';
 
+import { buildSiteUrl } from '@/lib/site-url';
+
 type AuthButtonsProps = {
   isAuthenticated: boolean;
   userName?: string | null;
