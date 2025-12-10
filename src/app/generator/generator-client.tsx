@@ -161,6 +161,16 @@ export default function GeneratorClient({ userName }: GeneratorClientProps) {
           <p className='mx-auto mt-4 max-w-2xl text-lg text-slate-700'>
             Weaving academic rigor with healing-centered, biophilic practice.
           </p>
+          <div className='mt-6 flex justify-center'>
+            <a
+              href='https://sahearn1.github.io/Lesson-plan-explainer'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='rounded bg-[#d4af37] px-6 py-3 text-base font-serif font-semibold text-[#1a3a2e] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#c9a32a] hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#d4af37]/30'
+            >
+              Lesson Plan Overview
+            </a>
+          </div>
           {userName && (
             <p className='mt-2 text-base text-brand-evergreen'>
               Welcome back, <span className='font-semibold'>{userName}</span>!
