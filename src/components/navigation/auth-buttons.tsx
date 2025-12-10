@@ -12,18 +12,26 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignIn = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/generator`
+      : '/generator';
+
     try {
       setIsSubmitting(true);
-      await signIn('google', { callbackUrl: '/generator' });
+      await signIn('google', { callbackUrl });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSignOut = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/`
+      : '/';
+
     try {
       setIsSubmitting(true);
-      await signOut({ callbackUrl: '/' });
+      await signOut({ callbackUrl });
     } finally {
       setIsSubmitting(false);
     }

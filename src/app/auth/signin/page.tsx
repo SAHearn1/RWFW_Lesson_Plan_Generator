@@ -9,9 +9,13 @@ export default function SignInPage() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
 
   const handleGoogleSignIn = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/generator`
+      : '/generator';
+
     setIsGoogleLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/' });
+      await signIn('google', { callbackUrl });
     } catch (error) {
       console.error('Sign in error:', error);
       setIsGoogleLoading(false);
