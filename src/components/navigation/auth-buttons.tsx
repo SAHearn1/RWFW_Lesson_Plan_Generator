@@ -14,7 +14,9 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignIn = async () => {
-    const callbackUrl = buildSiteUrl('/generator');
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/generator`
+      : '/generator';
 
     try {
       setIsSubmitting(true);
@@ -25,7 +27,9 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   };
 
   const handleSignOut = async () => {
-    const callbackUrl = buildSiteUrl('/');
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/`
+      : '/';
 
     try {
       setIsSubmitting(true);

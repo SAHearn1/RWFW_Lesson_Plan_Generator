@@ -24,13 +24,10 @@ const nextAuthSecret = process.env.NEXTAUTH_SECRET
   ?? (process.env.NODE_ENV === 'production' ? undefined : 'insecure-development-secret');
 
 // Ensure NEXTAUTH_URL is always available so OAuth callbacks stay on the
-// correct host (prefer the canonical site URL when set, otherwise fall back
-// to the current Vercel host or localhost during development).
+// current host in preview deployments.
 if (!process.env.NEXTAUTH_URL) {
   const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? vercelUrl ?? 'http://localhost:3000';
-
-  process.env.NEXTAUTH_URL = siteUrl;
+  process.env.NEXTAUTH_URL = vercelUrl ?? 'http://localhost:3000';
 }
 
 interface RootAuthOptions extends NextAuthOptions {
