@@ -4,14 +4,17 @@ import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import { FormEvent, useState } from 'react';
 
+import { useGeneratorCallbackUrl } from '@/lib/callback-urls';
+
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const generatorCallbackUrl = useGeneratorCallbackUrl();
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/' });
+      await signIn('google', { callbackUrl: generatorCallbackUrl });
     } catch (error) {
       console.error('Sign in error:', error);
       setIsGoogleLoading(false);

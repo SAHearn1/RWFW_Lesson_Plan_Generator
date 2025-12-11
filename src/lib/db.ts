@@ -1,9 +1,11 @@
 // src/lib/db.ts
 import { PrismaClient } from '@prisma/client';
 
+import { env } from '@/lib/env';
+
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = env.DATABASE_URL;
 
 if (!databaseUrl) {
   console.warn(
@@ -17,7 +19,7 @@ export const prisma =
     ? globalForPrisma.prisma ??
       new PrismaClient({
         // Keep logs quiet in prod
-        log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+        log: env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
       })
     : undefined;
 
