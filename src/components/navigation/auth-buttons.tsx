@@ -3,6 +3,8 @@
 import { signIn, signOut } from 'next-auth/react';
 import { useState } from 'react';
 
+import { useGeneratorCallbackUrl, useHomeCallbackUrl } from '@/lib/callback-urls';
+
 type AuthButtonsProps = {
   isAuthenticated: boolean;
   userName?: string | null;
@@ -10,11 +12,13 @@ type AuthButtonsProps = {
 
 export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const generatorCallbackUrl = useGeneratorCallbackUrl();
+  const homeCallbackUrl = useHomeCallbackUrl();
 
   const handleSignIn = async () => {
     try {
       setIsSubmitting(true);
-      await signIn('google', { callbackUrl: '/generator' });
+      await signIn('google', { callbackUrl: generatorCallbackUrl });
     } finally {
       setIsSubmitting(false);
     }
@@ -23,7 +27,7 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const handleSignOut = async () => {
     try {
       setIsSubmitting(true);
-      await signOut({ callbackUrl: '/' });
+      await signOut({ callbackUrl: homeCallbackUrl });
     } finally {
       setIsSubmitting(false);
     }
