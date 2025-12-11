@@ -5,6 +5,8 @@ import { useMemo, useState } from 'react';
 
 import { buildSiteUrl } from '@/lib/site-url';
 
+import { buildSiteUrl } from '@/lib/site-url';
+
 type AuthButtonsProps = {
   isAuthenticated: boolean;
   userName?: string | null;
@@ -16,18 +18,26 @@ export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const homeCallbackUrl = useMemo(() => buildSiteUrl('/'), []);
 
   const handleSignIn = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/generator`
+      : '/generator';
+
     try {
       setIsSubmitting(true);
-      await signIn('google', { callbackUrl: generatorCallbackUrl });
+      await signIn('google', { callbackUrl });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSignOut = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/`
+      : '/';
+
     try {
       setIsSubmitting(true);
-      await signOut({ callbackUrl: homeCallbackUrl });
+      await signOut({ callbackUrl });
     } finally {
       setIsSubmitting(false);
     }
