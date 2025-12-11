@@ -1,7 +1,13 @@
 'use client';
 
 import { signIn, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import { buildSiteUrl } from '@/lib/site-url';
+
+import { buildSiteUrl } from '@/lib/site-url';
+
+import { useGeneratorCallbackUrl, useHomeCallbackUrl } from '@/lib/callback-urls';
 
 import { useGeneratorCallbackUrl, useHomeCallbackUrl } from '@/lib/callback-urls';
 
@@ -12,22 +18,30 @@ type AuthButtonsProps = {
 
 export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const generatorCallbackUrl = useGeneratorCallbackUrl();
-  const homeCallbackUrl = useHomeCallbackUrl();
+  const generatorCallbackUrl = useMemo(() => buildSiteUrl('/generator'), []);
+  const homeCallbackUrl = useMemo(() => buildSiteUrl('/'), []);
 
   const handleSignIn = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/generator`
+      : '/generator';
+
     try {
       setIsSubmitting(true);
-      await signIn('google', { callbackUrl: generatorCallbackUrl });
+      await signIn('google', { callbackUrl });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSignOut = async () => {
+    const callbackUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/`
+      : '/';
+
     try {
       setIsSubmitting(true);
-      await signOut({ callbackUrl: homeCallbackUrl });
+      await signOut({ callbackUrl });
     } finally {
       setIsSubmitting(false);
     }
