@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next";
 import GoogleProvider from "next-auth/providers/google";
 
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 
 interface ExtendedJWT {
   sub?: string;
@@ -15,8 +16,8 @@ interface ExtendedJWT {
   [key: string]: unknown;
 }
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleClientId = env.GOOGLE_CLIENT_ID;
+const googleClientSecret = env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
 const prismaUnavailable = typeof prisma === "undefined" || prisma === null;
 const sessionStrategy: "jwt" | "database" = prismaUnavailable ? "jwt" : "database";

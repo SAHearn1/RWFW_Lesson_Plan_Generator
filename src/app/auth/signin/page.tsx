@@ -2,13 +2,16 @@
 
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
+
+import { buildSiteUrl } from '@/lib/site-url';
 
 import { buildSiteUrl } from '@/lib/site-url';
 
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const generatorCallbackUrl = useMemo(() => buildSiteUrl('/generator'), []);
 
   const handleGoogleSignIn = async () => {
     const callbackUrl = typeof window !== 'undefined'

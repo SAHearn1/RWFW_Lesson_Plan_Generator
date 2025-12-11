@@ -1,7 +1,9 @@
 'use client';
 
 import { signIn, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import { buildSiteUrl } from '@/lib/site-url';
 
 import { buildSiteUrl } from '@/lib/site-url';
 
@@ -12,6 +14,8 @@ type AuthButtonsProps = {
 
 export function AuthButtons({ isAuthenticated, userName }: AuthButtonsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const generatorCallbackUrl = useMemo(() => buildSiteUrl('/generator'), []);
+  const homeCallbackUrl = useMemo(() => buildSiteUrl('/'), []);
 
   const handleSignIn = async () => {
     const callbackUrl = typeof window !== 'undefined'

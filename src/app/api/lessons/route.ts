@@ -1,5 +1,6 @@
 import { masterPrompt } from '@/constants/prompts';
 import { getServerAuthSession } from '@/lib/auth';
+import { env } from '@/lib/env';
 
 type LessonMessage = {
   role: 'user' | 'assistant';
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+    const anthropicApiKey = env.ANTHROPIC_API_KEY;
     if (!anthropicApiKey) {
       return new Response(
         JSON.stringify({ error: 'Anthropic API key is not configured.' }),
