@@ -21,18 +21,14 @@ const googleClientSecret = env.GOOGLE_CLIENT_SECRET;
 const googleConfigMissing = !googleClientId || !googleClientSecret;
 const prismaUnavailable = typeof prisma === "undefined" || prisma === null;
 const sessionStrategy: "jwt" | "database" = prismaUnavailable ? "jwt" : "database";
-const nextAuthSecret = env.NEXTAUTH_SECRET
-  ?? (env.NODE_ENV === "production" ? undefined : "insecure-development-secret");
+const nextAuthSecret = process.env.NEXTAUTH_SECRET
+  ?? (process.env.NODE_ENV === 'production' ? undefined : 'insecure-development-secret');
 
 // Ensure NEXTAUTH_URL is always available so OAuth callbacks stay on the
-// correct host (prefer the canonical site URL when set, otherwise fall back
-// to the current Vercel host or localhost during development).
-const vercelUrl = env.VERCEL_URL ? `https://${env.VERCEL_URL}` : undefined;
-const siteUrl = env.NEXT_PUBLIC_SITE_URL ?? vercelUrl ?? "http://localhost:3000";
-const resolvedNextAuthUrl = env.NEXTAUTH_URL ?? siteUrl;
-
+// current host in preview deployments.
 if (!process.env.NEXTAUTH_URL) {
-  process.env.NEXTAUTH_URL = resolvedNextAuthUrl;
+  const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  process.env.NEXTAUTH_URL = vercelUrl ?? 'http://localhost:3000';
 }
 
 interface RootAuthOptions extends NextAuthOptions {
