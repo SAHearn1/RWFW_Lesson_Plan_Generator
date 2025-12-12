@@ -10,6 +10,8 @@ import { buildSiteUrl } from '@/lib/site-url';
 
 import { useGeneratorCallbackUrl } from '@/lib/callback-urls';
 
+import { useGeneratorCallbackUrl } from '@/lib/callback-urls';
+
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');

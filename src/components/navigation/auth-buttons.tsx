@@ -9,6 +9,8 @@ import { buildSiteUrl } from '@/lib/site-url';
 
 import { useGeneratorCallbackUrl, useHomeCallbackUrl } from '@/lib/callback-urls';
 
+import { useGeneratorCallbackUrl, useHomeCallbackUrl } from '@/lib/callback-urls';
+
 type AuthButtonsProps = {
   isAuthenticated: boolean;
   userName?: string | null;
